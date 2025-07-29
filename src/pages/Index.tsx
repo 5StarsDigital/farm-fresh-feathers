@@ -2,6 +2,7 @@ import Navigation from '@/components/ui/navigation';
 import HeroSection from '@/components/ui/hero-section';
 import FeaturesSection from '@/components/ui/features-section';
 import HowItWorksSection from '@/components/ui/how-it-works';
+import AvailableFarmsSection from '@/components/ui/available-farms-section';
 import PackagesSection from '@/components/ui/packages-section';
 import TestimonialsSection from '@/components/ui/testimonials-section';
 import Footer from '@/components/ui/footer';
@@ -14,6 +15,7 @@ const Index = () => {
         <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />
+        <AvailableFarmsSection />
         <PackagesSection />
         <TestimonialsSection />
       </main>
