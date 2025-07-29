@@ -8,7 +8,7 @@ const AvailableFarmsSection = () => {
     {
       id: 1,
       name: "Trang trại Mini Hải Dương",
-      image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      image: "/lovable-uploads/05e0ef0f-6969-420a-857d-097c9220c184.png",
       address: "Hải Dương",
       minChickens: 5,
       maxChickens: 15,
@@ -19,7 +19,7 @@ const AvailableFarmsSection = () => {
     {
       id: 2,
       name: "Trang trại Mini Hà Nội",
-      image: "https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      image: "/lovable-uploads/81d89db6-5363-4583-afcc-727f9e30aade.png",
       address: "Hà Nội",
       minChickens: 8,
       maxChickens: 20,
@@ -30,7 +30,7 @@ const AvailableFarmsSection = () => {
     {
       id: 3,
       name: "Trang trại Mini Bắc Ninh",
-      image: "https://images.unsplash.com/photo-1612900922865-0a3b9a8e5e1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      image: "/lovable-uploads/85a5a39e-52b9-44c5-b46c-63478a1e8080.png",
       address: "Bắc Ninh",
       minChickens: 6,
       maxChickens: 18,
