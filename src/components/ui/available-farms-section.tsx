@@ -41,7 +41,7 @@ const AvailableFarmsSection = () => {
     {
       id: 4,
       name: "Trang trại Mini Thái Bình",
-      image: "/lovable-uploads/05e0ef0f-6969-420a-857d-097c9220c184.png",
+      image: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png",
       address: "Thái Bình",
       minChickens: 10,
       maxChickens: 25,
@@ -52,7 +52,7 @@ const AvailableFarmsSection = () => {
     {
       id: 5,
       name: "Trang trại Mini Nam Định",
-      image: "/lovable-uploads/81d89db6-5363-4583-afcc-727f9e30aade.png",
+      image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png",
       address: "Nam Định",
       minChickens: 7,
       maxChickens: 16,
@@ -63,7 +63,7 @@ const AvailableFarmsSection = () => {
     {
       id: 6,
       name: "Trang trại Mini Ninh Bình",
-      image: "/lovable-uploads/85a5a39e-52b9-44c5-b46c-63478a1e8080.png",
+      image: "/lovable-uploads/c2b9d409-e83b-4af4-95f8-cecc6eee4e70.png",
       address: "Ninh Bình",
       minChickens: 12,
       maxChickens: 30,
