@@ -37,6 +37,39 @@ const AvailableFarmsSection = () => {
       rentalCost: 600000,
       monthlyFee: 250000,
       available: false
+    },
+    {
+      id: 4,
+      name: "Trang trại Mini Thái Bình",
+      image: "/lovable-uploads/05e0ef0f-6969-420a-857d-097c9220c184.png",
+      address: "Thái Bình",
+      minChickens: 10,
+      maxChickens: 25,
+      rentalCost: 800000,
+      monthlyFee: 350000,
+      available: true
+    },
+    {
+      id: 5,
+      name: "Trang trại Mini Nam Định",
+      image: "/lovable-uploads/81d89db6-5363-4583-afcc-727f9e30aade.png",
+      address: "Nam Định",
+      minChickens: 7,
+      maxChickens: 16,
+      rentalCost: 550000,
+      monthlyFee: 220000,
+      available: true
+    },
+    {
+      id: 6,
+      name: "Trang trại Mini Ninh Bình",
+      image: "/lovable-uploads/85a5a39e-52b9-44c5-b46c-63478a1e8080.png",
+      address: "Ninh Bình",
+      minChickens: 12,
+      maxChickens: 30,
+      rentalCost: 900000,
+      monthlyFee: 400000,
+      available: false
     }
   ];
 
