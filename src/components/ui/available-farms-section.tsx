@@ -99,7 +99,7 @@ const AvailableFarmsSection = () => {
                 <img 
                   src={farm.image} 
                   alt={farm.name}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-64 object-cover"
                 />
                 <div className="absolute top-4 right-4">
                   <Badge variant={farm.available ? "default" : "secondary"}>
