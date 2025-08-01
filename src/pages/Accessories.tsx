@@ -11,15 +11,25 @@ const Accessories = () => {
     name: "Máy ấp trứng tự động",
     description: "Máy ấp trứng công nghệ cao, tự động điều chỉnh nhiệt độ",
     price: 4500000,
-    effect: "Tăng tỷ lệ nở 15%",
-    image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+    effect_type: "Tăng tỷ lệ nở",
+    effect_value: 15,
+    image_url: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
   }, {
     id: 2,
     name: "Hệ thống tưới nước tự động",
     description: "Hệ thống cung cấp nước sạch liên tục cho gà",
     price: 2800000,
-    effect: "Giảm công việc chăm sóc 30%",
-    image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+    effect_type: "Giảm công việc chăm sóc",
+    effect_value: 30,
+    image_url: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+  }, {
+    id: 3,
+    name: "Máy cho ăn tự động",
+    description: "Hệ thống cho ăn tự động theo lịch trình",
+    price: 3200000,
+    effect_type: "Tăng hiệu quả thức ăn",
+    effect_value: 20,
+    image_url: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
   }];
 
   const formatCurrency = (amount: number) => {
@@ -62,7 +72,7 @@ const Accessories = () => {
             {accessories.map(accessory => (
               <Card key={accessory.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                 <div className="aspect-video bg-muted overflow-hidden">
-                  <img src={accessory.image} alt={accessory.name} className="w-full h-full object-cover" />
+                  <img src={accessory.image_url} alt={accessory.name} className="w-full h-full object-cover" />
                 </div>
                 <CardHeader>
                   <CardTitle className="text-lg">{accessory.name}</CardTitle>
@@ -71,7 +81,7 @@ const Accessories = () => {
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Hiệu ứng:</span>
-                    <Badge variant="outline">{accessory.effect}</Badge>
+                    <Badge variant="outline">{accessory.effect_type}: +{accessory.effect_value}%</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Giá bán:</span>

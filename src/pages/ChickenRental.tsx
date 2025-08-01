@@ -10,16 +10,23 @@ const ChickenRental = () => {
     id: 1,
     name: "Gà Tàu Vàng",
     description: "Gà sinh trứng cao, phù hợp nuôi trong chuồng",
-    eggProductionRate: 280,
-    rentalPrice: 150000,
-    image: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
+    egg_production_rate: 280,
+    price: 150000,
+    image_url: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
   }, {
     id: 2,
-    name: "Gà Rhode Island",
+    name: "Gà Rhode Island", 
     description: "Giống gà mạnh khỏe, sinh trứng ổn định",
-    eggProductionRate: 250,
-    rentalPrice: 120000,
-    image: "/lovable-uploads/c2b9d409-e83b-4af4-95f8-cecc6eee4e70.png"
+    egg_production_rate: 250,
+    price: 120000,
+    image_url: "/lovable-uploads/c2b9d409-e83b-4af4-95f8-cecc6eee4e70.png"
+  }, {
+    id: 3,
+    name: "Gà Leghorn",
+    description: "Gà sinh trứng trắng, năng suất cao", 
+    egg_production_rate: 300,
+    price: 180000,
+    image_url: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
   }];
 
   const formatCurrency = (amount: number) => {
@@ -62,7 +69,7 @@ const ChickenRental = () => {
             {chickenTypes.map(chicken => (
               <Card key={chicken.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                 <div className="aspect-video bg-muted overflow-hidden">
-                  <img src={chicken.image} alt={chicken.name} className="w-full h-full object-cover" />
+                  <img src={chicken.image_url} alt={chicken.name} className="w-full h-full object-cover" />
                 </div>
                 <CardHeader>
                   <CardTitle className="text-lg">{chicken.name}</CardTitle>
@@ -71,11 +78,11 @@ const ChickenRental = () => {
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Sản lượng trứng:</span>
-                    <Badge variant="secondary">{chicken.eggProductionRate} trứng/năm</Badge>
+                    <Badge variant="secondary">{chicken.egg_production_rate} trứng/năm</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Giá thuê:</span>
-                    <span className="font-semibold text-primary">{formatCurrency(chicken.rentalPrice)}/con/tháng</span>
+                    <span className="font-semibold text-primary">{formatCurrency(chicken.price)}/con/tháng</span>
                   </div>
                   <Button className="w-full">Thuê ngay</Button>
                 </CardContent>
