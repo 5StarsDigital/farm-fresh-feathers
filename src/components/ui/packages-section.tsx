@@ -7,55 +7,79 @@ const PackagesSection = () => {
   const packages = [
     {
       id: 1,
-      name: 'Gói Gà Mái Đẻ',
-      price: '350.000đ',
-      originalPrice: '450.000đ',
-      description: '5 trứng/tuần',
+      name: 'Gói Cơ Bản',
+      subtitle: '"Chăm chỉ mỗi ngày"',
+      price: '200.000đ',
+      originalPrice: '280.000đ',
+      description: 'Chăm sóc tiết kiệm nhưng đầy đủ',
       features: [
-        '1 con gà mái giống tốt',
-        'Thức ăn 1 tháng',
-        'Camera theo dõi cơ bản',
-        'Giao trứng 2 lần/tuần'
+        'Ăn 2 bữa/ngày thức ăn thô sạch',
+        'Nước uống sạch mỗi ngày',
+        'Bổ sung rau xanh tươi',
+        'Dọn chuồng 1 lần/tuần',
+        'Thả ra sân phơi nắng'
       ],
       popular: false,
-      discount: '22%',
-      emoji: '🐔',
-      bgGradient: 'from-orange-400 to-orange-500'
+      discount: '29%',
+      emoji: '🐣',
+      bgGradient: 'from-blue-400 to-blue-500'
     },
     {
       id: 2,
-      name: 'Gói Gà VIP + Camera HD',
-      price: '600.000đ',
-      originalPrice: '800.000đ',
-      description: '7-10 trứng/tuần',
+      name: 'Gói Nâng Cao',
+      subtitle: '"Gà có Gu"',
+      price: '400.000đ',
+      originalPrice: '550.000đ',
+      description: 'Chăm như thú cưng, ăn ngon hơn',
       features: [
-        '2 con gà mái chất lượng cao',
-        'Camera HD 4K',
-        'Thức ăn cao cấp 1.5 tháng',
-        'Giao trứng 3 lần/tuần',
-        'Hỗ trợ 24/7'
+        'Tất cả dịch vụ Gói Cơ Bản',
+        'Sâu gạo 1 lần/tuần',
+        'Hoa quả theo mùa',
+        'Vệ sinh chuồng 2 lần/tuần',
+        'Báo cáo tăng trưởng hàng tháng'
       ],
-      popular: true,
-      discount: '25%',
-      emoji: '👑',
-      bgGradient: 'from-purple-400 to-purple-500'
+      popular: false,
+      discount: '27%',
+      emoji: '🥚',
+      bgGradient: 'from-yellow-400 to-yellow-500'
     },
     {
       id: 3,
-      name: 'Combo Chuồng + Thức Ăn',
-      price: '120.000đ',
-      originalPrice: '150.000đ',
-      description: '1 tháng',
+      name: 'Gói VIP',
+      subtitle: '"Chủ tịch Gà"',
+      price: '800.000đ',
+      originalPrice: '1.100.000đ',
+      description: 'Trải nghiệm cá nhân hóa cao cấp',
       features: [
-        'Chuồng gỗ cao cấp',
-        'Thức ăn hữu cơ 1 tháng',
-        'Đồ chơi cho gà',
-        'Miễn phí vận chuyển'
+        'Bao gồm Gói Nâng Cao',
+        'Thức ăn đặc biệt: dế mèn, thịt bò',
+        'Mắc màn chống muỗi, côn trùng',
+        'Thiết kế chuồng bằng AI',
+        'Tư vấn chuyên gia riêng'
+      ],
+      popular: true,
+      discount: '27%',
+      emoji: '🐓',
+      bgGradient: 'from-purple-400 to-purple-500'
+    },
+    {
+      id: 4,
+      name: 'Gói King Chicken',
+      subtitle: '"Hoàng gia dành cho gà"',
+      price: '1.500.000đ',
+      originalPrice: '2.000.000đ',
+      description: 'Xa xỉ và sáng tạo tột đỉnh',
+      features: [
+        'Bao gồm tất cả dịch vụ VIP',
+        'Tắm nước sạch cho gà',
+        'Hoa quả nhập khẩu cao cấp',
+        'Nhạc thư giãn trong chuồng',
+        'Video vlog nuôi gà cá nhân'
       ],
       popular: false,
-      discount: '20%',
-      emoji: '🏠',
-      bgGradient: 'from-green-400 to-green-500'
+      discount: '25%',
+      emoji: '👑',
+      bgGradient: 'from-gradient-start to-gradient-end'
     }
   ];
 
@@ -71,7 +95,7 @@ const PackagesSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {packages.map((pkg) => (
             <Card 
               key={pkg.id}
@@ -102,11 +126,12 @@ const PackagesSection = () => {
                   <span className="text-3xl">{pkg.emoji}</span>
                 </div>
 
-                <CardTitle className="text-2xl font-bold text-foreground mb-2">
+                <CardTitle className="text-xl font-bold text-foreground mb-1">
                   {pkg.name}
                 </CardTitle>
+                <p className="text-sm font-medium text-primary mb-2">{pkg.subtitle}</p>
                 
-                <p className="text-muted-foreground mb-4">{pkg.description}</p>
+                <p className="text-sm text-muted-foreground mb-4">{pkg.description}</p>
 
                 {/* Price */}
                 <div className="space-y-1">
