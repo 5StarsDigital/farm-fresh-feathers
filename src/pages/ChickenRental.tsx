@@ -4,9 +4,89 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bird } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const ChickenRental = () => {
-  const chickenTypes = [{
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [chickenTypes, setChickenTypes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rentingChickenId, setRentingChickenId] = useState<string | null>(null);
+
+  // Load chicken types from database
+  useEffect(() => {
+    loadChickenTypes();
+  }, []);
+
+  const loadChickenTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chicken_types' as any)
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading chicken types:', error);
+        // Use static data as fallback
+        setChickenTypes(staticChickenTypes);
+        return;
+      }
+      
+      setChickenTypes(data || staticChickenTypes);
+    } catch (error) {
+      console.error('Error loading chicken types:', error);
+      setChickenTypes(staticChickenTypes);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRentChicken = async (chickenId: string) => {
+    if (!user) {
+      toast({
+        title: "Cần đăng nhập",
+        description: "Bạn cần đăng nhập để thuê gà",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setRentingChickenId(chickenId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('rent-chicken', {
+        body: { chickenTypeId: chickenId, quantity: 1 }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "Thuê thành công!",
+          description: `Đã thuê ${data.chicken_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`,
+        });
+        
+        // Trigger balance update in navigation
+        window.dispatchEvent(new CustomEvent('balanceUpdate'));
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error renting chicken:', error);
+      toast({
+        title: "Lỗi thuê gà",
+        description: error.message || "Có lỗi xảy ra khi thuê gà",
+        variant: "destructive"
+      });
+    } finally {
+      setRentingChickenId(null);
+    }
+  };
+
+  const staticChickenTypes = [{
     id: 1,
     name: "Gà Tàu Vàng",
     description: "Gà sinh trứng cao, phù hợp nuôi trong chuồng",
@@ -84,7 +164,13 @@ const ChickenRental = () => {
                     <span className="text-sm text-muted-foreground">Giá thuê:</span>
                     <span className="font-semibold text-primary">{formatCurrency(chicken.price)}/con/tháng</span>
                   </div>
-                  <Button className="w-full">Thuê ngay</Button>
+                  <Button 
+                    className="w-full" 
+                    disabled={rentingChickenId === chicken.id?.toString()}
+                    onClick={() => handleRentChicken(chicken.id?.toString() || chicken.id)}
+                  >
+                    {rentingChickenId === chicken.id?.toString() ? 'Đang thuê...' : 'Thuê ngay'}
+                  </Button>
                 </CardContent>
               </Card>
             ))}

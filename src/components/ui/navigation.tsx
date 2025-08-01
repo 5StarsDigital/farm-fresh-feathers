@@ -17,6 +17,18 @@ const Navigation = () => {
     }
   }, [user]);
 
+  // Listen for balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = () => {
+      if (user) {
+        loadAccountBalance();
+      }
+    };
+
+    window.addEventListener('balanceUpdate', handleBalanceUpdate);
+    return () => window.removeEventListener('balanceUpdate', handleBalanceUpdate);
+  }, [user]);
+
   const loadAccountBalance = async () => {
     try {
       const { data, error } = await (supabase as any)

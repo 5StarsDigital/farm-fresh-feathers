@@ -4,9 +4,89 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Accessories = () => {
-  const accessories = [{
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [accessories, setAccessories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [buyingAccessoryId, setBuyingAccessoryId] = useState<string | null>(null);
+
+  // Load accessories from database
+  useEffect(() => {
+    loadAccessories();
+  }, []);
+
+  const loadAccessories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('accessories' as any)
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading accessories:', error);
+        // Use static data as fallback
+        setAccessories(staticAccessories);
+        return;
+      }
+      
+      setAccessories(data || staticAccessories);
+    } catch (error) {
+      console.error('Error loading accessories:', error);
+      setAccessories(staticAccessories);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuyAccessory = async (accessoryId: string) => {
+    if (!user) {
+      toast({
+        title: "Cần đăng nhập",
+        description: "Bạn cần đăng nhập để mua phụ kiện",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setBuyingAccessoryId(accessoryId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('buy-accessory', {
+        body: { accessoryId: accessoryId, quantity: 1 }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "Mua thành công!",
+          description: `Đã mua ${data.accessory_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`,
+        });
+        
+        // Trigger balance update in navigation
+        window.dispatchEvent(new CustomEvent('balanceUpdate'));
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error buying accessory:', error);
+      toast({
+        title: "Lỗi mua phụ kiện",
+        description: error.message || "Có lỗi xảy ra khi mua phụ kiện",
+        variant: "destructive"
+      });
+    } finally {
+      setBuyingAccessoryId(null);
+    }
+  };
+
+  const staticAccessories = [{
     id: 1,
     name: "Máy ấp trứng tự động",
     description: "Máy ấp trứng công nghệ cao, tự động điều chỉnh nhiệt độ",
@@ -87,7 +167,13 @@ const Accessories = () => {
                     <span className="text-sm text-muted-foreground">Giá bán:</span>
                     <span className="font-semibold text-primary">{formatCurrency(accessory.price)}</span>
                   </div>
-                  <Button className="w-full">Mua ngay</Button>
+                  <Button 
+                    className="w-full"
+                    disabled={buyingAccessoryId === accessory.id?.toString()}
+                    onClick={() => handleBuyAccessory(accessory.id?.toString() || accessory.id)}
+                  >
+                    {buyingAccessoryId === accessory.id?.toString() ? 'Đang mua...' : 'Mua ngay'}
+                  </Button>
                 </CardContent>
               </Card>
             ))}
