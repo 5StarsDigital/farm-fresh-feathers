@@ -8,8 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon } from 'lucide-react';
 
 // Using any types temporarily until Supabase types are updated
 interface Farm {
@@ -40,6 +44,22 @@ interface Transaction {
   description: string | null;
   created_at: string;
 }
+
+interface UserProfile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  shop_name: string | null;
+  date_of_birth: string | null;
+  avatar_url: string | null;
+}
+
+interface ProfileFormData {
+  full_name: string;
+  shop_name: string;
+  date_of_birth: string;
+  email: string;
+}
 const Farm = () => {
   const navigate = useNavigate();
   const {
@@ -52,7 +72,17 @@ const Farm = () => {
     total_eggs: 0
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const form = useForm<ProfileFormData>({
+    defaultValues: {
+      full_name: '',
+      shop_name: '',
+      date_of_birth: '',
+      email: ''
+    }
+  });
   useEffect(() => {
     const initializeFarm = async () => {
       const {
@@ -65,10 +95,99 @@ const Farm = () => {
         return;
       }
       setUser(user);
+      await loadUserProfile(user.id);
       await loadFarmData(user.id);
     };
     initializeFarm();
   }, [navigate]);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      let { data: profileData, error: profileError } = await (supabase as any)
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Create profile if doesn't exist
+        const { data: newProfile, error: createError } = await (supabase as any)
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: user?.email || '',
+            full_name: '',
+            shop_name: '',
+            date_of_birth: null,
+            avatar_url: null
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        profileData = newProfile;
+      } else if (profileError) {
+        throw profileError;
+      }
+
+      setProfile(profileData);
+      
+      // Update form with loaded data
+      form.reset({
+        full_name: profileData.full_name || '',
+        shop_name: profileData.shop_name || '',
+        date_of_birth: profileData.date_of_birth || '',
+        email: profileData.email || user?.email || ''
+      });
+
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tải thông tin cá nhân",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const saveProfile = async (data: ProfileFormData) => {
+    if (!user || !profile) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from('profiles')
+        .update({
+          full_name: data.full_name,
+          shop_name: data.shop_name,
+          date_of_birth: data.date_of_birth || null,
+          email: data.email
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setProfile(prev => prev ? {
+        ...prev,
+        full_name: data.full_name,
+        shop_name: data.shop_name,
+        date_of_birth: data.date_of_birth,
+        email: data.email
+      } : null);
+
+      toast({
+        title: "Thành công!",
+        description: "Thông tin cá nhân đã được lưu"
+      });
+
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể lưu thông tin cá nhân",
+        variant: "destructive"
+      });
+    }
+  };
   const loadFarmData = async (userId: string) => {
     try {
       // Get or create farm using any type to bypass TypeScript errors
@@ -249,10 +368,14 @@ const Farm = () => {
         </div>
 
         <Tabs defaultValue="home" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="home" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               Trang chủ
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <UserIcon className="h-4 w-4" />
+              Thông tin
             </TabsTrigger>
             <TabsTrigger value="camera" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
@@ -359,6 +482,87 @@ const Farm = () => {
                     Cửa hàng
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserIcon className="h-5 w-5" />
+                  Thông tin cá nhân
+                </CardTitle>
+                <CardDescription>
+                  Cập nhật thông tin cá nhân của bạn
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(saveProfile)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="full_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Họ và tên</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập họ và tên" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="shop_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tên shop gà</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nhập tên shop gà" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Email" {...field} disabled />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="date_of_birth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ngày sinh</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <Button type="submit" className="w-full">
+                      Lưu thông tin
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </TabsContent>
