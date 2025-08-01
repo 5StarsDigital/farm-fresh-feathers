@@ -2,29 +2,14 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { User as SupabaseUser } from '@supabase/supabase-js';
+import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-
-  useEffect(() => {
-    // Get current user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user, userRole, signOut } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
   };
 
   const menuItems = [{
@@ -94,6 +79,12 @@ const Navigation = () => {
                     <User className="w-4 h-4 mr-2" />
                     Thông tin tài khoản
                   </DropdownMenuItem>
+                  {userRole === 'super_admin' && (
+                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Quản trị hệ thống
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Đăng xuất
@@ -140,6 +131,12 @@ const Navigation = () => {
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
                   </a>
+                  {userRole === 'super_admin' && (
+                    <a href="/admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                      <Shield className="w-5 h-5" />
+                      <span>Quản trị hệ thống</span>
+                    </a>
+                  )}
                   <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>
