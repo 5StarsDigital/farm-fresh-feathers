@@ -44,7 +44,6 @@ interface Transaction {
   description: string | null;
   created_at: string;
 }
-
 interface UserProfile {
   id: string;
   email: string | null;
@@ -53,7 +52,6 @@ interface UserProfile {
   date_of_birth: string | null;
   avatar_url: string | null;
 }
-
 interface ProfileFormData {
   full_name: string;
   shop_name: string;
@@ -74,7 +72,6 @@ const Farm = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
   const form = useForm<ProfileFormData>({
     defaultValues: {
       full_name: '',
@@ -100,38 +97,32 @@ const Farm = () => {
     };
     initializeFarm();
   }, [navigate]);
-
   const loadUserProfile = async (userId: string) => {
     try {
-      let { data: profileData, error: profileError } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
+      let {
+        data: profileData,
+        error: profileError
+      } = await (supabase as any).from('profiles').select('*').eq('id', userId).single();
       if (profileError && profileError.code === 'PGRST116') {
         // Create profile if doesn't exist
-        const { data: newProfile, error: createError } = await (supabase as any)
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: user?.email || '',
-            full_name: '',
-            shop_name: '',
-            date_of_birth: null,
-            avatar_url: null
-          })
-          .select()
-          .single();
-
+        const {
+          data: newProfile,
+          error: createError
+        } = await (supabase as any).from('profiles').insert({
+          id: userId,
+          email: user?.email || '',
+          full_name: '',
+          shop_name: '',
+          date_of_birth: null,
+          avatar_url: null
+        }).select().single();
         if (createError) throw createError;
         profileData = newProfile;
       } else if (profileError) {
         throw profileError;
       }
-
       setProfile(profileData);
-      
+
       // Update form with loaded data
       form.reset({
         full_name: profileData.full_name || '',
@@ -139,7 +130,6 @@ const Farm = () => {
         date_of_birth: profileData.date_of_birth || '',
         email: profileData.email || user?.email || ''
       });
-
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
@@ -149,23 +139,18 @@ const Farm = () => {
       });
     }
   };
-
   const saveProfile = async (data: ProfileFormData) => {
     if (!user || !profile) return;
-
     try {
-      const { error } = await (supabase as any)
-        .from('profiles')
-        .update({
-          full_name: data.full_name,
-          shop_name: data.shop_name,
-          date_of_birth: data.date_of_birth || null,
-          email: data.email
-        })
-        .eq('id', user.id);
-
+      const {
+        error
+      } = await (supabase as any).from('profiles').update({
+        full_name: data.full_name,
+        shop_name: data.shop_name,
+        date_of_birth: data.date_of_birth || null,
+        email: data.email
+      }).eq('id', user.id);
       if (error) throw error;
-
       setProfile(prev => prev ? {
         ...prev,
         full_name: data.full_name,
@@ -173,12 +158,10 @@ const Farm = () => {
         date_of_birth: data.date_of_birth,
         email: data.email
       } : null);
-
       toast({
         title: "Thành công!",
         description: "Thông tin cá nhân đã được lưu"
       });
-
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
@@ -373,10 +356,7 @@ const Farm = () => {
               <Home className="h-4 w-4" />
               Trang chủ
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <UserIcon className="h-4 w-4" />
-              Thông tin
-            </TabsTrigger>
+            
             <TabsTrigger value="camera" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
               Camera
@@ -501,61 +481,45 @@ const Farm = () => {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(saveProfile)} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="full_name"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="full_name" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Họ và tên</FormLabel>
                             <FormControl>
                               <Input placeholder="Nhập họ và tên" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="shop_name"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="shop_name" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Tên shop gà</FormLabel>
                             <FormControl>
                               <Input placeholder="Nhập tên shop gà" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="email" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
                               <Input placeholder="Email" {...field} disabled />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="date_of_birth"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="date_of_birth" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Ngày sinh</FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                     </div>
                     
                     <Button type="submit" className="w-full">
