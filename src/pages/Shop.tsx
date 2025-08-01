@@ -5,8 +5,86 @@ import { MapPin, Users, Star, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 const Shop = () => {
-  const availableFarms = [{
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [availableFarms, setAvailableFarms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rentingFarmId, setRentingFarmId] = useState<string | null>(null);
+
+  // Load farms from database
+  useEffect(() => {
+    loadFarms();
+  }, []);
+
+  const loadFarms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('available_farms' as any)
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading farms:', error);
+        // Use static data as fallback
+        setAvailableFarms(staticFarms);
+        return;
+      }
+      
+      setAvailableFarms(data || staticFarms);
+    } catch (error) {
+      console.error('Error loading farms:', error);
+      setAvailableFarms(staticFarms);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRentFarm = async (farmId: string) => {
+    if (!user) {
+      toast({
+        title: "Cần đăng nhập",
+        description: "Bạn cần đăng nhập để thuê trang trại",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setRentingFarmId(farmId);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('rent-farm', {
+        body: { availableFarmId: farmId }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "Thuê thành công!",
+          description: `Đã thuê ${data.farm_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`,
+        });
+        
+        // Reload farms to update available coops
+        loadFarms();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error renting farm:', error);
+      toast({
+        title: "Lỗi thuê trang trại",
+        description: error.message || "Có lỗi xảy ra khi thuê trang trại",
+        variant: "destructive"
+      });
+    } finally {
+      setRentingFarmId(null);
+    }
+  };
+
+  const staticFarms = [{
     id: 1,
     name: "Trang trại Xanh An",
     location: "Hà Nội, Việt Nam",
@@ -77,47 +155,73 @@ const Shop = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableFarms.map(farm => (
-              <Card key={farm.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
-                <div className="aspect-video bg-muted overflow-hidden">
-                  <img src={farm.image} alt={farm.name} className="w-full h-full object-cover" />
-                </div>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{farm.name}</CardTitle>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    {farm.location}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>Còn trống: <strong>{farm.availableCoops}/{farm.totalCoops}</strong></span>
+            {loading ? (
+              <div className="col-span-full text-center py-8">
+                <p>Đang tải danh sách trang trại...</p>
+              </div>
+            ) : (
+              availableFarms.map(farm => {
+                const farmData = {
+                  id: farm.id,
+                  name: farm.name || 'Unknown Farm',
+                  location: farm.location || 'Unknown Location',
+                  availableCoops: farm.available_coops || farm.availableCoops || 0,
+                  totalCoops: farm.total_coops || farm.totalCoops || 0,
+                  rentalPrice: farm.rental_price || farm.rentalPrice || 0,
+                  monthlyCost: farm.monthly_cost || farm.monthlyCost || 0,
+                  rating: farm.rating || 4.5,
+                  reviewCount: farm.review_count || farm.reviewCount || 0,
+                  image: farm.image_url || farm.image || '/placeholder.svg'
+                };
+
+                return (
+                  <Card key={farmData.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+                    <div className="aspect-video bg-muted overflow-hidden">
+                      <img src={farmData.image} alt={farmData.name} className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span><strong>{farm.rating}</strong> ({farm.reviewCount})</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Giá thuê:</span>
-                      <span className="font-semibold text-primary">{formatCurrency(farm.rentalPrice)}/tháng</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Chi phí phát sinh:</span>
-                      <span className="text-sm">{formatCurrency(farm.monthlyCost)}/tháng</span>
-                    </div>
-                  </div>
-                  
-                  <Button className="w-full mt-4" disabled={farm.availableCoops === 0}>
-                    {farm.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{farmData.name}</CardTitle>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        {farmData.location}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-muted-foreground" />
+                          <span>Còn trống: <strong>{farmData.availableCoops}/{farmData.totalCoops}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span><strong>{farmData.rating}</strong> ({farmData.reviewCount})</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Giá thuê:</span>
+                          <span className="font-semibold text-primary">{formatCurrency(farmData.rentalPrice)}/tháng</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Chi phí phát sinh:</span>
+                          <span className="text-sm">{formatCurrency(farmData.monthlyCost)}/tháng</span>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        className="w-full mt-4" 
+                        disabled={farmData.availableCoops === 0 || rentingFarmId === farmData.id.toString()}
+                        onClick={() => handleRentFarm(farmData.id.toString())}
+                      >
+                        {farmData.availableCoops === 0 ? 'Hết chỗ' : 
+                         rentingFarmId === farmData.id.toString() ? 'Đang thuê...' : 'Thuê ngay'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
       </main>
