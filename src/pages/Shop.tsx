@@ -3,94 +3,78 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Home, Bird, Package, MapPin, Users, DollarSign, Star } from 'lucide-react';
-
 const Shop = () => {
-  const availableFarms = [
-    {
-      id: 1,
-      name: "Trang trại Xanh An",
-      location: "Hà Nội, Việt Nam",
-      availableCoops: 15,
-      totalCoops: 20,
-      rentalPrice: 2500000,
-      monthlyCost: 800000,
-      rating: 4.8,
-      reviewCount: 124,
-      image: "/lovable-uploads/05e0ef0f-6969-420a-857d-097c9220c184.png"
-    },
-    {
-      id: 2,
-      name: "Trang trại Bình Minh",
-      location: "TP. Hồ Chí Minh, Việt Nam",
-      availableCoops: 8,
-      totalCoops: 25,
-      rentalPrice: 3200000,
-      monthlyCost: 950000,
-      rating: 4.6,
-      reviewCount: 87,
-      image: "/lovable-uploads/81d89db6-5363-4583-afcc-727f9e30aade.png"
-    },
-    {
-      id: 3,
-      name: "Trang trại Phú Quý",
-      location: "Đà Nẵng, Việt Nam",
-      availableCoops: 12,
-      totalCoops: 18,
-      rentalPrice: 2800000,
-      monthlyCost: 750000,
-      rating: 4.9,
-      reviewCount: 156,
-      image: "/lovable-uploads/85a5a39e-52b9-44c5-b46c-63478a1e8080.png"
-    }
-  ];
-
-  const chickenTypes = [
-    {
-      id: 1,
-      name: "Gà Tàu Vàng",
-      description: "Gà sinh trứng cao, phù hợp nuôi trong chuồng",
-      eggProductionRate: 280,
-      rentalPrice: 150000,
-      image: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
-    },
-    {
-      id: 2,
-      name: "Gà Rhode Island",
-      description: "Giống gà mạnh khỏe, sinh trứng ổn định",
-      eggProductionRate: 250,
-      rentalPrice: 120000,
-      image: "/lovable-uploads/c2b9d409-e83b-4af4-95f8-cecc6eee4e70.png"
-    }
-  ];
-
-  const accessories = [
-    {
-      id: 1,
-      name: "Máy ấp trứng tự động",
-      description: "Máy ấp trứng công nghệ cao, tự động điều chỉnh nhiệt độ",
-      price: 4500000,
-      effect: "Tăng tỷ lệ nở 15%",
-      image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
-    },
-    {
-      id: 2,
-      name: "Hệ thống tưới nước tự động",
-      description: "Hệ thống cung cấp nước sạch liên tục cho gà",
-      price: 2800000,
-      effect: "Giảm công việc chăm sóc 30%",
-      image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
-    }
-  ];
-
+  const availableFarms = [{
+    id: 1,
+    name: "Trang trại Xanh An",
+    location: "Hà Nội, Việt Nam",
+    availableCoops: 15,
+    totalCoops: 20,
+    rentalPrice: 2500000,
+    monthlyCost: 800000,
+    rating: 4.8,
+    reviewCount: 124,
+    image: "/lovable-uploads/05e0ef0f-6969-420a-857d-097c9220c184.png"
+  }, {
+    id: 2,
+    name: "Trang trại Bình Minh",
+    location: "TP. Hồ Chí Minh, Việt Nam",
+    availableCoops: 8,
+    totalCoops: 25,
+    rentalPrice: 3200000,
+    monthlyCost: 950000,
+    rating: 4.6,
+    reviewCount: 87,
+    image: "/lovable-uploads/81d89db6-5363-4583-afcc-727f9e30aade.png"
+  }, {
+    id: 3,
+    name: "Trang trại Phú Quý",
+    location: "Đà Nẵng, Việt Nam",
+    availableCoops: 12,
+    totalCoops: 18,
+    rentalPrice: 2800000,
+    monthlyCost: 750000,
+    rating: 4.9,
+    reviewCount: 156,
+    image: "/lovable-uploads/85a5a39e-52b9-44c5-b46c-63478a1e8080.png"
+  }];
+  const chickenTypes = [{
+    id: 1,
+    name: "Gà Tàu Vàng",
+    description: "Gà sinh trứng cao, phù hợp nuôi trong chuồng",
+    eggProductionRate: 280,
+    rentalPrice: 150000,
+    image: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
+  }, {
+    id: 2,
+    name: "Gà Rhode Island",
+    description: "Giống gà mạnh khỏe, sinh trứng ổn định",
+    eggProductionRate: 250,
+    rentalPrice: 120000,
+    image: "/lovable-uploads/c2b9d409-e83b-4af4-95f8-cecc6eee4e70.png"
+  }];
+  const accessories = [{
+    id: 1,
+    name: "Máy ấp trứng tự động",
+    description: "Máy ấp trứng công nghệ cao, tự động điều chỉnh nhiệt độ",
+    price: 4500000,
+    effect: "Tăng tỷ lệ nở 15%",
+    image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+  }, {
+    id: 2,
+    name: "Hệ thống tưới nước tự động",
+    description: "Hệ thống cung cấp nước sạch liên tục cho gà",
+    price: 2800000,
+    effect: "Giảm công việc chăm sóc 30%",
+    image: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+  }];
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       <main className="pt-20 pb-16">
@@ -118,14 +102,9 @@ const Shop = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableFarms.map((farm) => (
-                <Card key={farm.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+              {availableFarms.map(farm => <Card key={farm.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                   <div className="aspect-video bg-muted overflow-hidden">
-                    <img 
-                      src={farm.image} 
-                      alt={farm.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={farm.image} alt={farm.name} className="w-full h-full object-cover" />
                   </div>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg">{farm.name}</CardTitle>
@@ -161,8 +140,7 @@ const Shop = () => {
                       {farm.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
                     </Button>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </div>
 
@@ -173,20 +151,15 @@ const Shop = () => {
                 <Bird className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Thuê gà</h2>
+                <h2 className="text-2xl font-bold text-foreground">Giống gà</h2>
                 <p className="text-muted-foreground">Thuê gà để tăng sản lượng trứng cho trại của bạn</p>
               </div>
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              {chickenTypes.map((chicken) => (
-                <Card key={chicken.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+              {chickenTypes.map(chicken => <Card key={chicken.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                   <div className="aspect-video bg-muted overflow-hidden">
-                    <img 
-                      src={chicken.image} 
-                      alt={chicken.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={chicken.image} alt={chicken.name} className="w-full h-full object-cover" />
                   </div>
                   <CardHeader>
                     <CardTitle className="text-lg">{chicken.name}</CardTitle>
@@ -203,8 +176,7 @@ const Shop = () => {
                     </div>
                     <Button className="w-full">Thuê ngay</Button>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </div>
 
@@ -221,14 +193,9 @@ const Shop = () => {
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              {accessories.map((accessory) => (
-                <Card key={accessory.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+              {accessories.map(accessory => <Card key={accessory.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                   <div className="aspect-video bg-muted overflow-hidden">
-                    <img 
-                      src={accessory.image} 
-                      alt={accessory.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={accessory.image} alt={accessory.name} className="w-full h-full object-cover" />
                   </div>
                   <CardHeader>
                     <CardTitle className="text-lg">{accessory.name}</CardTitle>
@@ -245,14 +212,11 @@ const Shop = () => {
                     </div>
                     <Button className="w-full">Mua ngay</Button>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Shop;
