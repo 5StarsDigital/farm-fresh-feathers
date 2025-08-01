@@ -2,13 +2,46 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut, Shield } from 'lucide-react';
+import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut, Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [accountBalance, setAccountBalance] = useState<number | null>(null);
   const { user, userRole, signOut } = useAuth();
 
+  // Load account balance
+  useEffect(() => {
+    if (user) {
+      loadAccountBalance();
+    }
+  }, [user]);
+
+  const loadAccountBalance = async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('farms')
+        .select('account_balance')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      
+      if (data && !error) {
+        setAccountBalance(Number(data.account_balance) || 0);
+      }
+    } catch (error) {
+      console.error('Error loading account balance:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
   const handleLogout = async () => {
+    setAccountBalance(null);
     await signOut();
   };
 
@@ -64,14 +97,22 @@ const Navigation = () => {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 h-auto p-2">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
-                      <AvatarFallback>
-                        {getUserDisplayName().charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{getUserDisplayName()}</span>
+                  <Button variant="ghost" className="flex flex-col items-start space-y-0 h-auto p-2">
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
+                        <AvatarFallback>
+                          {getUserDisplayName().charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{getUserDisplayName()}</span>
+                    </div>
+                    {accountBalance !== null && (
+                      <div className="flex items-center space-x-1 text-xs text-muted-foreground ml-10">
+                        <Wallet className="w-3 h-3" />
+                        <span>{formatCurrency(accountBalance)}</span>
+                      </div>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -118,14 +159,22 @@ const Navigation = () => {
               {/* Mobile User Account or Login */}
               {user ? (
                 <>
-                  <div className="flex items-center space-x-2 px-3 py-2 border-t border-border mt-2 pt-2">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
-                      <AvatarFallback>
-                        {getUserDisplayName().charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{getUserDisplayName()}</span>
+                  <div className="px-3 py-2 border-t border-border mt-2 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
+                        <AvatarFallback>
+                          {getUserDisplayName().charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{getUserDisplayName()}</span>
+                    </div>
+                    {accountBalance !== null && (
+                      <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-1 ml-10">
+                        <Wallet className="w-3 h-3" />
+                        <span>{formatCurrency(accountBalance)}</span>
+                      </div>
+                    )}
                   </div>
                   <a href="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                     <User className="w-5 h-5" />
