@@ -1,8 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
   const menuItems = [{
     name: 'Trang chủ',
     href: '/',
@@ -23,11 +47,16 @@ const Navigation = () => {
     name: 'Hướng dẫn',
     href: '/guide',
     icon: BookOpen
-  }, {
-    name: 'Đăng nhập',
-    href: '/auth',
-    icon: User
   }];
+
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Người dùng';
+  };
+
+  const getUserAvatar = () => {
+    return user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  };
   return <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-soft">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -45,6 +74,38 @@ const Navigation = () => {
                 {item.icon && <item.icon className="w-4 h-4" />}
                 <span>{item.name}</span>
               </a>)}
+            
+            {/* User Account or Login */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 h-auto p-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
+                      <AvatarFallback>
+                        {getUserDisplayName().charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{getUserDisplayName()}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+                    <User className="w-4 h-4 mr-2" />
+                    Thông tin tài khoản
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <a href="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+                <User className="w-4 h-4" />
+                <span>Đăng nhập</span>
+              </a>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -62,6 +123,34 @@ const Navigation = () => {
                   {item.icon && <item.icon className="w-5 h-5" />}
                   <span>{item.name}</span>
                 </a>)}
+              
+              {/* Mobile User Account or Login */}
+              {user ? (
+                <>
+                  <div className="flex items-center space-x-2 px-3 py-2 border-t border-border mt-2 pt-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
+                      <AvatarFallback>
+                        {getUserDisplayName().charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{getUserDisplayName()}</span>
+                  </div>
+                  <a href="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                    <User className="w-5 h-5" />
+                    <span>Thông tin tài khoản</span>
+                  </a>
+                  <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
+                    <LogOut className="w-5 h-5" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </>
+              ) : (
+                <a href="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                  <User className="w-5 h-5" />
+                  <span>Đăng nhập</span>
+                </a>
+              )}
             </div>
           </div>}
       </div>
