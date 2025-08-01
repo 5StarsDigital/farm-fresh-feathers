@@ -38,7 +38,7 @@ const Accessories = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <nav className="flex justify-center gap-6 mb-8">
-              <Link to="/shop/farms" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
+              <Link to="/shop" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
                 Trại gà cho thuê
               </Link>
               <Link to="/shop/chickens" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
