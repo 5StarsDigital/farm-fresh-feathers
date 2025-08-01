@@ -9,18 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Home, 
-  Camera, 
-  History, 
-  Egg, 
-  Wallet, 
-  ShoppingCart,
-  Trophy,
-  MessageCircle,
-  MapPin,
-  Truck
-} from 'lucide-react';
+import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck } from 'lucide-react';
 
 // Using any types temporarily until Supabase types are updated
 interface Farm {
@@ -28,7 +17,6 @@ interface Farm {
   farm_name: string;
   account_balance: number;
 }
-
 interface ChickenType {
   id: string;
   name: string;
@@ -36,17 +24,14 @@ interface ChickenType {
   price: number;
   description: string;
 }
-
 interface UserChicken {
   id: string;
   quantity: number;
   chicken_types: ChickenType;
 }
-
 interface EggInventory {
   total_eggs: number;
 }
-
 interface Transaction {
   id: string;
   transaction_type: string;
@@ -55,234 +40,211 @@ interface Transaction {
   description: string | null;
   created_at: string;
 }
-
 const Farm = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [farm, setFarm] = useState<Farm | null>(null);
   const [chickens, setChickens] = useState<UserChicken[]>([]);
-  const [eggInventory, setEggInventory] = useState<EggInventory>({ total_eggs: 0 });
+  const [eggInventory, setEggInventory] = useState<EggInventory>({
+    total_eggs: 0
+  });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const initializeFarm = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate('/auth');
         return;
       }
-
       setUser(user);
       await loadFarmData(user.id);
     };
-
     initializeFarm();
   }, [navigate]);
-
   const loadFarmData = async (userId: string) => {
     try {
       // Get or create farm using any type to bypass TypeScript errors
-      let { data: farmData, error: farmError } = await (supabase as any)
-        .from('farms')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
+      let {
+        data: farmData,
+        error: farmError
+      } = await (supabase as any).from('farms').select('*').eq('user_id', userId).single();
       if (farmError && farmError.code === 'PGRST116') {
         // Create farm if doesn't exist
-        const { data: newFarm, error: createError } = await (supabase as any)
-          .from('farms')
-          .insert({
-            user_id: userId,
-            farm_name: `Trang trại của ${user?.email?.split('@')[0] || 'bạn'}`,
-            account_balance: 100000 // Starting balance
-          })
-          .select()
-          .single();
-
+        const {
+          data: newFarm,
+          error: createError
+        } = await (supabase as any).from('farms').insert({
+          user_id: userId,
+          farm_name: `Trang trại của ${user?.email?.split('@')[0] || 'bạn'}`,
+          account_balance: 100000 // Starting balance
+        }).select().single();
         if (createError) throw createError;
         farmData = newFarm;
       } else if (farmError) {
         throw farmError;
       }
-
       setFarm(farmData);
 
       // Get chickens
-      const { data: chickenData, error: chickenError } = await (supabase as any)
-        .from('user_chickens')
-        .select(`
+      const {
+        data: chickenData,
+        error: chickenError
+      } = await (supabase as any).from('user_chickens').select(`
           *,
           chicken_types (*)
-        `)
-        .eq('farm_id', farmData.id);
-
+        `).eq('farm_id', farmData.id);
       if (chickenError) throw chickenError;
       setChickens(chickenData || []);
 
       // Get or create egg inventory
-      let { data: eggData, error: eggError } = await (supabase as any)
-        .from('eggs_inventory')
-        .select('*')
-        .eq('farm_id', farmData.id)
-        .single();
-
+      let {
+        data: eggData,
+        error: eggError
+      } = await (supabase as any).from('eggs_inventory').select('*').eq('farm_id', farmData.id).single();
       if (eggError && eggError.code === 'PGRST116') {
-        const { data: newEgg, error: createEggError } = await (supabase as any)
-          .from('eggs_inventory')
-          .insert({
-            farm_id: farmData.id,
-            total_eggs: 0
-          })
-          .select()
-          .single();
-
+        const {
+          data: newEgg,
+          error: createEggError
+        } = await (supabase as any).from('eggs_inventory').insert({
+          farm_id: farmData.id,
+          total_eggs: 0
+        }).select().single();
         if (createEggError) throw createEggError;
         eggData = newEgg;
       } else if (eggError) {
         throw eggError;
       }
-
       setEggInventory(eggData);
 
       // Get transaction history
-      const { data: transactionData, error: transactionError } = await (supabase as any)
-        .from('transactions')
-        .select('*')
-        .eq('farm_id', farmData.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
+      const {
+        data: transactionData,
+        error: transactionError
+      } = await (supabase as any).from('transactions').select('*').eq('farm_id', farmData.id).order('created_at', {
+        ascending: false
+      }).limit(10);
       if (transactionError) throw transactionError;
       setTransactions(transactionData || []);
-
     } catch (error) {
       console.error('Error loading farm data:', error);
       toast({
         title: "Lỗi",
         description: "Không thể tải dữ liệu trang trại",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const collectEggs = async () => {
     if (!farm) return;
-
     try {
       const totalChickens = chickens.reduce((sum, chicken) => sum + chicken.quantity, 0);
       const newEggs = Math.floor(totalChickens * 0.8); // 80% chance each chicken lays an egg
 
-      const { error: updateError } = await (supabase as any)
-        .from('eggs_inventory')
-        .update({ total_eggs: eggInventory.total_eggs + newEggs })
-        .eq('farm_id', farm.id);
-
+      const {
+        error: updateError
+      } = await (supabase as any).from('eggs_inventory').update({
+        total_eggs: eggInventory.total_eggs + newEggs
+      }).eq('farm_id', farm.id);
       if (updateError) throw updateError;
 
       // Record transaction
-      await (supabase as any)
-        .from('transactions')
-        .insert({
-          farm_id: farm.id,
-          transaction_type: 'egg_collection',
-          quantity: newEggs,
-          description: `Thu hoạch ${newEggs} quả trứng`
-        });
-
-      setEggInventory(prev => ({ total_eggs: prev.total_eggs + newEggs }));
-      
+      await (supabase as any).from('transactions').insert({
+        farm_id: farm.id,
+        transaction_type: 'egg_collection',
+        quantity: newEggs,
+        description: `Thu hoạch ${newEggs} quả trứng`
+      });
+      setEggInventory(prev => ({
+        total_eggs: prev.total_eggs + newEggs
+      }));
       toast({
         title: "Thu hoạch thành công!",
-        description: `Bạn đã thu được ${newEggs} quả trứng`,
+        description: `Bạn đã thu được ${newEggs} quả trứng`
       });
-
       await loadFarmData(user!.id);
     } catch (error) {
       console.error('Error collecting eggs:', error);
       toast({
         title: "Lỗi",
         description: "Không thể thu hoạch trứng",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const sellEggs = async (quantity: number) => {
     if (!farm || quantity > eggInventory.total_eggs) return;
-
     try {
       const pricePerEgg = 3000; // 3,000 VND per egg
       const totalAmount = quantity * pricePerEgg;
 
       // Update egg inventory
-      const { error: eggError } = await (supabase as any)
-        .from('eggs_inventory')
-        .update({ total_eggs: eggInventory.total_eggs - quantity })
-        .eq('farm_id', farm.id);
-
+      const {
+        error: eggError
+      } = await (supabase as any).from('eggs_inventory').update({
+        total_eggs: eggInventory.total_eggs - quantity
+      }).eq('farm_id', farm.id);
       if (eggError) throw eggError;
 
       // Update farm balance
-      const { error: balanceError } = await (supabase as any)
-        .from('farms')
-        .update({ account_balance: farm.account_balance + totalAmount })
-        .eq('id', farm.id);
-
+      const {
+        error: balanceError
+      } = await (supabase as any).from('farms').update({
+        account_balance: farm.account_balance + totalAmount
+      }).eq('id', farm.id);
       if (balanceError) throw balanceError;
 
       // Record transaction
-      await (supabase as any)
-        .from('transactions')
-        .insert({
-          farm_id: farm.id,
-          transaction_type: 'egg_sale',
-          amount: totalAmount,
-          quantity: quantity,
-          description: `Bán ${quantity} quả trứng`
-        });
-
-      setEggInventory(prev => ({ total_eggs: prev.total_eggs - quantity }));
-      setFarm(prev => prev ? { ...prev, account_balance: prev.account_balance + totalAmount } : null);
-      
+      await (supabase as any).from('transactions').insert({
+        farm_id: farm.id,
+        transaction_type: 'egg_sale',
+        amount: totalAmount,
+        quantity: quantity,
+        description: `Bán ${quantity} quả trứng`
+      });
+      setEggInventory(prev => ({
+        total_eggs: prev.total_eggs - quantity
+      }));
+      setFarm(prev => prev ? {
+        ...prev,
+        account_balance: prev.account_balance + totalAmount
+      } : null);
       toast({
         title: "Bán thành công!",
-        description: `Bạn đã bán ${quantity} quả trứng và nhận được ${totalAmount.toLocaleString()} VND`,
+        description: `Bạn đã bán ${quantity} quả trứng và nhận được ${totalAmount.toLocaleString()} VND`
       });
-
       await loadFarmData(user!.id);
     } catch (error) {
       console.error('Error selling eggs:', error);
       toast({
         title: "Lỗi",
         description: "Không thể bán trứng",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
+    return <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Đang tải...</div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Trang trại của tôi</h1>
+        <div className="mb-8 my-0">
+          <h1 className="text-3xl font-bold my-[50px]">Trang trại của tôi</h1>
           <p className="text-muted-foreground">Quản lý trang trại gà và thu hoạch trứng</p>
         </div>
 
@@ -338,10 +300,8 @@ const Farm = () => {
                 <CardTitle>Các loại gà đang sở hữu</CardTitle>
               </CardHeader>
               <CardContent>
-                {chickens.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {chickens.map((chicken) => (
-                      <div key={chicken.id} className="border rounded-lg p-4">
+                {chickens.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {chickens.map(chicken => <div key={chicken.id} className="border rounded-lg p-4">
                         <h3 className="font-semibold">{chicken.chicken_types.name}</h3>
                         <p className="text-sm text-muted-foreground">{chicken.chicken_types.description}</p>
                         <div className="mt-2 flex justify-between items-center">
@@ -350,14 +310,10 @@ const Farm = () => {
                             {chicken.chicken_types.egg_production_rate} trứng/2 ngày
                           </Badge>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
+                      </div>)}
+                  </div> : <p className="text-center text-muted-foreground py-8">
                     Bạn chưa có gà nào. Hãy mua gà từ cửa hàng!
-                  </p>
-                )}
+                  </p>}
               </CardContent>
             </Card>
 
@@ -390,12 +346,7 @@ const Farm = () => {
                     <Egg className="h-6 w-6" />
                     Thu hoạch trứng
                   </Button>
-                  <Button 
-                    onClick={() => sellEggs(Math.min(10, eggInventory.total_eggs))} 
-                    variant="outline" 
-                    className="flex flex-col items-center gap-2 h-auto py-4"
-                    disabled={eggInventory.total_eggs === 0}
-                  >
+                  <Button onClick={() => sellEggs(Math.min(10, eggInventory.total_eggs))} variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" disabled={eggInventory.total_eggs === 0}>
                     <Truck className="h-6 w-6" />
                     Bán 10 trứng
                   </Button>
@@ -463,8 +414,7 @@ const Farm = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {transactions.length > 0 ? (
-                  <Table>
+                {transactions.length > 0 ? <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Loại giao dịch</TableHead>
@@ -475,16 +425,10 @@ const Farm = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
+                      {transactions.map(transaction => <TableRow key={transaction.id}>
                           <TableCell>
-                            <Badge variant={
-                              transaction.transaction_type === 'egg_collection' ? 'default' :
-                              transaction.transaction_type === 'egg_sale' ? 'secondary' : 'outline'
-                            }>
-                              {transaction.transaction_type === 'egg_collection' ? 'Thu hoạch' :
-                               transaction.transaction_type === 'egg_sale' ? 'Bán trứng' :
-                               transaction.transaction_type}
+                            <Badge variant={transaction.transaction_type === 'egg_collection' ? 'default' : transaction.transaction_type === 'egg_sale' ? 'secondary' : 'outline'}>
+                              {transaction.transaction_type === 'egg_collection' ? 'Thu hoạch' : transaction.transaction_type === 'egg_sale' ? 'Bán trứng' : transaction.transaction_type}
                             </Badge>
                           </TableCell>
                           <TableCell>{transaction.description}</TableCell>
@@ -495,15 +439,11 @@ const Farm = () => {
                           <TableCell>
                             {new Date(transaction.created_at).toLocaleString('vi-VN')}
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
+                  </Table> : <p className="text-center text-muted-foreground py-8">
                     Chưa có giao dịch nào
-                  </p>
-                )}
+                  </p>}
               </CardContent>
             </Card>
 
@@ -536,8 +476,6 @@ const Farm = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Farm;
