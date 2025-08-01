@@ -8,11 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon, Save } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck } from 'lucide-react';
 
 // Using any types temporarily until Supabase types are updated
 interface Farm {
@@ -43,21 +40,6 @@ interface Transaction {
   description: string | null;
   created_at: string;
 }
-
-interface UserProfile {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  shop_name: string | null;
-  date_of_birth: string | null;
-  avatar_url: string | null;
-}
-
-interface ProfileFormData {
-  full_name: string;
-  shop_name: string;
-  date_of_birth: string;
-}
 const Farm = () => {
   const navigate = useNavigate();
   const {
@@ -70,10 +52,7 @@ const Farm = () => {
     total_eggs: 0
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileFormData>();
   useEffect(() => {
     const initializeFarm = async () => {
       const {
@@ -154,9 +133,6 @@ const Farm = () => {
       }).limit(10);
       if (transactionError) throw transactionError;
       setTransactions(transactionData || []);
-
-      // Get or create user profile
-      await loadUserProfile(userId);
     } catch (error) {
       console.error('Error loading farm data:', error);
       toast({
@@ -166,77 +142,6 @@ const Farm = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadUserProfile = async (userId: string) => {
-    try {
-      let { data: profileData, error: profileError } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileError && profileError.code === 'PGRST116') {
-        // Create profile if doesn't exist
-        const { data: newProfile, error: createError } = await (supabase as any)
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: user?.email,
-            full_name: user?.user_metadata?.full_name || '',
-            shop_name: '',
-            date_of_birth: null
-          })
-          .select()
-          .single();
-        
-        if (createError) throw createError;
-        profileData = newProfile;
-      } else if (profileError) {
-        throw profileError;
-      }
-
-      setProfile(profileData);
-      
-      // Set form values
-      if (profileData) {
-        setValue('full_name', profileData.full_name || '');
-        setValue('shop_name', profileData.shop_name || '');
-        setValue('date_of_birth', profileData.date_of_birth || '');
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    }
-  };
-
-  const saveProfile = async (data: ProfileFormData) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await (supabase as any)
-        .from('profiles')
-        .update({
-          full_name: data.full_name,
-          shop_name: data.shop_name,
-          date_of_birth: data.date_of_birth || null
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      await loadUserProfile(user.id);
-      toast({
-        title: "Thành công!",
-        description: "Thông tin cá nhân đã được cập nhật"
-      });
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      toast({
-        title: "Lỗi",
-        description: "Không thể cập nhật thông tin",
-        variant: "destructive"
-      });
     }
   };
   const collectEggs = async () => {
@@ -386,57 +291,6 @@ const Farm = () => {
                     <p className="text-2xl font-bold">{chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} con</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* User Profile Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserIcon className="h-5 w-5" />
-                  Thông tin cá nhân
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(saveProfile)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="full_name">Họ và tên</Label>
-                      <Input
-                        id="full_name"
-                        {...register('full_name', { required: 'Vui lòng nhập họ tên' })}
-                        placeholder="Nhập họ và tên"
-                      />
-                      {errors.full_name && (
-                        <p className="text-sm text-destructive">{errors.full_name.message}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="shop_name">Tên cửa hàng gà</Label>
-                      <Input
-                        id="shop_name"
-                        {...register('shop_name')}
-                        placeholder="Nhập tên cửa hàng"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date_of_birth">Ngày sinh</Label>
-                      <Input
-                        id="date_of_birth"
-                        type="date"
-                        {...register('date_of_birth')}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input value={profile?.email || ''} disabled />
-                    </div>
-                  </div>
-                  <Button type="submit" className="flex items-center gap-2">
-                    <Save className="h-4 w-4" />
-                    Lưu thông tin
-                  </Button>
-                </form>
               </CardContent>
             </Card>
 
