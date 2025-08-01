@@ -38,11 +38,6 @@ export default function Admin() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Debug logs
-  console.log('Admin component - user:', user);
-  console.log('Admin component - userRole:', userRole);
-  console.log('Admin component - authLoading:', authLoading);
-
   useEffect(() => {
     if (authLoading) return;
     if (userRole === 'super_admin') {

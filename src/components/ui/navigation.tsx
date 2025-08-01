@@ -4,14 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Link, useNavigate } from 'react-router-dom';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, userRole, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  // Debug log to check userRole
-  console.log('Navigation userRole:', userRole);
 
   const handleLogout = async () => {
     await signOut();
@@ -60,10 +55,10 @@ const Navigation = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">
-            {menuItems.map(item => <Link key={item.name} to={item.href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+            {menuItems.map(item => <a key={item.name} href={item.href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
                 {item.icon && <item.icon className="w-4 h-4" />}
                 <span>{item.name}</span>
-              </Link>)}
+              </a>)}
             
             {/* User Account or Login */}
             {user ? (
@@ -80,12 +75,12 @@ const Navigation = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
                     <User className="w-4 h-4 mr-2" />
                     Thông tin tài khoản
                   </DropdownMenuItem>
                   {userRole === 'super_admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
                       <Shield className="w-4 h-4 mr-2" />
                       Quản trị hệ thống
                     </DropdownMenuItem>
@@ -97,10 +92,10 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link to="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+              <a href="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
                 <User className="w-4 h-4" />
                 <span>Đăng nhập</span>
-              </Link>
+              </a>
             )}
           </div>
 
@@ -115,10 +110,10 @@ const Navigation = () => {
         {/* Mobile Menu */}
         {isMenuOpen && <div className="md:hidden bg-card border-t border-border">
             <div className="px-4 py-2 space-y-1">
-              {menuItems.map(item => <Link key={item.name} to={item.href} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+              {menuItems.map(item => <a key={item.name} href={item.href} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                   {item.icon && <item.icon className="w-5 h-5" />}
                   <span>{item.name}</span>
-                </Link>)}
+                </a>)}
               
               {/* Mobile User Account or Login */}
               {user ? (
@@ -132,15 +127,15 @@ const Navigation = () => {
                     </Avatar>
                     <span className="text-sm font-medium">{getUserDisplayName()}</span>
                   </div>
-                  <Link to="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                  <a href="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
-                  </Link>
+                  </a>
                   {userRole === 'super_admin' && (
-                    <Link to="/admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                    <a href="/admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
                       <span>Quản trị hệ thống</span>
-                    </Link>
+                    </a>
                   )}
                   <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />
@@ -148,10 +143,10 @@ const Navigation = () => {
                   </button>
                 </>
               ) : (
-                <Link to="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                <a href="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                   <User className="w-5 h-5" />
                   <span>Đăng nhập</span>
-                </Link>
+                </a>
               )}
             </div>
           </div>}

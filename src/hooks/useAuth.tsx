@@ -34,19 +34,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setTimeout(async () => {
             try {
               // Use any type to bypass TypeScript issues temporarily
-              const { data: roleData, error } = await (supabase as any)
+              const { data: roleData } = await (supabase as any)
                 .from('user_roles')
                 .select('role')
                 .eq('user_id', session.user.id)
-                .maybeSingle();
+                .single();
               
-              if (error) {
-                console.error('Error fetching user role:', error);
-                setUserRole('customer');
-                return;
-              }
-              
-              console.log('User role data:', roleData); // Debug log
               setUserRole(roleData?.role || 'customer');
             } catch (error) {
               console.error('Error fetching user role:', error);
@@ -70,19 +63,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(async () => {
           try {
             // Use any type to bypass TypeScript issues temporarily
-            const { data: roleData, error } = await (supabase as any)
+            const { data: roleData } = await (supabase as any)
               .from('user_roles')
               .select('role')
               .eq('user_id', session.user.id)
-              .maybeSingle();
+              .single();
             
-            if (error) {
-              console.error('Error fetching user role:', error);
-              setUserRole('customer');
-            } else {
-              console.log('User role data on session check:', roleData); // Debug log
-              setUserRole(roleData?.role || 'customer');
-            }
+            setUserRole(roleData?.role || 'customer');
           } catch (error) {
             console.error('Error fetching user role:', error);
             setUserRole('customer');
