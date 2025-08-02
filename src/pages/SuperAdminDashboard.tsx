@@ -50,6 +50,18 @@ interface UserProfile {
   user_roles?: Array<{ role: string }>;
 }
 
+interface AdminActivity {
+  id: string;
+  admin_id: string;
+  action_type: string;
+  description: string;
+  details: any;
+  target_table: string | null;
+  target_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function SuperAdminDashboard() {
   const { user, userRole, loading } = useAuth();
 
@@ -82,6 +94,7 @@ function SuperAdminContent() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [farms, setFarms] = useState<Farm[]>([]);
+  const [adminActivities, setAdminActivities] = useState<AdminActivity[]>([]);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [yearlyRevenue, setYearlyRevenue] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
@@ -114,10 +127,22 @@ function SuperAdminContent() {
         )
         .subscribe();
 
+      const adminActivitiesSubscription = supabase
+        .channel('admin_activities_changes')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'admin_activities' },
+          () => {
+            console.log('Admin activity logged, refreshing...');
+            fetchAllData(); // Refresh all data when admin activities change
+          }
+        )
+        .subscribe();
+
       // Cleanup subscriptions on unmount
       return () => {
         supabase.removeChannel(paymentsSubscription);
         supabase.removeChannel(transactionsSubscription);
+        supabase.removeChannel(adminActivitiesSubscription);
       };
     }
   }, [user, userRole]);
@@ -125,6 +150,18 @@ function SuperAdminContent() {
   const fetchAllData = async () => {
     try {
       setLoadingData(true);
+      
+      // Fetch admin activities
+      const { data: adminActivitiesData, error: adminActivitiesError } = await supabase
+        .from('admin_activities')
+        .select(`
+          *,
+          admin:admin_id(email, full_name)
+        `)
+        .order('created_at', { ascending: false });
+      
+      console.log('Admin activities:', adminActivitiesData?.length);
+      console.log('Admin activities error:', adminActivitiesError);
       
       // Fetch ALL transactions from all users
       const { data: transactionsData, error: transactionsError } = await supabase
@@ -184,6 +221,7 @@ function SuperAdminContent() {
       setTransactions(transactionsData || []);
       setPayments(paymentsData || []);
       setFarms(farmsData || []);
+      setAdminActivities(adminActivitiesData || []);
       
       // Transform users data by combining profiles and roles
       const usersWithRoles = profilesData?.map((profile: any) => {
@@ -402,7 +440,7 @@ function SuperAdminContent() {
         <Tabs defaultValue="activities" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
-            <TabsTrigger value="seller-activities">Hoạt động Seller</TabsTrigger>
+            <TabsTrigger value="admin-activities">Hoạt động Admin</TabsTrigger>
             <TabsTrigger value="users">Quản lý Role</TabsTrigger>
             <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
           </TabsList>
@@ -521,11 +559,11 @@ function SuperAdminContent() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="seller-activities">
+          <TabsContent value="admin-activities">
             <Card>
               <CardHeader>
-                <CardTitle>Hoạt động của Seller</CardTitle>
-                <p className="text-muted-foreground">Theo dõi hoạt động bán hàng và doanh thu của người bán</p>
+                <CardTitle>Hoạt động của Admin</CardTitle>
+                <p className="text-muted-foreground">Theo dõi tất cả hoạt động quản trị của Admin trong hệ thống</p>
               </CardHeader>
               <CardContent>
                 {loadingData ? (
@@ -534,59 +572,120 @@ function SuperAdminContent() {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* Search Bar */}
+                    <div className="flex items-center space-x-2">
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm kiếm theo admin, hoạt động..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="max-w-md"
+                      />
+                    </div>
+
+                    {/* Statistics */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <Card>
                         <CardContent className="p-4">
-                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'seller').length}</div>
-                          <p className="text-sm text-muted-foreground">Tổng Seller</p>
+                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'admin' || u.role === 'super_admin').length}</div>
+                          <p className="text-sm text-muted-foreground">Tổng Admin</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{adminActivities.length}</div>
+                          <p className="text-sm text-muted-foreground">Hoạt động ghi nhận</p>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4">
                           <div className="text-2xl font-bold">
-                            {transactions.filter(t => t.transaction_type === 'egg_collection').length}
+                            {adminActivities.filter(a => 
+                              new Date(a.created_at) >= new Date(Date.now() - 24 * 60 * 60 * 1000)
+                            ).length}
                           </div>
-                          <p className="text-sm text-muted-foreground">Thu hoạch trứng</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold">
-                            {transactions.filter(t => t.transaction_type === 'chicken_purchase').length}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Mua gà</p>
+                          <p className="text-sm text-muted-foreground">Hoạt động hôm nay</p>
                         </CardContent>
                       </Card>
                     </div>
+
+                    {/* Admin Activities Table */}
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Tên</TableHead>
-                          <TableHead>Shop</TableHead>
-                          <TableHead>Hoạt động</TableHead>
-                          <TableHead>Ngày tham gia</TableHead>
+                          <TableHead>Admin</TableHead>
+                          <TableHead>Loại hoạt động</TableHead>
+                          <TableHead>Mô tả</TableHead>
+                          <TableHead>Bảng liên quan</TableHead>
+                          <TableHead>Thời gian</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users
-                          .filter(user => user.role === 'seller')
-                          .map((seller) => {
-                            const sellerTransactions = transactions.filter(t => 
-                              users.find(u => u.id === seller.id)
-                            );
+                        {adminActivities
+                          .filter(activity => {
+                            const searchLower = searchQuery.toLowerCase();
+                            const adminUser = users.find(u => u.id === activity.admin_id);
                             return (
-                              <TableRow key={seller.id}>
-                                <TableCell>{seller.email}</TableCell>
-                                <TableCell>{seller.full_name || 'Chưa cập nhật'}</TableCell>
-                                <TableCell>Shop của {seller.full_name || 'Seller'}</TableCell>
-                                <TableCell>{sellerTransactions.length} giao dịch</TableCell>
-                                <TableCell>{new Date(seller.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                              activity.action_type.toLowerCase().includes(searchLower) ||
+                              activity.description.toLowerCase().includes(searchLower) ||
+                              adminUser?.email?.toLowerCase().includes(searchLower) ||
+                              adminUser?.full_name?.toLowerCase().includes(searchLower) ||
+                              (activity.target_table && activity.target_table.toLowerCase().includes(searchLower))
+                            );
+                          })
+                          .slice(0, 50) // Limit to 50 most recent activities
+                          .map((activity) => {
+                            const adminUser = users.find(u => u.id === activity.admin_id);
+                            return (
+                              <TableRow key={activity.id}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {adminUser?.email || 'Admin không xác định'}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {adminUser?.full_name || 'N/A'}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">
+                                    {activity.action_type}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="max-w-xs truncate">
+                                    {activity.description}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {activity.target_table ? (
+                                    <Badge variant="secondary">
+                                      {activity.target_table}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {new Date(activity.created_at).toLocaleDateString('vi-VN')}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(activity.created_at).toLocaleTimeString('vi-VN')}
+                                  </div>
+                                </TableCell>
                               </TableRow>
                             );
                           })}
                       </TableBody>
                     </Table>
+
+                    {adminActivities.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Chưa có hoạt động admin nào được ghi nhận
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

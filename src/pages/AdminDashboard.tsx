@@ -74,6 +74,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (user && (userRole === 'admin' || userRole === 'super_admin')) {
       fetchAllData();
+      
+      // Log admin dashboard access
+      logAdminActivity(
+        'dashboard_access',
+        'Truy cập trang quản trị admin',
+        { timestamp: new Date().toISOString(), userRole }
+      );
     }
   }, [user, userRole]);
   const fetchAllData = async () => {
@@ -122,13 +129,34 @@ export default function AdminDashboard() {
           error
         } = await supabase.from('available_farms').update(farmData).eq('id', editingFarm.id);
         if (error) throw error;
+        
+        // Log admin activity
+        await logAdminActivity(
+          'farm_update',
+          `Cập nhật thông tin trại: ${farmData.name}`,
+          { farmData, previous: editingFarm },
+          'available_farms',
+          editingFarm.id
+        );
+        
         toast.success('Cập nhật trại thành công');
       } else {
         // Add new farm
         const {
+          data,
           error
-        } = await supabase.from('available_farms').insert(farmData);
+        } = await supabase.from('available_farms').insert(farmData).select().single();
         if (error) throw error;
+        
+        // Log admin activity
+        await logAdminActivity(
+          'farm_create',
+          `Thêm trại mới: ${farmData.name}`,
+          { farmData },
+          'available_farms',
+          data?.id
+        );
+        
         toast.success('Thêm trại mới thành công');
       }
       setEditingFarm(null);
@@ -141,15 +169,42 @@ export default function AdminDashboard() {
   };
   const handleDeleteFarm = async (farmId: string) => {
     try {
+      const farmToDelete = farms.find(f => f.id === farmId);
       const {
         error
       } = await supabase.from('available_farms').delete().eq('id', farmId);
       if (error) throw error;
+      
+      // Log admin activity
+      await logAdminActivity(
+        'farm_delete',
+        `Xóa trại: ${farmToDelete?.name || 'Unknown'}`,
+        { deletedFarm: farmToDelete },
+        'available_farms',
+        farmId
+      );
+      
       toast.success('Xóa trại thành công');
       fetchAllData();
     } catch (error) {
       console.error('Error deleting farm:', error);
       toast.error('Lỗi khi xóa trại');
+    }
+  };
+
+  // Helper function to log admin activities
+  const logAdminActivity = async (actionType: string, description: string, details: any = {}, targetTable?: string, targetId?: string) => {
+    try {
+      await supabase.rpc('log_admin_activity', {
+        p_action_type: actionType,
+        p_description: description,
+        p_details: details,
+        p_target_table: targetTable,
+        p_target_id: targetId
+      });
+    } catch (error) {
+      console.error('Error logging admin activity:', error);
+      // Don't throw error to avoid breaking main functionality
     }
   };
   const handleSaveChicken = async (chickenData: any) => {
@@ -160,13 +215,34 @@ export default function AdminDashboard() {
           error
         } = await supabase.from('chicken_types').update(chickenData).eq('id', editingChicken.id);
         if (error) throw error;
+        
+        // Log admin activity
+        await logAdminActivity(
+          'chicken_type_update',
+          `Cập nhật giống gà: ${chickenData.name}`,
+          { chickenData, previous: editingChicken },
+          'chicken_types',
+          editingChicken.id
+        );
+        
         toast.success('Cập nhật giống gà thành công');
       } else {
         // Add new chicken type
         const {
+          data,
           error
-        } = await supabase.from('chicken_types').insert(chickenData);
+        } = await supabase.from('chicken_types').insert(chickenData).select().single();
         if (error) throw error;
+        
+        // Log admin activity
+        await logAdminActivity(
+          'chicken_type_create',
+          `Thêm giống gà mới: ${chickenData.name}`,
+          { chickenData },
+          'chicken_types',
+          data?.id
+        );
+        
         toast.success('Thêm giống gà mới thành công');
       }
       setEditingChicken(null);
@@ -179,10 +255,21 @@ export default function AdminDashboard() {
   };
   const handleDeleteChicken = async (chickenId: string) => {
     try {
+      const chickenToDelete = chickenTypes.find(c => c.id === chickenId);
       const {
         error
       } = await supabase.from('chicken_types').delete().eq('id', chickenId);
       if (error) throw error;
+      
+      // Log admin activity
+      await logAdminActivity(
+        'chicken_type_delete',
+        `Xóa giống gà: ${chickenToDelete?.name || 'Unknown'}`,
+        { deletedChicken: chickenToDelete },
+        'chicken_types',
+        chickenId
+      );
+      
       toast.success('Xóa giống gà thành công');
       fetchAllData();
     } catch (error) {

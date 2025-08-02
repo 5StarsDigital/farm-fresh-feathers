@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_activities: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string
+          description: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_table: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string
+          description: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          description?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       available_farms: {
         Row: {
           available_coops: number
@@ -483,6 +519,16 @@ export type Database = {
       is_super_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      log_admin_activity: {
+        Args: {
+          p_action_type: string
+          p_description: string
+          p_details?: Json
+          p_target_table?: string
+          p_target_id?: string
+        }
+        Returns: string
       }
     }
     Enums: {
