@@ -136,14 +136,18 @@ const Navigation = () => {
                   </DropdownMenuItem>
                   
                   {/* Admin workspace buttons */}
-                  <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Khu vực Admin
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/super-admin')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Khu vực Super Admin
-                  </DropdownMenuItem>
+                  {(userRole === 'admin' || userRole === 'super_admin') && (
+                    <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Khu vực Admin
+                    </DropdownMenuItem>
+                  )}
+                  {userRole === 'super_admin' && (
+                    <DropdownMenuItem onClick={() => navigate('/super-admin')}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Khu vực Super Admin
+                    </DropdownMenuItem>
+                  )}
                   
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
@@ -199,20 +203,18 @@ const Navigation = () => {
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
                   </a>
-                  {userRole === 'admin' && (
+                  {(userRole === 'admin' || userRole === 'super_admin') && (
                     <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
                       <span>Khu vực Admin</span>
                     </a>
                   )}
                   {userRole === 'super_admin' && (
-                    <>
-                      <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                        <Shield className="w-5 h-5" />
-                        <span>Khu vực Super Admin</span>
-                      </a>
-                     </>
-                   )}
+                    <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                      <Shield className="w-5 h-5" />
+                      <span>Khu vực Super Admin</span>
+                    </a>
+                  )}
                   <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>
