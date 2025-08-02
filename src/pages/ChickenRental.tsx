@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import gaDongTao from '@/assets/ga-dong-tao.jpg';
+import gaRi from '@/assets/ga-ri.jpg';
 
 const ChickenRental = () => {
   const { user } = useAuth();
@@ -88,25 +90,18 @@ const ChickenRental = () => {
 
   const staticChickenTypes = [{
     id: 1,
-    name: "Gà Tàu Vàng",
-    description: "Gà sinh trứng cao, phù hợp nuôi trong chuồng",
+    name: "Gà Đông Tảo",
+    description: "Gà đặc sản Việt Nam",
     egg_production_rate: 280,
     price: 150000,
-    image_url: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
+    image_url: gaDongTao
   }, {
     id: 2,
-    name: "Gà Rhode Island", 
-    description: "Giống gà mạnh khỏe, sinh trứng ổn định",
+    name: "Gà Rí", 
+    description: "Gà lai, cho trứng nhiều",
     egg_production_rate: 250,
     price: 120000,
-    image_url: "/lovable-uploads/c2b9d409-e83b-4af4-95f8-cecc6eee4e70.png"
-  }, {
-    id: 3,
-    name: "Gà Leghorn",
-    description: "Gà sinh trứng trắng, năng suất cao", 
-    egg_production_rate: 300,
-    price: 180000,
-    image_url: "/lovable-uploads/bf646450-ea7e-4a74-86b0-371c7a1b00d9.png"
+    image_url: gaRi
   }];
 
   const formatCurrency = (amount: number) => {

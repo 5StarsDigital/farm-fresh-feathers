@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import cameraMonitor from '@/assets/camera-monitor.jpg';
+import heatLamp from '@/assets/heat-lamp.jpg';
 
 const Accessories = () => {
   const { user } = useAuth();
@@ -88,28 +90,20 @@ const Accessories = () => {
 
   const staticAccessories = [{
     id: 1,
-    name: "Máy ấp trứng tự động",
-    description: "Máy ấp trứng công nghệ cao, tự động điều chỉnh nhiệt độ",
-    price: 4500000,
-    effect_type: "Tăng tỷ lệ nở",
-    effect_value: 15,
-    image_url: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+    name: "Camera quan sát",
+    description: "Theo dõi gà từ xa",
+    price: 150000,
+    effect_type: "monitoring",
+    effect_value: 1,
+    image_url: cameraMonitor
   }, {
     id: 2,
-    name: "Hệ thống tưới nước tự động",
-    description: "Hệ thống cung cấp nước sạch liên tục cho gà",
-    price: 2800000,
-    effect_type: "Giảm công việc chăm sóc",
-    effect_value: 30,
-    image_url: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
-  }, {
-    id: 3,
-    name: "Máy cho ăn tự động",
-    description: "Hệ thống cho ăn tự động theo lịch trình",
-    price: 3200000,
-    effect_type: "Tăng hiệu quả thức ăn",
-    effect_value: 20,
-    image_url: "/lovable-uploads/c567b755-4e30-472d-87a5-2fa6a26e09fc.png"
+    name: "Đèn sưởi ấm",
+    description: "Giữ ấm cho gà, tăng sức khỏe",
+    price: 50000,
+    effect_type: "health_boost",
+    effect_value: 1,
+    image_url: heatLamp
   }];
 
   const formatCurrency = (amount: number) => {
