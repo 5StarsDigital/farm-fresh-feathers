@@ -331,9 +331,8 @@ function SuperAdminContent() {
         </div>
 
         <Tabs defaultValue="activities" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
-            <TabsTrigger value="customer-activities">Hoạt động Customer</TabsTrigger>
             <TabsTrigger value="seller-activities">Hoạt động Seller</TabsTrigger>
             <TabsTrigger value="users">Quản lý Role</TabsTrigger>
             <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
@@ -442,79 +441,6 @@ function SuperAdminContent() {
                         Không tìm thấy giao dịch nào với từ khóa "{searchQuery}"
                       </div>
                     )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="customer-activities">
-            <Card>
-              <CardHeader>
-                <CardTitle>Hoạt động của Customer</CardTitle>
-                <p className="text-muted-foreground">Theo dõi hoạt động mua sắm và giao dịch của khách hàng</p>
-              </CardHeader>
-              <CardContent>
-                {loadingData ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
-                          <p className="text-sm text-muted-foreground">Tổng Customer</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold">{payments.filter(p => users.find(u => u.id === p.user_id)?.role === 'customer').length}</div>
-                          <p className="text-sm text-muted-foreground">Giao dịch thanh toán</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="p-4">
-                          <div className="text-2xl font-bold">
-                            {formatCurrency(
-                              payments
-                                .filter(p => users.find(u => u.id === p.user_id)?.role === 'customer' && p.status === 'completed')
-                                .reduce((sum, p) => sum + Number(p.amount), 0)
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Tổng chi tiêu</p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Tên</TableHead>
-                          <TableHead>Tổng chi tiêu</TableHead>
-                          <TableHead>Giao dịch</TableHead>
-                          <TableHead>Ngày tham gia</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {users
-                          .filter(user => user.role === 'customer')
-                          .map((customer) => {
-                            const customerPayments = payments.filter(p => p.user_id === customer.id && p.status === 'completed');
-                            const totalSpent = customerPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-                            return (
-                              <TableRow key={customer.id}>
-                                <TableCell>{customer.email}</TableCell>
-                                <TableCell>{customer.full_name || 'Chưa cập nhật'}</TableCell>
-                                <TableCell>{formatCurrency(totalSpent)}</TableCell>
-                                <TableCell>{customerPayments.length}</TableCell>
-                                <TableCell>{new Date(customer.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                              </TableRow>
-                            );
-                          })}
-                      </TableBody>
-                    </Table>
                   </div>
                 )}
               </CardContent>
