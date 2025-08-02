@@ -151,13 +151,10 @@ function SuperAdminContent() {
     try {
       setLoadingData(true);
       
-      // Fetch admin activities
+      // Fetch admin activities (without join since we can't join with auth.users)
       const { data: adminActivitiesData, error: adminActivitiesError } = await supabase
         .from('admin_activities')
-        .select(`
-          *,
-          admin:admin_id(email, full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
       console.log('Admin activities:', adminActivitiesData?.length);
