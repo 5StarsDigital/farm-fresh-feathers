@@ -106,9 +106,6 @@ const Shop = () => {
               <Link to="/shop/chickens" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
                 Thuê gà
               </Link>
-              <Link to="/shop/accessories" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
-                Mua phụ kiện
-              </Link>
             </nav>
             
             <div className="flex items-center justify-center gap-3 mb-4">
