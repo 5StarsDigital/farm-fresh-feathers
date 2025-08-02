@@ -13,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-
 interface AvailableFarm {
   id: string;
   name: string;
@@ -26,7 +25,6 @@ interface AvailableFarm {
   total_coops: number;
   rental_price: number;
 }
-
 interface ChickenType {
   id: string;
   name: string;
@@ -35,7 +33,6 @@ interface ChickenType {
   image_url: string;
   egg_production_rate: number;
 }
-
 interface Accessory {
   id: string;
   name: string;
@@ -45,7 +42,6 @@ interface Accessory {
   effect_type: string;
   effect_value: number;
 }
-
 interface UserAccessory {
   id: string;
   farm_id: string;
@@ -58,7 +54,6 @@ interface UserAccessory {
     farm_name: string;
   };
 }
-
 interface Transaction {
   id: string;
   farm_id: string;
@@ -70,7 +65,6 @@ interface Transaction {
   user_email: string;
   user_name: string;
 }
-
 interface PaymentTransaction {
   id: string;
   user_id: string;
@@ -83,9 +77,12 @@ interface PaymentTransaction {
   user_email: string;
   user_name: string;
 }
-
 export default function AdminDashboard() {
-  const { user, userRole, loading } = useAuth();
+  const {
+    user,
+    userRole,
+    loading
+  } = useAuth();
   const [farms, setFarms] = useState<AvailableFarm[]>([]);
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
@@ -97,55 +94,58 @@ export default function AdminDashboard() {
   const [isAddingFarm, setIsAddingFarm] = useState(false);
   const [editingChicken, setEditingChicken] = useState<ChickenType | null>(null);
   const [isAddingChicken, setIsAddingChicken] = useState(false);
-
   useEffect(() => {
     if (user && (userRole === 'admin' || userRole === 'super_admin')) {
       fetchAllData();
     }
   }, [user, userRole]);
-
   const fetchAllData = async () => {
     try {
       // Fetch farms
-      const { data: farmsData } = await supabase
-        .from('available_farms')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const {
+        data: farmsData
+      } = await supabase.from('available_farms').select('*').order('created_at', {
+        ascending: false
+      });
 
       // Fetch chicken types
-      const { data: chickenData } = await supabase
-        .from('chicken_types')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const {
+        data: chickenData
+      } = await supabase.from('chicken_types').select('*').order('created_at', {
+        ascending: false
+      });
 
       // Fetch accessories
-      const { data: accessoriesData } = await supabase
-        .from('accessories')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const {
+        data: accessoriesData
+      } = await supabase.from('accessories').select('*').order('created_at', {
+        ascending: false
+      });
 
       // Fetch user accessories with user info
-      const { data: userAccessoriesData } = await supabase
-        .from('user_accessories')
-        .select(`
+      const {
+        data: userAccessoriesData
+      } = await supabase.from('user_accessories').select(`
           *,
           accessories(*),
           farms(user_id, farm_name)
-        `)
-        .order('created_at', { ascending: false });
+        `).order('created_at', {
+        ascending: false
+      });
 
       // Fetch transactions
-      const { data: transactionsData } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const {
+        data: transactionsData
+      } = await supabase.from('transactions').select('*').order('created_at', {
+        ascending: false
+      });
 
       // Fetch payment transactions  
-      const { data: paymentData } = await supabase
-        .from('payment_transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data: paymentData
+      } = await supabase.from('payment_transactions').select('*').order('created_at', {
+        ascending: false
+      });
       setFarms(farmsData || []);
       setChickenTypes(chickenData || []);
       setAccessories(accessoriesData || []);
@@ -157,37 +157,30 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi tải dữ liệu');
     }
   };
-
   const handleDeleteUserAccessory = async (accessoryRecord: UserAccessory) => {
     try {
       // Calculate refund amount
       const refundAmount = accessoryRecord.accessories.price * accessoryRecord.quantity;
-      
-      // Delete the user accessory
-      const { error: deleteError } = await supabase
-        .from('user_accessories')
-        .delete()
-        .eq('id', accessoryRecord.id);
 
+      // Delete the user accessory
+      const {
+        error: deleteError
+      } = await supabase.from('user_accessories').delete().eq('id', accessoryRecord.id);
       if (deleteError) throw deleteError;
 
       // Get current balance and update it
-      const { data: farmData } = await supabase
-        .from('farms')
-        .select('account_balance')
-        .eq('id', accessoryRecord.farm_id)
-        .single();
-
+      const {
+        data: farmData
+      } = await supabase.from('farms').select('account_balance').eq('id', accessoryRecord.farm_id).single();
       if (farmData) {
         const newBalance = (farmData.account_balance || 0) + refundAmount;
-        const { error: refundError } = await supabase
-          .from('farms')
-          .update({ account_balance: newBalance })
-          .eq('id', accessoryRecord.farm_id);
-
+        const {
+          error: refundError
+        } = await supabase.from('farms').update({
+          account_balance: newBalance
+        }).eq('id', accessoryRecord.farm_id);
         if (refundError) throw refundError;
       }
-
       toast.success(`Đã xóa sản phẩm và hoàn trả ${refundAmount.toLocaleString('vi-VN')} ₫`);
       fetchAllData();
     } catch (error) {
@@ -195,28 +188,23 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi xóa sản phẩm');
     }
   };
-
   const handleSaveFarm = async (farmData: any) => {
     try {
       if (editingFarm) {
         // Update existing farm
-        const { error } = await supabase
-          .from('available_farms')
-          .update(farmData)
-          .eq('id', editingFarm.id);
-        
+        const {
+          error
+        } = await supabase.from('available_farms').update(farmData).eq('id', editingFarm.id);
         if (error) throw error;
         toast.success('Cập nhật trại thành công');
       } else {
         // Add new farm
-        const { error } = await supabase
-          .from('available_farms')
-          .insert(farmData);
-        
+        const {
+          error
+        } = await supabase.from('available_farms').insert(farmData);
         if (error) throw error;
         toast.success('Thêm trại mới thành công');
       }
-      
       setEditingFarm(null);
       setIsAddingFarm(false);
       fetchAllData();
@@ -225,14 +213,11 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi lưu trại');
     }
   };
-
   const handleDeleteFarm = async (farmId: string) => {
     try {
-      const { error } = await supabase
-        .from('available_farms')
-        .delete()
-        .eq('id', farmId);
-      
+      const {
+        error
+      } = await supabase.from('available_farms').delete().eq('id', farmId);
       if (error) throw error;
       toast.success('Xóa trại thành công');
       fetchAllData();
@@ -241,28 +226,23 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi xóa trại');
     }
   };
-
   const handleSaveChicken = async (chickenData: any) => {
     try {
       if (editingChicken) {
         // Update existing chicken type
-        const { error } = await supabase
-          .from('chicken_types')
-          .update(chickenData)
-          .eq('id', editingChicken.id);
-        
+        const {
+          error
+        } = await supabase.from('chicken_types').update(chickenData).eq('id', editingChicken.id);
         if (error) throw error;
         toast.success('Cập nhật giống gà thành công');
       } else {
         // Add new chicken type
-        const { error } = await supabase
-          .from('chicken_types')
-          .insert(chickenData);
-        
+        const {
+          error
+        } = await supabase.from('chicken_types').insert(chickenData);
         if (error) throw error;
         toast.success('Thêm giống gà mới thành công');
       }
-      
       setEditingChicken(null);
       setIsAddingChicken(false);
       fetchAllData();
@@ -271,14 +251,11 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi lưu giống gà');
     }
   };
-
   const handleDeleteChicken = async (chickenId: string) => {
     try {
-      const { error } = await supabase
-        .from('chicken_types')
-        .delete()
-        .eq('id', chickenId);
-      
+      const {
+        error
+      } = await supabase.from('chicken_types').delete().eq('id', chickenId);
       if (error) throw error;
       toast.success('Xóa giống gà thành công');
       fetchAllData();
@@ -287,58 +264,39 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi xóa giống gà');
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
-
   const getStatusBadge = (status: string) => {
-    const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
+    const variants: {
+      [key: string]: "default" | "secondary" | "destructive" | "outline";
+    } = {
       completed: "default",
-      pending: "secondary", 
+      pending: "secondary",
       failed: "destructive"
     };
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
-
-  const filteredTransactions = transactions.filter(t =>
-    t.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredPayments = paymentTransactions.filter(p =>
-    p.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.user_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredUserAccessories = userAccessories.filter(ua =>
-    ua.accessories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ua.farms?.farm_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+  const filteredTransactions = transactions.filter(t => t.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || t.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || t.description?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredPayments = paymentTransactions.filter(p => p.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || p.user_name?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredUserAccessories = userAccessories.filter(ua => ua.accessories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || ua.farms?.farm_name?.toLowerCase().includes(searchQuery.toLowerCase()));
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
+    return <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  if (!user || (userRole !== 'admin' && userRole !== 'super_admin')) {
+  if (!user || userRole !== 'admin' && userRole !== 'super_admin') {
     return <Navigate to="/" replace />;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -397,7 +355,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
             <TabsTrigger value="purchases">Sản phẩm đã bán</TabsTrigger>
-            <TabsTrigger value="activities">Hoạt động SuperAdmin</TabsTrigger>
+            <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
           <TabsContent value="farms" className="space-y-4">
@@ -420,18 +378,11 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid gap-4">
-              {farms.map((farm) => (
-                <Card key={farm.id}>
+              {farms.map(farm => <Card key={farm.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div className="flex gap-4">
-                        {farm.image_url && (
-                          <img 
-                            src={farm.image_url} 
-                            alt={farm.name}
-                            className="w-20 h-20 object-cover rounded-lg"
-                          />
-                        )}
+                        {farm.image_url && <img src={farm.image_url} alt={farm.name} className="w-20 h-20 object-cover rounded-lg" />}
                         <div>
                           <h3 className="font-semibold text-lg">{farm.name}</h3>
                           <p className="text-muted-foreground">{farm.location}</p>
@@ -454,25 +405,16 @@ export default function AdminDashboard() {
                             <DialogHeader>
                               <DialogTitle>Chỉnh sửa trại</DialogTitle>
                             </DialogHeader>
-                            <FarmForm 
-                              farm={farm}
-                              onSave={handleSaveFarm} 
-                              onCancel={() => setEditingFarm(null)} 
-                            />
+                            <FarmForm farm={farm} onSave={handleSaveFarm} onCancel={() => setEditingFarm(null)} />
                           </DialogContent>
                         </Dialog>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDeleteFarm(farm.id)}
-                        >
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteFarm(farm.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </TabsContent>
 
@@ -496,18 +438,11 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid gap-4">
-              {chickenTypes.map((chicken) => (
-                <Card key={chicken.id}>
+              {chickenTypes.map(chicken => <Card key={chicken.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start">
                       <div className="flex gap-4">
-                        {chicken.image_url && (
-                          <img 
-                            src={chicken.image_url} 
-                            alt={chicken.name}
-                            className="w-20 h-20 object-cover rounded-lg"
-                          />
-                        )}
+                        {chicken.image_url && <img src={chicken.image_url} alt={chicken.name} className="w-20 h-20 object-cover rounded-lg" />}
                         <div>
                           <h3 className="font-semibold text-lg">{chicken.name}</h3>
                           <p className="text-muted-foreground">{chicken.description}</p>
@@ -528,25 +463,16 @@ export default function AdminDashboard() {
                             <DialogHeader>
                               <DialogTitle>Chỉnh sửa giống gà</DialogTitle>
                             </DialogHeader>
-                            <ChickenForm 
-                              chicken={chicken}
-                              onSave={handleSaveChicken} 
-                              onCancel={() => setEditingChicken(null)} 
-                            />
+                            <ChickenForm chicken={chicken} onSave={handleSaveChicken} onCancel={() => setEditingChicken(null)} />
                           </DialogContent>
                         </Dialog>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDeleteChicken(chicken.id)}
-                        >
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteChicken(chicken.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
           </TabsContent>
 
@@ -554,12 +480,7 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Sản phẩm khách hàng đã mua</h2>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Tìm kiếm theo tên, email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64"
-                />
+                <Input placeholder="Tìm kiếm theo tên, email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-64" />
                 <Button onClick={fetchAllData} variant="outline">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
@@ -579,8 +500,7 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUserAccessories.map((userAccessory) => (
-                    <TableRow key={userAccessory.id}>
+                  {filteredUserAccessories.map(userAccessory => <TableRow key={userAccessory.id}>
                       <TableCell>
                         <div>
                           <div className="font-medium">Trại: {userAccessory.farms?.farm_name || 'N/A'}</div>
@@ -589,13 +509,7 @@ export default function AdminDashboard() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {userAccessory.accessories?.image_url && (
-                            <img 
-                              src={userAccessory.accessories.image_url} 
-                              alt={userAccessory.accessories.name}
-                              className="w-10 h-10 object-cover rounded"
-                            />
-                          )}
+                          {userAccessory.accessories?.image_url && <img src={userAccessory.accessories.image_url} alt={userAccessory.accessories.name} className="w-10 h-10 object-cover rounded" />}
                           <div>
                             <div className="font-medium">{userAccessory.accessories?.name}</div>
                             <div className="text-sm text-muted-foreground">
@@ -612,17 +526,12 @@ export default function AdminDashboard() {
                         {new Date(userAccessory.created_at).toLocaleDateString('vi-VN')}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteUserAccessory(userAccessory)}
-                        >
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteUserAccessory(userAccessory)}>
                           <Trash2 className="h-4 w-4 mr-1" />
                           Xóa & Hoàn tiền
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
             </Card>
@@ -631,12 +540,7 @@ export default function AdminDashboard() {
           <TabsContent value="activities" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Hoạt động hệ thống</h2>
-              <Input
-                placeholder="Tìm kiếm giao dịch..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64"
-              />
+              <Input placeholder="Tìm kiếm giao dịch..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-64" />
             </div>
 
             <Tabs defaultValue="transactions" className="space-y-4">
@@ -658,8 +562,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredTransactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
+                      {filteredTransactions.map(transaction => <TableRow key={transaction.id}>
                           <TableCell>
                             <div>
                               <div className="font-medium">{transaction.user_name || 'N/A'}</div>
@@ -670,8 +573,7 @@ export default function AdminDashboard() {
                           <TableCell>{formatCurrency(transaction.amount || 0)}</TableCell>
                           <TableCell>{transaction.description}</TableCell>
                           <TableCell>{new Date(transaction.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
                   </Table>
                 </Card>
@@ -690,8 +592,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPayments.map((payment) => (
-                        <TableRow key={payment.id}>
+                      {filteredPayments.map(payment => <TableRow key={payment.id}>
                           <TableCell>
                             <div>
                               <div className="font-medium">{payment.user_name || 'N/A'}</div>
@@ -702,8 +603,7 @@ export default function AdminDashboard() {
                           <TableCell>{getStatusBadge(payment.status)}</TableCell>
                           <TableCell>{payment.payment_method}</TableCell>
                           <TableCell>{new Date(payment.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
                   </Table>
                 </Card>
@@ -712,17 +612,16 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 }
 
 // Farm form component
-function FarmForm({ 
-  farm, 
-  onSave, 
-  onCancel 
-}: { 
-  farm?: AvailableFarm; 
+function FarmForm({
+  farm,
+  onSave,
+  onCancel
+}: {
+  farm?: AvailableFarm;
   onSave: (data: Partial<AvailableFarm>) => void;
   onCancel: () => void;
 }) {
@@ -735,90 +634,70 @@ function FarmForm({
     rating: farm?.rating || 4.5,
     review_count: farm?.review_count || 0,
     available_coops: farm?.available_coops || 0,
-    total_coops: farm?.total_coops || 0,
+    total_coops: farm?.total_coops || 0
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
   };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  return <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="name">Tên trại</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-        />
+        <Input id="name" value={formData.name} onChange={e => setFormData({
+        ...formData,
+        name: e.target.value
+      })} required />
       </div>
       
       <div>
         <Label htmlFor="location">Địa điểm</Label>
-        <Input
-          id="location"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          required
-        />
+        <Input id="location" value={formData.location} onChange={e => setFormData({
+        ...formData,
+        location: e.target.value
+      })} required />
       </div>
       
       <div>
         <Label htmlFor="image_url">URL hình ảnh</Label>
-        <Input
-          id="image_url"
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-        />
+        <Input id="image_url" value={formData.image_url} onChange={e => setFormData({
+        ...formData,
+        image_url: e.target.value
+      })} />
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="rental_price">Giá thuê</Label>
-          <Input
-            id="rental_price"
-            type="number"
-            value={formData.rental_price}
-            onChange={(e) => setFormData({ ...formData, rental_price: Number(e.target.value) })}
-            required
-          />
+          <Input id="rental_price" type="number" value={formData.rental_price} onChange={e => setFormData({
+          ...formData,
+          rental_price: Number(e.target.value)
+        })} required />
         </div>
         
         <div>
           <Label htmlFor="monthly_cost">Chi phí hàng tháng</Label>
-          <Input
-            id="monthly_cost"
-            type="number"
-            value={formData.monthly_cost}
-            onChange={(e) => setFormData({ ...formData, monthly_cost: Number(e.target.value) })}
-            required
-          />
+          <Input id="monthly_cost" type="number" value={formData.monthly_cost} onChange={e => setFormData({
+          ...formData,
+          monthly_cost: Number(e.target.value)
+        })} required />
         </div>
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="available_coops">Chuồng có sẵn</Label>
-          <Input
-            id="available_coops"
-            type="number"
-            value={formData.available_coops}
-            onChange={(e) => setFormData({ ...formData, available_coops: Number(e.target.value) })}
-            required
-          />
+          <Input id="available_coops" type="number" value={formData.available_coops} onChange={e => setFormData({
+          ...formData,
+          available_coops: Number(e.target.value)
+        })} required />
         </div>
         
         <div>
           <Label htmlFor="total_coops">Tổng chuồng</Label>
-          <Input
-            id="total_coops"
-            type="number"
-            value={formData.total_coops}
-            onChange={(e) => setFormData({ ...formData, total_coops: Number(e.target.value) })}
-            required
-          />
+          <Input id="total_coops" type="number" value={formData.total_coops} onChange={e => setFormData({
+          ...formData,
+          total_coops: Number(e.target.value)
+        })} required />
         </div>
       </div>
       
@@ -830,17 +709,16 @@ function FarmForm({
           {farm ? 'Cập nhật' : 'Thêm mới'}
         </Button>
       </div>
-    </form>
-  );
+    </form>;
 }
 
 // Chicken form component
-function ChickenForm({ 
-  chicken, 
-  onSave, 
-  onCancel 
-}: { 
-  chicken?: ChickenType; 
+function ChickenForm({
+  chicken,
+  onSave,
+  onCancel
+}: {
+  chicken?: ChickenType;
   onSave: (data: Partial<ChickenType>) => void;
   onCancel: () => void;
 }) {
@@ -849,65 +727,52 @@ function ChickenForm({
     description: chicken?.description || '',
     price: chicken?.price || 0,
     image_url: chicken?.image_url || '',
-    egg_production_rate: chicken?.egg_production_rate || 1,
+    egg_production_rate: chicken?.egg_production_rate || 1
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
   };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  return <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="chicken_name">Tên giống gà</Label>
-        <Input
-          id="chicken_name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-        />
+        <Input id="chicken_name" value={formData.name} onChange={e => setFormData({
+        ...formData,
+        name: e.target.value
+      })} required />
       </div>
       
       <div>
         <Label htmlFor="chicken_description">Mô tả</Label>
-        <Input
-          id="chicken_description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-        />
+        <Input id="chicken_description" value={formData.description} onChange={e => setFormData({
+        ...formData,
+        description: e.target.value
+      })} />
       </div>
       
       <div>
         <Label htmlFor="chicken_image_url">URL hình ảnh</Label>
-        <Input
-          id="chicken_image_url"
-          value={formData.image_url}
-          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-        />
+        <Input id="chicken_image_url" value={formData.image_url} onChange={e => setFormData({
+        ...formData,
+        image_url: e.target.value
+      })} />
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="chicken_price">Giá (VND)</Label>
-          <Input
-            id="chicken_price"
-            type="number"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-            required
-          />
+          <Input id="chicken_price" type="number" value={formData.price} onChange={e => setFormData({
+          ...formData,
+          price: Number(e.target.value)
+        })} required />
         </div>
         
         <div>
           <Label htmlFor="egg_production_rate">Tỷ lệ đẻ trứng/ngày</Label>
-          <Input
-            id="egg_production_rate"
-            type="number"
-            value={formData.egg_production_rate}
-            onChange={(e) => setFormData({ ...formData, egg_production_rate: Number(e.target.value) })}
-            required
-          />
+          <Input id="egg_production_rate" type="number" value={formData.egg_production_rate} onChange={e => setFormData({
+          ...formData,
+          egg_production_rate: Number(e.target.value)
+        })} required />
         </div>
       </div>
       
@@ -919,6 +784,5 @@ function ChickenForm({
           {chicken ? 'Cập nhật' : 'Thêm mới'}
         </Button>
       </div>
-    </form>
-  );
+    </form>;
 }
