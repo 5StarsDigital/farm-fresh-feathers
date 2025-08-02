@@ -10,10 +10,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import gaDongTao from '@/assets/ga-dong-tao.jpg';
 import gaRi from '@/assets/ga-ri.jpg';
-
 const ChickenRental = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const [chickenTypes, setChickenTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rentingChickenId, setRentingChickenId] = useState<string | null>(null);
@@ -22,21 +25,18 @@ const ChickenRental = () => {
   useEffect(() => {
     loadChickenTypes();
   }, []);
-
   const loadChickenTypes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('chicken_types' as any)
-        .select('*')
-        .order('name');
-      
+      const {
+        data,
+        error
+      } = await supabase.from('chicken_types' as any).select('*').order('name');
       if (error) {
         console.error('Error loading chicken types:', error);
         // Use static data as fallback
         setChickenTypes(staticChickenTypes);
         return;
       }
-      
       setChickenTypes(data || staticChickenTypes);
     } catch (error) {
       console.error('Error loading chicken types:', error);
@@ -45,7 +45,6 @@ const ChickenRental = () => {
       setLoading(false);
     }
   };
-
   const handleRentChicken = async (chickenId: string) => {
     if (!user) {
       toast({
@@ -55,22 +54,24 @@ const ChickenRental = () => {
       });
       return;
     }
-
     setRentingChickenId(chickenId);
-    
     try {
-      const { data, error } = await supabase.functions.invoke('rent-chicken', {
-        body: { chickenTypeId: chickenId, quantity: 1 }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('rent-chicken', {
+        body: {
+          chickenTypeId: chickenId,
+          quantity: 1
+        }
       });
-
       if (error) throw error;
-
       if (data.success) {
         toast({
           title: "Thuê thành công!",
-          description: `Đã thuê ${data.chicken_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`,
+          description: `Đã thuê ${data.chicken_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`
         });
-        
+
         // Trigger balance update in navigation
         window.dispatchEvent(new CustomEvent('balanceUpdate'));
       } else {
@@ -87,7 +88,6 @@ const ChickenRental = () => {
       setRentingChickenId(null);
     }
   };
-
   const staticChickenTypes = [{
     id: 1,
     name: "Gà Đông Tảo",
@@ -97,22 +97,19 @@ const ChickenRental = () => {
     image_url: gaDongTao
   }, {
     id: 2,
-    name: "Gà Rí", 
+    name: "Gà Rí",
     description: "Gà lai, cho trứng nhiều",
     egg_production_rate: 250,
     price: 120000,
     image_url: gaRi
   }];
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       <main className="pt-20 pb-16">
@@ -120,12 +117,8 @@ const ChickenRental = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <nav className="flex justify-center gap-6 mb-8">
-              <Link to="/shop" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
-                Trại gà cho thuê
-              </Link>
-              <Link to="/shop/chickens" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">
-                Thuê gà
-              </Link>
+              <Link to="/shop" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">Trại gà Mini</Link>
+              <Link to="/shop/chickens" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">Gà giống</Link>
             </nav>
             
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -138,8 +131,7 @@ const ChickenRental = () => {
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
-            {chickenTypes.map(chicken => (
-              <Card key={chicken.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+            {chickenTypes.map(chicken => <Card key={chicken.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                 <div className="aspect-video bg-muted overflow-hidden">
                   <img src={chicken.image_url} alt={chicken.name} className="w-full h-full object-cover" />
                 </div>
@@ -156,21 +148,14 @@ const ChickenRental = () => {
                     <span className="text-sm text-muted-foreground">Giá thuê:</span>
                     <span className="font-semibold text-primary">{formatCurrency(chicken.price)}/con/tháng</span>
                   </div>
-                  <Button 
-                    className="w-full" 
-                    disabled={rentingChickenId === chicken.id?.toString()}
-                    onClick={() => handleRentChicken(chicken.id?.toString() || chicken.id)}
-                  >
+                  <Button className="w-full" disabled={rentingChickenId === chicken.id?.toString()} onClick={() => handleRentChicken(chicken.id?.toString() || chicken.id)}>
                     {rentingChickenId === chicken.id?.toString() ? 'Đang thuê...' : 'Thuê ngay'}
                   </Button>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default ChickenRental;
