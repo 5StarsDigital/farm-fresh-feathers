@@ -164,9 +164,11 @@ const Shop = () => {
                         </div>
                       </div>
                       
-                      <Button className="w-full mt-4" disabled={farmData.availableCoops === 0 || rentingFarmId === farmData.id.toString()} onClick={() => handleRentFarm(farmData.id.toString())}>
-                        {farmData.availableCoops === 0 ? 'Hết chỗ' : rentingFarmId === farmData.id.toString() ? 'Đang thuê...' : 'Thuê ngay'}
-                      </Button>
+                      <Link to="/checkout" className="block">
+                        <Button className="w-full mt-4" disabled={farmData.availableCoops === 0}>
+                          {farmData.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>;
           })}
