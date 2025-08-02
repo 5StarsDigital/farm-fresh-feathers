@@ -26,9 +26,10 @@ interface FarmRental {
 
 interface UserPackagesSectionProps {
   farmId: string | undefined;
+  refreshTrigger?: number; // Add refresh trigger
 }
 
-const UserPackagesSection = ({ farmId }: UserPackagesSectionProps) => {
+const UserPackagesSection = ({ farmId, refreshTrigger }: UserPackagesSectionProps) => {
   const [packages, setPackages] = useState<UserPackage[]>([]);
   const [farmRentals, setFarmRentals] = useState<FarmRental[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +39,7 @@ const UserPackagesSection = ({ farmId }: UserPackagesSectionProps) => {
       loadUserPackages();
       loadFarmRentals();
     }
-  }, [farmId]);
+  }, [farmId, refreshTrigger]); // Include refreshTrigger in dependency
 
   const loadUserPackages = async () => {
     try {

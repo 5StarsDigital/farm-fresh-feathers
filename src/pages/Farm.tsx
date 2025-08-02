@@ -75,6 +75,7 @@ const Farm = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const form = useForm<ProfileFormData>({
     defaultValues: {
@@ -100,6 +101,14 @@ const Farm = () => {
       await loadFarmData(user.id);
     };
     initializeFarm();
+    
+    // Auto refresh every 30 seconds to catch admin refunds
+    const interval = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1);
+      if (user?.id) loadFarmData(user.id);
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [navigate]);
 
   const loadUserProfile = async (userId: string) => {
@@ -424,7 +433,7 @@ const Farm = () => {
                 <CardTitle>Gói dịch vụ đã mua</CardTitle>
               </CardHeader>
               <CardContent>
-                <UserPackagesSection farmId={farm?.id} />
+                <UserPackagesSection farmId={farm?.id} refreshTrigger={refreshTrigger} />
               </CardContent>
             </Card>
 

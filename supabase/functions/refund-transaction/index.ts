@@ -102,20 +102,23 @@ serve(async (req) => {
         }
       }
 
-      // Create refund transaction record
+      // Create refund transaction record using service role
       const { error: refundError } = await supabase
         .from('transactions')
         .insert({
           farm_id: transaction.farm_id,
           transaction_type: 'refund',
-          amount: transaction.amount,
+          amount: refundAmount,
           quantity: transaction.quantity,
           description: `Hoàn trả: ${transaction.description}`,
           user_email: transaction.user_email,
           user_name: transaction.user_name
         });
 
-      if (refundError) throw refundError;
+      if (refundError) {
+        console.error('Refund transaction error:', refundError);
+        throw refundError;
+      }
 
       // Delete original transaction
       const { error: deleteError } = await supabase
@@ -158,13 +161,18 @@ serve(async (req) => {
 
       if (balanceError) throw balanceError;
 
-      // Remove farm rentals if any
+      // Remove farm rentals associated with this payment
       const { error: rentalError } = await supabase
         .from('farm_rentals')
         .delete()
-        .eq('user_id', payment.user_id);
+        .eq('user_id', payment.user_id)
+        .eq('status', 'active');
 
-      if (rentalError) console.error('Error removing farm rentals:', rentalError);
+      if (rentalError) {
+        console.error('Error removing farm rentals:', rentalError);
+      } else {
+        console.log('Farm rentals removed successfully');
+      }
 
       // Update payment status to refunded
       const { error: statusError } = await supabase
