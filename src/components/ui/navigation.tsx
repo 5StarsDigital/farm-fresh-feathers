@@ -132,29 +132,26 @@ const Navigation = () => {
                     <User className="w-4 h-4 mr-2" />
                     Thông tin tài khoản
                   </DropdownMenuItem>
-                  {userRole === 'seller' && (
-                    <DropdownMenuItem onClick={() => window.location.href = '/seller'}>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Khu vực Seller
-                    </DropdownMenuItem>
-                  )}
-                  {userRole === 'admin' && (
-                    <DropdownMenuItem onClick={() => window.location.href = '/admin-dashboard'}>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Khu vực Admin
-                    </DropdownMenuItem>
-                  )}
+                  
+                  {/* Always show all workspace buttons for easy navigation */}
+                  <DropdownMenuItem onClick={() => window.location.href = '/seller'}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Khu vực Seller
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = '/admin-dashboard'}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Khu vực Admin
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = '/super-admin'}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Khu vực Super Admin
+                  </DropdownMenuItem>
+                  
                   {userRole === 'super_admin' && (
-                    <>
-                      <DropdownMenuItem onClick={() => window.location.href = '/super-admin'}>
-                        <Shield className="w-4 h-4 mr-2" />
-                        Khu vực Super Admin
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
-                        <Shield className="w-4 h-4 mr-2" />
-                        Quản lý người dùng
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Quản lý người dùng
+                    </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
