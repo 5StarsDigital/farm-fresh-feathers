@@ -482,14 +482,19 @@ function SuperAdminContent() {
                               <TableCell className="font-mono text-sm">
                                 {transaction.id.slice(0, 8)}...
                               </TableCell>
-                              <TableCell>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{user?.email || 'Không xác định'}</span>
-                                  <span className="text-sm text-muted-foreground">
-                                    {user?.full_name || 'Chưa cập nhật'}
-                                  </span>
-                                </div>
-                              </TableCell>
+                               <TableCell>
+                                 <div className="flex flex-col">
+                                   <span className="font-medium">
+                                     {user?.email || 'Email không xác định'}
+                                     {user?.id === 'deleted_user' && (
+                                       <Badge variant="outline" className="ml-2 text-xs">Đã xóa</Badge>
+                                     )}
+                                   </span>
+                                   <span className="text-sm text-muted-foreground">
+                                     {user?.full_name || 'Tên không xác định'}
+                                   </span>
+                                 </div>
+                               </TableCell>
                               <TableCell>
                                 <Badge variant="outline">{transaction.transaction_type}</Badge>
                               </TableCell>
