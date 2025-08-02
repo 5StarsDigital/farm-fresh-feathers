@@ -255,24 +255,17 @@ export default function AdminDashboard() {
       const transaction = transactions.find(t => t.id === transactionId);
       if (!transaction) return;
 
-      // Create a refund transaction
-      const refundData = {
-        farm_id: transaction.farm_id,
-        transaction_type: 'refund',
-        amount: transaction.amount,
-        quantity: transaction.quantity,
-        description: `Hoàn trả: ${transaction.description}`,
-        user_email: transaction.user_email,
-        user_name: transaction.user_name
-      };
+      // Call refund edge function
+      const { error } = await supabase.functions.invoke('refund-transaction', {
+        body: { transactionId, type: 'transaction' }
+      });
 
-      const { error } = await supabase.from('transactions').insert(refundData);
       if (error) throw error;
 
       // Log admin activity
       await logAdminActivity('transaction_refund', `Hoàn trả giao dịch: ${transaction.description}`, {
         originalTransaction: transaction,
-        refundData
+        refundAmount: transaction.amount
       }, 'transactions', transactionId);
 
       toast.success('Hoàn trả giao dịch thành công');
@@ -289,12 +282,11 @@ export default function AdminDashboard() {
       const payment = paymentTransactions.find(p => p.id === paymentId);
       if (!payment) return;
 
-      // Update payment status to refunded
-      const { error } = await supabase
-        .from('payment_transactions')
-        .update({ status: 'refunded' })
-        .eq('id', paymentId);
-      
+      // Call refund edge function
+      const { error } = await supabase.functions.invoke('refund-transaction', {
+        body: { transactionId: paymentId, type: 'payment' }
+      });
+
       if (error) throw error;
 
       // Log admin activity
