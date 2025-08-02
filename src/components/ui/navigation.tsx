@@ -132,11 +132,29 @@ const Navigation = () => {
                     <User className="w-4 h-4 mr-2" />
                     Thông tin tài khoản
                   </DropdownMenuItem>
-                  {userRole === 'super_admin' && (
-                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                  {userRole === 'seller' && (
+                    <DropdownMenuItem onClick={() => window.location.href = '/seller'}>
                       <Shield className="w-4 h-4 mr-2" />
-                      Quản trị hệ thống
+                      Khu vực Seller
                     </DropdownMenuItem>
+                  )}
+                  {userRole === 'admin' && (
+                    <DropdownMenuItem onClick={() => window.location.href = '/admin-dashboard'}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Khu vực Admin
+                    </DropdownMenuItem>
+                  )}
+                  {userRole === 'super_admin' && (
+                    <>
+                      <DropdownMenuItem onClick={() => window.location.href = '/super-admin'}>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Khu vực Super Admin
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Quản lý người dùng
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
@@ -192,11 +210,29 @@ const Navigation = () => {
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
                   </a>
-                  {userRole === 'super_admin' && (
-                    <a href="/admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                  {userRole === 'seller' && (
+                    <a href="/seller" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
-                      <span>Quản trị hệ thống</span>
+                      <span>Khu vực Seller</span>
                     </a>
+                  )}
+                  {userRole === 'admin' && (
+                    <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                      <Shield className="w-5 h-5" />
+                      <span>Khu vực Admin</span>
+                    </a>
+                  )}
+                  {userRole === 'super_admin' && (
+                    <>
+                      <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                        <Shield className="w-5 h-5" />
+                        <span>Khu vực Super Admin</span>
+                      </a>
+                      <a href="/admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                        <Shield className="w-5 h-5" />
+                        <span>Quản lý người dùng</span>
+                      </a>
+                    </>
                   )}
                   <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />

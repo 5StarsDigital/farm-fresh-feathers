@@ -15,6 +15,9 @@ import ChickenRental from "./pages/ChickenRental";
 import Accessories from "./pages/Accessories";
 import TopUp from "./pages/TopUp";
 import Admin from "./pages/Admin";
+import SellerDashboard from "./pages/SellerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +38,9 @@ const App = () => (
             <Route path="/shop/accessories" element={<Accessories />} />
             <Route path="/topup" element={<TopUp />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/seller" element={<SellerDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/super-admin" element={<SuperAdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
