@@ -2,10 +2,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/ui/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Database, Settings, Activity, DollarSign, Users, TrendingUp } from 'lucide-react';
+import { Shield, Database, Settings, Activity, DollarSign, Users, TrendingUp, Search } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
@@ -19,6 +20,12 @@ interface Transaction {
   created_at: string;
   farm_id: string;
   quantity: number | null;
+}
+
+interface Farm {
+  id: string;
+  user_id: string;
+  farm_name: string;
 }
 
 interface Payment {
@@ -70,9 +77,11 @@ function SuperAdminContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [farms, setFarms] = useState<Farm[]>([]);
   const [monthlyRevenue, setMonthlyRevenue] = useState(0);
   const [yearlyRevenue, setYearlyRevenue] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (user && userRole === 'super_admin') {
@@ -114,6 +123,11 @@ function SuperAdminContent() {
       console.log('Roles data:', rolesData);
       console.log('Roles error:', rolesError);
 
+      // Fetch farms to connect transactions to users
+      const { data: farmsData } = await supabase
+        .from('farms')
+        .select('id, user_id, farm_name');
+
       // Calculate revenue
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
@@ -132,6 +146,7 @@ function SuperAdminContent() {
 
       setTransactions(transactionsData || []);
       setPayments(paymentsData || []);
+      setFarms(farmsData || []);
       
       // Transform users data by combining profiles and roles
       const usersWithRoles = profilesData?.map((profile: any) => {
@@ -213,6 +228,42 @@ function SuperAdminContent() {
     return <Badge variant={variants[role] || 'outline'}>{role}</Badge>;
   };
 
+  // Helper functions
+  const getUserFromTransaction = (transaction: Transaction) => {
+    const farm = farms.find(f => f.id === transaction.farm_id);
+    return farm ? users.find(u => u.id === farm.user_id) : null;
+  };
+
+  const getUserFromPayment = (payment: Payment) => {
+    return users.find(u => u.id === payment.user_id);
+  };
+
+  // Filter transactions and payments based on search
+  const filteredTransactions = transactions.filter(transaction => {
+    const user = getUserFromTransaction(transaction);
+    const searchLower = searchQuery.toLowerCase();
+    
+    return (
+      transaction.id.toLowerCase().includes(searchLower) ||
+      transaction.description?.toLowerCase().includes(searchLower) ||
+      user?.email?.toLowerCase().includes(searchLower) ||
+      user?.full_name?.toLowerCase().includes(searchLower) ||
+      transaction.transaction_type.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const filteredPayments = payments.filter(payment => {
+    const user = getUserFromPayment(payment);
+    const searchLower = searchQuery.toLowerCase();
+    
+    return (
+      payment.id.toLowerCase().includes(searchLower) ||
+      user?.email?.toLowerCase().includes(searchLower) ||
+      user?.full_name?.toLowerCase().includes(searchLower) ||
+      payment.payment_method?.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -292,7 +343,7 @@ function SuperAdminContent() {
             <Card>
               <CardHeader>
                 <CardTitle>Hoạt động giao dịch</CardTitle>
-                <p className="text-muted-foreground">Tất cả hoạt động mua bán, thu hoạch trứng</p>
+                <p className="text-muted-foreground">Tất cả hoạt động mua bán, thu hoạch trứng với thông tin người dùng</p>
               </CardHeader>
               <CardContent>
                 {loadingData ? (
@@ -300,30 +351,98 @@ function SuperAdminContent() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Loại</TableHead>
-                        <TableHead>Mô tả</TableHead>
-                        <TableHead>Số lượng</TableHead>
-                        <TableHead>Số tiền</TableHead>
-                        <TableHead>Thời gian</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>
-                            <Badge variant="outline">{transaction.transaction_type}</Badge>
-                          </TableCell>
-                          <TableCell>{transaction.description}</TableCell>
-                          <TableCell>{transaction.quantity || '-'}</TableCell>
-                          <TableCell>{transaction.amount ? formatCurrency(Number(transaction.amount)) : '-'}</TableCell>
-                          <TableCell>{new Date(transaction.created_at).toLocaleString('vi-VN')}</TableCell>
+                  <div className="space-y-4">
+                    {/* Search Bar */}
+                    <div className="flex items-center space-x-2">
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm kiếm theo tên, email, mã giao dịch, loại giao dịch..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="max-w-md"
+                      />
+                    </div>
+
+                    {/* Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{filteredTransactions.length}</div>
+                          <p className="text-sm text-muted-foreground">Giao dịch được tìm thấy</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">
+                            {formatCurrency(
+                              filteredTransactions
+                                .filter(t => t.amount && t.amount < 0)
+                                .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Tổng chi tiêu</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">
+                            {new Set(filteredTransactions.map(t => getUserFromTransaction(t)?.id).filter(Boolean)).size}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Người dùng hoạt động</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Transactions Table */}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Mã giao dịch</TableHead>
+                          <TableHead>Người dùng</TableHead>
+                          <TableHead>Loại</TableHead>
+                          <TableHead>Mô tả</TableHead>
+                          <TableHead>Số lượng</TableHead>
+                          <TableHead>Số tiền</TableHead>
+                          <TableHead>Thời gian</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTransactions.map((transaction) => {
+                          const user = getUserFromTransaction(transaction);
+                          return (
+                            <TableRow key={transaction.id}>
+                              <TableCell className="font-mono text-sm">
+                                {transaction.id.slice(0, 8)}...
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{user?.email || 'Không xác định'}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {user?.full_name || 'Chưa cập nhật'}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{transaction.transaction_type}</Badge>
+                              </TableCell>
+                              <TableCell>{transaction.description}</TableCell>
+                              <TableCell>{transaction.quantity || '-'}</TableCell>
+                              <TableCell className={transaction.amount && transaction.amount < 0 ? 'text-red-600' : 'text-green-600'}>
+                                {transaction.amount ? formatCurrency(Number(transaction.amount)) : '-'}
+                              </TableCell>
+                              <TableCell>{new Date(transaction.created_at).toLocaleString('vi-VN')}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                    
+                    {filteredTransactions.length === 0 && searchQuery && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Không tìm thấy giao dịch nào với từ khóa "{searchQuery}"
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
