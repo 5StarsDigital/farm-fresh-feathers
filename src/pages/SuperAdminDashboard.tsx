@@ -93,19 +93,23 @@ function SuperAdminContent() {
     try {
       setLoadingData(true);
       
-      // Fetch transactions
-      const { data: transactionsData } = await supabase
+      // Fetch ALL transactions from all users
+      const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
       
-      // Fetch payment transactions
-      const { data: paymentsData } = await supabase
+      console.log('All transactions:', transactionsData?.length);
+      console.log('Transactions error:', transactionsError);
+      
+      // Fetch ALL payment transactions from all users
+      const { data: paymentsData, error: paymentsError } = await supabase
         .from('payment_transactions')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
+      
+      console.log('All payments:', paymentsData?.length);
+      console.log('Payments error:', paymentsError);
       
       // Fetch users with profiles and roles separately for better error handling
       const { data: profilesData, error: profilesError } = await supabase
