@@ -271,10 +271,11 @@ function SuperAdminContent() {
         </div>
 
         <Tabs defaultValue="activities" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
-            <TabsTrigger value="payments">Thanh toán</TabsTrigger>
-            <TabsTrigger value="users">Người dùng</TabsTrigger>
+            <TabsTrigger value="customer-activities">Hoạt động Customer</TabsTrigger>
+            <TabsTrigger value="seller-activities">Hoạt động Seller</TabsTrigger>
+            <TabsTrigger value="users">Quản lý Role</TabsTrigger>
             <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
           </TabsList>
 
@@ -319,11 +320,11 @@ function SuperAdminContent() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payments">
+          <TabsContent value="customer-activities">
             <Card>
               <CardHeader>
-                <CardTitle>Giao dịch thanh toán</CardTitle>
-                <p className="text-muted-foreground">Tất cả hoạt động nạp tiền, rút tiền</p>
+                <CardTitle>Hoạt động của Customer</CardTitle>
+                <p className="text-muted-foreground">Theo dõi hoạt động mua sắm và giao dịch của khách hàng</p>
               </CardHeader>
               <CardContent>
                 {loadingData ? (
@@ -331,28 +332,134 @@ function SuperAdminContent() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Số tiền</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead>Phương thức</TableHead>
-                        <TableHead>Mã giao dịch</TableHead>
-                        <TableHead>Thời gian</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {payments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>{formatCurrency(Number(payment.amount))}</TableCell>
-                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          <TableCell>{payment.payment_method || 'N/A'}</TableCell>
-                          <TableCell className="font-mono text-sm">{payment.id.slice(0, 8)}...</TableCell>
-                          <TableCell>{new Date(payment.created_at).toLocaleString('vi-VN')}</TableCell>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
+                          <p className="text-sm text-muted-foreground">Tổng Customer</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{payments.filter(p => users.find(u => u.id === p.user_id)?.role === 'customer').length}</div>
+                          <p className="text-sm text-muted-foreground">Giao dịch thanh toán</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">
+                            {formatCurrency(
+                              payments
+                                .filter(p => users.find(u => u.id === p.user_id)?.role === 'customer' && p.status === 'completed')
+                                .reduce((sum, p) => sum + Number(p.amount), 0)
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Tổng chi tiêu</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Tên</TableHead>
+                          <TableHead>Tổng chi tiêu</TableHead>
+                          <TableHead>Giao dịch</TableHead>
+                          <TableHead>Ngày tham gia</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {users
+                          .filter(user => user.role === 'customer')
+                          .map((customer) => {
+                            const customerPayments = payments.filter(p => p.user_id === customer.id && p.status === 'completed');
+                            const totalSpent = customerPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+                            return (
+                              <TableRow key={customer.id}>
+                                <TableCell>{customer.email}</TableCell>
+                                <TableCell>{customer.full_name || 'Chưa cập nhật'}</TableCell>
+                                <TableCell>{formatCurrency(totalSpent)}</TableCell>
+                                <TableCell>{customerPayments.length}</TableCell>
+                                <TableCell>{new Date(customer.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="seller-activities">
+            <Card>
+              <CardHeader>
+                <CardTitle>Hoạt động của Seller</CardTitle>
+                <p className="text-muted-foreground">Theo dõi hoạt động bán hàng và doanh thu của người bán</p>
+              </CardHeader>
+              <CardContent>
+                {loadingData ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'seller').length}</div>
+                          <p className="text-sm text-muted-foreground">Tổng Seller</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">
+                            {transactions.filter(t => t.transaction_type === 'egg_collection').length}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Thu hoạch trứng</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">
+                            {transactions.filter(t => t.transaction_type === 'chicken_purchase').length}
+                          </div>
+                          <p className="text-sm text-muted-foreground">Mua gà</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Tên</TableHead>
+                          <TableHead>Shop</TableHead>
+                          <TableHead>Hoạt động</TableHead>
+                          <TableHead>Ngày tham gia</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users
+                          .filter(user => user.role === 'seller')
+                          .map((seller) => {
+                            const sellerTransactions = transactions.filter(t => 
+                              users.find(u => u.id === seller.id)
+                            );
+                            return (
+                              <TableRow key={seller.id}>
+                                <TableCell>{seller.email}</TableCell>
+                                <TableCell>{seller.full_name || 'Chưa cập nhật'}</TableCell>
+                                <TableCell>Shop của {seller.full_name || 'Seller'}</TableCell>
+                                <TableCell>{sellerTransactions.length} giao dịch</TableCell>
+                                <TableCell>{new Date(seller.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
