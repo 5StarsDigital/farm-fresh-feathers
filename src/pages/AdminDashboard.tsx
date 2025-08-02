@@ -95,6 +95,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingFarm, setEditingFarm] = useState<AvailableFarm | null>(null);
   const [isAddingFarm, setIsAddingFarm] = useState(false);
+  const [editingChicken, setEditingChicken] = useState<ChickenType | null>(null);
+  const [isAddingChicken, setIsAddingChicken] = useState(false);
 
   useEffect(() => {
     if (user && (userRole === 'admin' || userRole === 'super_admin')) {
@@ -240,6 +242,52 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveChicken = async (chickenData: any) => {
+    try {
+      if (editingChicken) {
+        // Update existing chicken type
+        const { error } = await supabase
+          .from('chicken_types')
+          .update(chickenData)
+          .eq('id', editingChicken.id);
+        
+        if (error) throw error;
+        toast.success('Cập nhật giống gà thành công');
+      } else {
+        // Add new chicken type
+        const { error } = await supabase
+          .from('chicken_types')
+          .insert(chickenData);
+        
+        if (error) throw error;
+        toast.success('Thêm giống gà mới thành công');
+      }
+      
+      setEditingChicken(null);
+      setIsAddingChicken(false);
+      fetchAllData();
+    } catch (error) {
+      console.error('Error saving chicken type:', error);
+      toast.error('Lỗi khi lưu giống gà');
+    }
+  };
+
+  const handleDeleteChicken = async (chickenId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chicken_types')
+        .delete()
+        .eq('id', chickenId);
+      
+      if (error) throw error;
+      toast.success('Xóa giống gà thành công');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting chicken type:', error);
+      toast.error('Lỗi khi xóa giống gà');
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -347,6 +395,7 @@ export default function AdminDashboard() {
         <Tabs defaultValue="farms" className="space-y-4">
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
+            <TabsTrigger value="chickens">Giống gà</TabsTrigger>
             <TabsTrigger value="purchases">Sản phẩm đã bán</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động SuperAdmin</TabsTrigger>
           </TabsList>
@@ -416,6 +465,80 @@ export default function AdminDashboard() {
                           variant="destructive" 
                           size="sm"
                           onClick={() => handleDeleteFarm(farm.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="chickens" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Quản lý Giống gà</h2>
+              <Dialog open={isAddingChicken} onOpenChange={setIsAddingChicken}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => setIsAddingChicken(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm giống gà mới
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Thêm giống gà mới</DialogTitle>
+                  </DialogHeader>
+                  <ChickenForm onSave={handleSaveChicken} onCancel={() => setIsAddingChicken(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid gap-4">
+              {chickenTypes.map((chicken) => (
+                <Card key={chicken.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-4">
+                        {chicken.image_url && (
+                          <img 
+                            src={chicken.image_url} 
+                            alt={chicken.name}
+                            className="w-20 h-20 object-cover rounded-lg"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-lg">{chicken.name}</h3>
+                          <p className="text-muted-foreground">{chicken.description}</p>
+                          <div className="flex gap-4 mt-2 text-sm">
+                            <span>Giá: {formatCurrency(chicken.price)}</span>
+                            <span>Tỷ lệ đẻ trứng: {chicken.egg_production_rate}/ngày</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => setEditingChicken(chicken)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Chỉnh sửa giống gà</DialogTitle>
+                            </DialogHeader>
+                            <ChickenForm 
+                              chicken={chicken}
+                              onSave={handleSaveChicken} 
+                              onCancel={() => setEditingChicken(null)} 
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteChicken(chicken.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -705,6 +828,95 @@ function FarmForm({
         </Button>
         <Button type="submit">
           {farm ? 'Cập nhật' : 'Thêm mới'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Chicken form component
+function ChickenForm({ 
+  chicken, 
+  onSave, 
+  onCancel 
+}: { 
+  chicken?: ChickenType; 
+  onSave: (data: Partial<ChickenType>) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: chicken?.name || '',
+    description: chicken?.description || '',
+    price: chicken?.price || 0,
+    image_url: chicken?.image_url || '',
+    egg_production_rate: chicken?.egg_production_rate || 1,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="chicken_name">Tên giống gà</Label>
+        <Input
+          id="chicken_name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="chicken_description">Mô tả</Label>
+        <Input
+          id="chicken_description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="chicken_image_url">URL hình ảnh</Label>
+        <Input
+          id="chicken_image_url"
+          value={formData.image_url}
+          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="chicken_price">Giá (VND)</Label>
+          <Input
+            id="chicken_price"
+            type="number"
+            value={formData.price}
+            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="egg_production_rate">Tỷ lệ đẻ trứng/ngày</Label>
+          <Input
+            id="egg_production_rate"
+            type="number"
+            value={formData.egg_production_rate}
+            onChange={(e) => setFormData({ ...formData, egg_production_rate: Number(e.target.value) })}
+            required
+          />
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Hủy
+        </Button>
+        <Button type="submit">
+          {chicken ? 'Cập nhật' : 'Thêm mới'}
         </Button>
       </div>
     </form>
