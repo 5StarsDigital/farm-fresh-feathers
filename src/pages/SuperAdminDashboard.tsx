@@ -20,6 +20,8 @@ interface Transaction {
   created_at: string;
   farm_id: string;
   quantity: number | null;
+  user_email: string | null;
+  user_name: string | null;
 }
 
 interface Farm {
@@ -35,6 +37,8 @@ interface Payment {
   payment_method: string;
   created_at: string;
   user_id: string;
+  user_email: string | null;
+  user_name: string | null;
 }
 
 interface UserProfile {
@@ -261,25 +265,45 @@ function SuperAdminContent() {
     return <Badge variant={variants[role] || 'outline'}>{role}</Badge>;
   };
 
-  // Helper functions
+  // Helper functions with fallback to stored user data
   const getUserFromTransaction = (transaction: Transaction) => {
+    // First try to get user from current users (if still exists)
     const farm = farms.find(f => f.id === transaction.farm_id);
-    if (!farm) {
-      console.log(`Farm not found for transaction ${transaction.id} with farm_id: ${transaction.farm_id}`);
-      return null;
+    let user = null;
+    
+    if (farm) {
+      user = users.find(u => u.id === farm.user_id);
     }
-    const user = users.find(u => u.id === farm.user_id);
-    if (!user) {
-      console.log(`User not found for farm ${farm.id} with user_id: ${farm.user_id}`);
+    
+    // If user not found in current users, use stored data from transaction
+    if (!user && (transaction.user_email || transaction.user_name)) {
+      user = {
+        id: 'deleted_user',
+        email: transaction.user_email,
+        full_name: transaction.user_name,
+        created_at: '',
+        role: 'customer'
+      };
     }
-    return user || null;
+    
+    return user;
   };
 
   const getUserFromPayment = (payment: Payment) => {
-    const user = users.find(u => u.id === payment.user_id);
-    if (!user) {
-      console.log(`User not found for payment ${payment.id} with user_id: ${payment.user_id}`);
+    // First try to get user from current users (if still exists)
+    let user = users.find(u => u.id === payment.user_id);
+    
+    // If user not found in current users, use stored data from payment
+    if (!user && (payment.user_email || payment.user_name)) {
+      user = {
+        id: 'deleted_user',
+        email: payment.user_email,
+        full_name: payment.user_name,
+        created_at: '',
+        role: 'customer'
+      };
     }
+    
     return user;
   };
 

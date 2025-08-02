@@ -235,7 +235,9 @@ export type Database = {
           status: string
           transaction_id: string | null
           updated_at: string
+          user_email: string | null
           user_id: string
+          user_name: string | null
         }
         Insert: {
           amount: number
@@ -246,7 +248,9 @@ export type Database = {
           status?: string
           transaction_id?: string | null
           updated_at?: string
+          user_email?: string | null
           user_id: string
+          user_name?: string | null
         }
         Update: {
           amount?: number
@@ -257,7 +261,9 @@ export type Database = {
           status?: string
           transaction_id?: string | null
           updated_at?: string
+          user_email?: string | null
           user_id?: string
+          user_name?: string | null
         }
         Relationships: [
           {
@@ -317,6 +323,8 @@ export type Database = {
           id: string
           quantity: number | null
           transaction_type: string
+          user_email: string | null
+          user_name: string | null
         }
         Insert: {
           amount?: number | null
@@ -326,6 +334,8 @@ export type Database = {
           id?: string
           quantity?: number | null
           transaction_type: string
+          user_email?: string | null
+          user_name?: string | null
         }
         Update: {
           amount?: number | null
@@ -335,6 +345,8 @@ export type Database = {
           id?: string
           quantity?: number | null
           transaction_type?: string
+          user_email?: string | null
+          user_name?: string | null
         }
         Relationships: [
           {
