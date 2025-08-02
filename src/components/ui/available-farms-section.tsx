@@ -116,7 +116,7 @@ const AvailableFarmsSection = () => {
                     </div>
                   </div>
 
-                  <Link to="/shop">
+                  <Link to="/checkout">
                     <Button 
                       className="w-full" 
                       disabled={farm.available_coops === 0}

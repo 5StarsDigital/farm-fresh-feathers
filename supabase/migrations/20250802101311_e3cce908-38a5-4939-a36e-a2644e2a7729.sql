@@ -1,0 +1,1 @@
+UPDATE farms SET account_balance = 50000000 WHERE user_id = 'c04e339b-3a4f-4e43-9241-f78f71120878';
