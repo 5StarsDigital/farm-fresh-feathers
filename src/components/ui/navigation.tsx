@@ -135,15 +135,20 @@ const Navigation = () => {
                     Thông tin tài khoản
                   </DropdownMenuItem>
                   
-                  {/* Admin workspace buttons */}
-                  <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Khu vực Admin
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/super-admin')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Khu vực Super Admin
-                  </DropdownMenuItem>
+                  {userRole === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin-dashboard" className="w-full">
+                        Khu vực Admin
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {userRole === 'super_admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/super-admin" className="w-full">
+                        Khu vực Super Admin
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
