@@ -5,10 +5,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut, Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { Link, useNavigate } from 'react-router-dom';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
   const { user, userRole, signOut } = useAuth();
+  const navigate = useNavigate();
 
   // Load account balance
   useEffect(() => {
@@ -127,28 +129,28 @@ const Navigation = () => {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+                <DropdownMenuContent align="end" className="bg-background border border-border shadow-lg z-50">
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="w-4 h-4 mr-2" />
                     Thông tin tài khoản
                   </DropdownMenuItem>
                   
                   {/* Always show all workspace buttons for easy navigation */}
-                  <DropdownMenuItem onClick={() => window.location.href = '/seller'}>
+                  <DropdownMenuItem onClick={() => navigate('/seller')}>
                     <Shield className="w-4 h-4 mr-2" />
                     Khu vực Seller
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.location.href = '/admin-dashboard'}>
+                  <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
                     <Shield className="w-4 h-4 mr-2" />
                     Khu vực Admin
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => window.location.href = '/super-admin'}>
+                  <DropdownMenuItem onClick={() => navigate('/super-admin')}>
                     <Shield className="w-4 h-4 mr-2" />
                     Khu vực Super Admin
                   </DropdownMenuItem>
                   
                   {userRole === 'super_admin' && (
-                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                    <DropdownMenuItem onClick={() => navigate('/admin')}>
                       <Shield className="w-4 h-4 mr-2" />
                       Quản lý người dùng
                     </DropdownMenuItem>
