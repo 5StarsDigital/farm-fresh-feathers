@@ -2,11 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Camera, Egg, Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const PackagesSection = () => {
+  const navigate = useNavigate();
+  
   const packages = [
     {
-      id: 1,
+      id: 'basic',
       name: 'Gói Cơ Bản',
       subtitle: '"Chăm chỉ mỗi ngày"',
       price: '200.000đ',
@@ -25,7 +28,7 @@ const PackagesSection = () => {
       bgGradient: 'from-blue-400 to-blue-500'
     },
     {
-      id: 2,
+      id: 'advanced',
       name: 'Gói Nâng Cao',
       subtitle: '"Gà có Gu"',
       price: '400.000đ',
@@ -44,7 +47,7 @@ const PackagesSection = () => {
       bgGradient: 'from-yellow-400 to-yellow-500'
     },
     {
-      id: 3,
+      id: 'vip',
       name: 'Gói VIP',
       subtitle: '"Chủ tịch Gà"',
       price: '800.000đ',
@@ -163,8 +166,14 @@ const PackagesSection = () => {
                       : 'bg-secondary hover:bg-secondary/80'
                   } transition-all duration-300`}
                   size="lg"
+                  onClick={() => {
+                    if (pkg.id === 'basic' || pkg.id === 'advanced' || pkg.id === 'vip') {
+                      navigate(`/checkout?package=${pkg.id}`);
+                    }
+                  }}
+                  disabled={pkg.id !== 'basic' && pkg.id !== 'advanced' && pkg.id !== 'vip'}
                 >
-                  Chọn gói này
+                  {pkg.id === 'basic' || pkg.id === 'advanced' || pkg.id === 'vip' ? 'Chọn gói này' : 'Sắp ra mắt'}
                 </Button>
               </CardContent>
             </Card>

@@ -14,6 +14,7 @@ import FarmRental from "./pages/FarmRental";
 import ChickenRental from "./pages/ChickenRental";
 import Accessories from "./pages/Accessories";
 import TopUp from "./pages/TopUp";
+import Checkout from "./pages/Checkout";
 
 import SellerDashboard from "./pages/SellerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/shop/chickens" element={<ChickenRental />} />
             <Route path="/shop/accessories" element={<Accessories />} />
             <Route path="/topup" element={<TopUp />} />
+            <Route path="/checkout" element={<Checkout />} />
             
             <Route path="/seller" element={<SellerDashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
