@@ -8,8 +8,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 const Shop = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const [availableFarms, setAvailableFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rentingFarmId, setRentingFarmId] = useState<string | null>(null);
@@ -18,21 +22,19 @@ const Shop = () => {
   useEffect(() => {
     loadFarms();
   }, []);
-
   const loadFarms = async () => {
     try {
-      const { data, error } = await supabase
-        .from('available_farms')
-        .select('*')
-        .order('rating', { ascending: false })
-        .order('name');
-      
+      const {
+        data,
+        error
+      } = await supabase.from('available_farms').select('*').order('rating', {
+        ascending: false
+      }).order('name');
       if (error) {
         console.error('Error loading farms:', error);
         setAvailableFarms([]);
         return;
       }
-      
       setAvailableFarms(data || []);
     } catch (error) {
       console.error('Error loading farms:', error);
@@ -41,7 +43,6 @@ const Shop = () => {
       setLoading(false);
     }
   };
-
   const handleRentFarm = async (farmId: string) => {
     if (!user) {
       toast({
@@ -51,22 +52,23 @@ const Shop = () => {
       });
       return;
     }
-
     setRentingFarmId(farmId);
-    
     try {
-      const { data, error } = await supabase.functions.invoke('rent-farm', {
-        body: { availableFarmId: farmId }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('rent-farm', {
+        body: {
+          availableFarmId: farmId
+        }
       });
-
       if (error) throw error;
-
       if (data.success) {
         toast({
           title: "Thuê thành công!",
-          description: `Đã thuê ${data.farm_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`,
+          description: `Đã thuê ${data.farm_name}. Số dư còn lại: ${formatCurrency(data.new_balance)}`
         });
-        
+
         // Reload farms to update available coops
         loadFarms();
       } else {
@@ -83,16 +85,13 @@ const Shop = () => {
       setRentingFarmId(null);
     }
   };
-
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       <main className="pt-20 pb-16">
@@ -100,12 +99,8 @@ const Shop = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <nav className="flex justify-center gap-6 mb-8">
-              <Link to="/shop" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">
-                Trại gà cho thuê
-              </Link>
-              <Link to="/shop/chickens" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">
-                Thuê gà
-              </Link>
+              <Link to="/shop" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">Trại gà Mini</Link>
+              <Link to="/shop/chickens" className="px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80">Gà giống</Link>
             </nav>
             
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -118,31 +113,24 @@ const Shop = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              <div className="col-span-full text-center py-8">
+            {loading ? <div className="col-span-full text-center py-8">
                 <p>Đang tải danh sách trang trại...</p>
-              </div>
-            ) : availableFarms.length === 0 ? (
-              <div className="col-span-full text-center py-8">
+              </div> : availableFarms.length === 0 ? <div className="col-span-full text-center py-8">
                 <p>Chưa có trang trại nào được thêm bởi quản trị viên.</p>
-              </div>
-            ) : (
-              availableFarms.map(farm => {
-                const farmData = {
-                  id: farm.id,
-                  name: farm.name || 'Unknown Farm',
-                  location: farm.location || 'Unknown Location',
-                  availableCoops: farm.available_coops || farm.availableCoops || 0,
-                  totalCoops: farm.total_coops || farm.totalCoops || 0,
-                  rentalPrice: farm.rental_price || farm.rentalPrice || 0,
-                  monthlyCost: farm.monthly_cost || farm.monthlyCost || 0,
-                  rating: farm.rating || 4.5,
-                  reviewCount: farm.review_count || farm.reviewCount || 0,
-                  image: farm.image_url || farm.image || '/placeholder.svg'
-                };
-
-                return (
-                  <Card key={farmData.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
+              </div> : availableFarms.map(farm => {
+            const farmData = {
+              id: farm.id,
+              name: farm.name || 'Unknown Farm',
+              location: farm.location || 'Unknown Location',
+              availableCoops: farm.available_coops || farm.availableCoops || 0,
+              totalCoops: farm.total_coops || farm.totalCoops || 0,
+              rentalPrice: farm.rental_price || farm.rentalPrice || 0,
+              monthlyCost: farm.monthly_cost || farm.monthlyCost || 0,
+              rating: farm.rating || 4.5,
+              reviewCount: farm.review_count || farm.reviewCount || 0,
+              image: farm.image_url || farm.image || '/placeholder.svg'
+            };
+            return <Card key={farmData.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
                     <div className="aspect-video bg-muted overflow-hidden">
                       <img src={farmData.image} alt={farmData.name} className="w-full h-full object-cover" />
                     </div>
@@ -176,23 +164,15 @@ const Shop = () => {
                         </div>
                       </div>
                       
-                      <Button 
-                        className="w-full mt-4" 
-                        disabled={farmData.availableCoops === 0 || rentingFarmId === farmData.id.toString()}
-                        onClick={() => handleRentFarm(farmData.id.toString())}
-                      >
-                        {farmData.availableCoops === 0 ? 'Hết chỗ' : 
-                         rentingFarmId === farmData.id.toString() ? 'Đang thuê...' : 'Thuê ngay'}
+                      <Button className="w-full mt-4" disabled={farmData.availableCoops === 0 || rentingFarmId === farmData.id.toString()} onClick={() => handleRentFarm(farmData.id.toString())}>
+                        {farmData.availableCoops === 0 ? 'Hết chỗ' : rentingFarmId === farmData.id.toString() ? 'Đang thuê...' : 'Thuê ngay'}
                       </Button>
                     </CardContent>
-                  </Card>
-                );
-              })
-            )}
+                  </Card>;
+          })}
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
 export default Shop;
