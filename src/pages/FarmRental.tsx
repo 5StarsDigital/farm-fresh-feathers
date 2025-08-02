@@ -112,9 +112,11 @@ const FarmRental = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full mt-4" disabled={farm.availableCoops === 0}>
-                    {farm.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
-                  </Button>
+                  <Link to="/checkout">
+                    <Button className="w-full mt-4" disabled={farm.availableCoops === 0}>
+                      {farm.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
