@@ -32,6 +32,19 @@ interface ChickenType {
   egg_production_rate: number;
 }
 
+interface AvailableFarm {
+  id: string;
+  name: string;
+  location: string;
+  monthly_cost: number;
+  rental_price: number;
+  rating: number;
+  review_count: number;
+  available_coops: number;
+  total_coops: number;
+  image_url: string;
+}
+
 const packages: Package[] = [
   {
     id: "basic",
@@ -127,6 +140,7 @@ export default function Checkout() {
   const [selectedCoop, setSelectedCoop] = useState<string>("");
   const [selectedChickens, setSelectedChickens] = useState<{[key: string]: number}>({});
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
+  const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -139,6 +153,7 @@ export default function Checkout() {
       }
     }
     loadChickenTypes();
+    loadAvailableFarms();
   }, [searchParams]);
 
   const loadChickenTypes = async () => {
@@ -158,6 +173,26 @@ export default function Checkout() {
     } catch (error) {
       console.error('Error:', error);
       toast.error('Có lỗi xảy ra khi tải dữ liệu');
+    }
+  };
+
+  const loadAvailableFarms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('available_farms')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Error loading available farms:', error);
+        toast.error('Không thể tải danh sách trại gà cho thuê');
+        return;
+      }
+
+      setAvailableFarms(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Có lỗi xảy ra khi tải dữ liệu');
     } finally {
       setLoading(false);
     }
@@ -167,6 +202,10 @@ export default function Checkout() {
   const availableCoops = selectedPackage === "basic" 
     ? coopDesigns.filter(c => c.id === "shared")
     : coopDesigns;
+  
+  // For advanced and VIP packages, show farms instead of coop designs
+  const showFarmDesigns = selectedPackage === "advanced" || selectedPackage === "vip";
+  const selectedFarmData = availableFarms.find(f => f.id === selectedCoop);
 
   const updateChickenQuantity = (chickenId: string, quantity: number) => {
     setSelectedChickens(prev => ({
@@ -182,10 +221,14 @@ export default function Checkout() {
   const getTotalPrice = () => {
     let total = selectedPackageData?.price || 0;
     
-    // Add coop price
-    const coopData = coopDesigns.find(c => c.id === selectedCoop);
-    if (coopData) {
-      total += coopData.price;
+    // Add coop price or farm rental price
+    if (showFarmDesigns && selectedFarmData) {
+      total += selectedFarmData.rental_price;
+    } else {
+      const coopData = coopDesigns.find(c => c.id === selectedCoop);
+      if (coopData) {
+        total += coopData.price;
+      }
     }
 
     // Add chicken prices
@@ -292,43 +335,97 @@ export default function Checkout() {
             {selectedPackage && (
               <Card>
                 <CardHeader>
-                  <CardTitle>2. Chọn Thiết Kế Chuồng Gà</CardTitle>
+                  <CardTitle>
+                    2. {showFarmDesigns ? 'Chọn Thiết Kế Trại Gà Cho Thuê' : 'Chọn Thiết Kế Chuồng Gà'}
+                  </CardTitle>
                   {selectedPackage === "basic" && (
                     <p className="text-sm text-muted-foreground">
                       Gói cơ bản sử dụng chuồng nuôi chung mặc định
                     </p>
                   )}
+                  {showFarmDesigns && (
+                    <p className="text-sm text-muted-foreground">
+                      Thuê không gian trại gà để nuôi gà của bạn
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <RadioGroup value={selectedCoop} onValueChange={setSelectedCoop}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {availableCoops.map((coop) => (
-                        <div key={coop.id} className="relative">
-                          <Label htmlFor={coop.id} className="cursor-pointer">
-                            <Card className={`transition-all hover:shadow-lg ${
-                              selectedCoop === coop.id ? 'ring-2 ring-primary' : ''
-                            } ${selectedPackage === "basic" && coop.id !== "shared" ? 'opacity-50' : ''}`}>
-                              <CardContent className="p-4">
-                                <div className="flex items-center space-x-2 mb-3">
-                                  <RadioGroupItem 
-                                    value={coop.id} 
-                                    id={coop.id}
-                                    disabled={selectedPackage === "basic" && coop.id !== "shared"}
+                    {showFarmDesigns ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {availableFarms.map((farm) => (
+                          <div key={farm.id} className="relative">
+                            <Label htmlFor={farm.id} className="cursor-pointer">
+                              <Card className={`transition-all hover:shadow-lg ${
+                                selectedCoop === farm.id ? 'ring-2 ring-primary' : ''
+                              }`}>
+                                <div className="aspect-video overflow-hidden rounded-t-lg">
+                                  <img 
+                                    src={farm.image_url || "/placeholder.svg"} 
+                                    alt={farm.name}
+                                    className="w-full h-full object-cover"
                                   />
-                                  <div className="flex-1">
-                                    <h4 className="font-semibold">{coop.name}</h4>
-                                    <p className="text-sm text-muted-foreground">{coop.description}</p>
-                                    <p className="text-lg font-bold text-green-600 mt-2">
-                                      {coop.price === 0 ? 'Miễn phí' : formatCurrency(coop.price)}
-                                    </p>
-                                  </div>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+                                <CardContent className="p-4">
+                                  <div className="flex items-center space-x-2 mb-3">
+                                    <RadioGroupItem value={farm.id} id={farm.id} />
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-lg">{farm.name}</h4>
+                                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                        📍 {farm.location}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-sm">Còn trống: {farm.available_coops}/{farm.total_coops}</span>
+                                        <span className="text-sm flex items-center gap-1">
+                                          ⭐ {farm.rating} ({farm.review_count})
+                                        </span>
+                                      </div>
+                                      <div className="mt-3">
+                                        <p className="text-lg font-bold text-green-600">
+                                          Giá thuê: {formatCurrency(farm.rental_price)}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                          Chi phí phát sinh: {formatCurrency(farm.monthly_cost)}/tháng
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {availableCoops.map((coop) => (
+                          <div key={coop.id} className="relative">
+                            <Label htmlFor={coop.id} className="cursor-pointer">
+                              <Card className={`transition-all hover:shadow-lg ${
+                                selectedCoop === coop.id ? 'ring-2 ring-primary' : ''
+                              } ${selectedPackage === "basic" && coop.id !== "shared" ? 'opacity-50' : ''}`}>
+                                <CardContent className="p-4">
+                                  <div className="flex items-center space-x-2 mb-3">
+                                    <RadioGroupItem 
+                                      value={coop.id} 
+                                      id={coop.id}
+                                      disabled={selectedPackage === "basic" && coop.id !== "shared"}
+                                    />
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold">{coop.name}</h4>
+                                      <p className="text-sm text-muted-foreground">{coop.description}</p>
+                                      <p className="text-lg font-bold text-green-600 mt-2">
+                                        {coop.price === 0 ? 'Miễn phí' : formatCurrency(coop.price)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </RadioGroup>
                 </CardContent>
               </Card>
@@ -404,8 +501,18 @@ export default function Checkout() {
                     
                     {selectedCoop && (
                       <div className="flex justify-between">
-                        <span>Thiết kế chuồng: {coopDesigns.find(c => c.id === selectedCoop)?.name}</span>
-                        <span>{formatCurrency(coopDesigns.find(c => c.id === selectedCoop)?.price || 0)}</span>
+                        <span>
+                          {showFarmDesigns 
+                            ? `Trại gà cho thuê: ${selectedFarmData?.name}` 
+                            : `Thiết kế chuồng: ${coopDesigns.find(c => c.id === selectedCoop)?.name}`
+                          }
+                        </span>
+                        <span>
+                          {showFarmDesigns 
+                            ? formatCurrency(selectedFarmData?.rental_price || 0)
+                            : formatCurrency(coopDesigns.find(c => c.id === selectedCoop)?.price || 0)
+                          }
+                        </span>
                       </div>
                     )}
 
