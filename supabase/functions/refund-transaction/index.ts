@@ -43,8 +43,9 @@ serve(async (req) => {
         throw new Error('Farm not found');
       }
 
-      // Refund money to farm balance
-      const newBalance = (farm.account_balance || 0) + transaction.amount;
+      // Refund money to farm balance - ensure we add positive amount
+      const refundAmount = Math.abs(transaction.amount || 0);
+      const newBalance = (farm.account_balance || 0) + refundAmount;
       const { error: balanceError } = await supabase
         .from('farms')
         .update({ account_balance: newBalance })
@@ -147,8 +148,9 @@ serve(async (req) => {
         throw new Error('Farm not found for payment user');
       }
 
-      // Refund money to farm balance
-      const newBalance = (farm.account_balance || 0) + payment.amount;
+      // Refund money to farm balance - ensure we add positive amount
+      const refundAmount = Math.abs(payment.amount || 0);
+      const newBalance = (farm.account_balance || 0) + refundAmount;
       const { error: balanceError } = await supabase
         .from('farms')
         .update({ account_balance: newBalance })
