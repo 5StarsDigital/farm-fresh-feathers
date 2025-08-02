@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshCw, Undo2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 interface AvailableFarm {
@@ -248,6 +248,92 @@ export default function AdminDashboard() {
       toast.error('Lỗi khi xóa giống gà');
     }
   };
+
+  // Handle transaction refund
+  const handleRefundTransaction = async (transactionId: string) => {
+    try {
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (!transaction) return;
+
+      // Create a refund transaction
+      const refundData = {
+        farm_id: transaction.farm_id,
+        transaction_type: 'refund',
+        amount: transaction.amount,
+        quantity: transaction.quantity,
+        description: `Hoàn trả: ${transaction.description}`,
+        user_email: transaction.user_email,
+        user_name: transaction.user_name
+      };
+
+      const { error } = await supabase.from('transactions').insert(refundData);
+      if (error) throw error;
+
+      // Log admin activity
+      await logAdminActivity('transaction_refund', `Hoàn trả giao dịch: ${transaction.description}`, {
+        originalTransaction: transaction,
+        refundData
+      }, 'transactions', transactionId);
+
+      toast.success('Hoàn trả giao dịch thành công');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error refunding transaction:', error);
+      toast.error('Lỗi khi hoàn trả giao dịch');
+    }
+  };
+
+  // Handle payment refund
+  const handleRefundPayment = async (paymentId: string) => {
+    try {
+      const payment = paymentTransactions.find(p => p.id === paymentId);
+      if (!payment) return;
+
+      // Update payment status to refunded
+      const { error } = await supabase
+        .from('payment_transactions')
+        .update({ status: 'refunded' })
+        .eq('id', paymentId);
+      
+      if (error) throw error;
+
+      // Log admin activity
+      await logAdminActivity('payment_refund', `Hoàn trả thanh toán: ${formatCurrency(payment.amount)}`, {
+        payment,
+        refundAmount: payment.amount
+      }, 'payment_transactions', paymentId);
+
+      toast.success('Hoàn trả thanh toán thành công');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error refunding payment:', error);
+      toast.error('Lỗi khi hoàn trả thanh toán');
+    }
+  };
+
+  // Handle transaction deletion
+  const handleDeleteTransaction = async (transactionId: string) => {
+    try {
+      const transaction = transactions.find(t => t.id === transactionId);
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transactionId);
+      
+      if (error) throw error;
+
+      // Log admin activity
+      await logAdminActivity('transaction_delete', `Xóa giao dịch: ${transaction?.description || 'Unknown'}`, {
+        deletedTransaction: transaction
+      }, 'transactions', transactionId);
+
+      toast.success('Xóa giao dịch thành công');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast.error('Lỗi khi xóa giao dịch');
+    }
+  };
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -260,7 +346,8 @@ export default function AdminDashboard() {
     } = {
       completed: "default",
       pending: "secondary",
-      failed: "destructive"
+      failed: "destructive",
+      refunded: "outline"
     };
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
@@ -453,28 +540,55 @@ export default function AdminDashboard() {
               <TabsContent value="transactions">
                 <Card>
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Người dùng</TableHead>
-                        <TableHead>Loại</TableHead>
-                        <TableHead>Số tiền</TableHead>
-                        <TableHead>Mô tả</TableHead>
-                        <TableHead>Ngày</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                     <TableHeader>
+                       <TableRow>
+                         <TableHead>Người dùng</TableHead>
+                         <TableHead>Loại</TableHead>
+                         <TableHead>Số tiền</TableHead>
+                         <TableHead>Mô tả</TableHead>
+                         <TableHead>Ngày</TableHead>
+                         <TableHead>Thao tác</TableHead>
+                       </TableRow>
+                     </TableHeader>
                     <TableBody>
-                      {filteredTransactions.map(transaction => <TableRow key={transaction.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{transaction.user_name || 'N/A'}</div>
-                              <div className="text-sm text-muted-foreground">{transaction.user_email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{transaction.transaction_type}</TableCell>
-                          <TableCell>{formatCurrency(transaction.amount || 0)}</TableCell>
-                          <TableCell>{transaction.description}</TableCell>
-                          <TableCell>{new Date(transaction.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                        </TableRow>)}
+                       {filteredTransactions.map(transaction => <TableRow key={transaction.id}>
+                           <TableCell>
+                             <div>
+                               <div className="font-medium">{transaction.user_name || 'N/A'}</div>
+                               <div className="text-sm text-muted-foreground">{transaction.user_email}</div>
+                             </div>
+                           </TableCell>
+                           <TableCell>
+                             <Badge variant={transaction.transaction_type === 'refund' ? 'destructive' : 'default'}>
+                               {transaction.transaction_type}
+                             </Badge>
+                           </TableCell>
+                           <TableCell>{formatCurrency(transaction.amount || 0)}</TableCell>
+                           <TableCell>{transaction.description}</TableCell>
+                           <TableCell>{new Date(transaction.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               {transaction.transaction_type !== 'refund' && (
+                                 <Button 
+                                   variant="outline" 
+                                   size="sm"
+                                   onClick={() => handleRefundTransaction(transaction.id)}
+                                   title="Hoàn trả"
+                                 >
+                                   <Undo2 className="h-4 w-4" />
+                                 </Button>
+                               )}
+                               <Button 
+                                 variant="destructive" 
+                                 size="sm"
+                                 onClick={() => handleDeleteTransaction(transaction.id)}
+                                 title="Xóa giao dịch"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>)}
                     </TableBody>
                   </Table>
                 </Card>
@@ -483,28 +597,43 @@ export default function AdminDashboard() {
               <TabsContent value="payments">
                 <Card>
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Người dùng</TableHead>
-                        <TableHead>Số tiền</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead>Phương thức</TableHead>
-                        <TableHead>Ngày</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                     <TableHeader>
+                       <TableRow>
+                         <TableHead>Người dùng</TableHead>
+                         <TableHead>Số tiền</TableHead>
+                         <TableHead>Trạng thái</TableHead>
+                         <TableHead>Phương thức</TableHead>
+                         <TableHead>Ngày</TableHead>
+                         <TableHead>Thao tác</TableHead>
+                       </TableRow>
+                     </TableHeader>
                     <TableBody>
-                      {filteredPayments.map(payment => <TableRow key={payment.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{payment.user_name || 'N/A'}</div>
-                              <div className="text-sm text-muted-foreground">{payment.user_email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          <TableCell>{payment.payment_method}</TableCell>
-                          <TableCell>{new Date(payment.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                        </TableRow>)}
+                       {filteredPayments.map(payment => <TableRow key={payment.id}>
+                           <TableCell>
+                             <div>
+                               <div className="font-medium">{payment.user_name || 'N/A'}</div>
+                               <div className="text-sm text-muted-foreground">{payment.user_email}</div>
+                             </div>
+                           </TableCell>
+                           <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                           <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                           <TableCell>{payment.payment_method}</TableCell>
+                           <TableCell>{new Date(payment.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               {payment.status !== 'refunded' && payment.status !== 'failed' && (
+                                 <Button 
+                                   variant="outline" 
+                                   size="sm"
+                                   onClick={() => handleRefundPayment(payment.id)}
+                                   title="Hoàn trả thanh toán"
+                                 >
+                                   <Undo2 className="h-4 w-4" />
+                                 </Button>
+                               )}
+                             </div>
+                           </TableCell>
+                         </TableRow>)}
                     </TableBody>
                   </Table>
                 </Card>
