@@ -41,14 +41,8 @@ interface UserProfile {
 
 export default function SuperAdminDashboard() {
   const { user, userRole, loading } = useAuth();
-  const { toast } = useToast();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-  const [yearlyRevenue, setYearlyRevenue] = useState(0);
-  const [loadingData, setLoadingData] = useState(true);
 
+  // Handle loading and authentication BEFORE any other hooks
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -61,6 +55,24 @@ export default function SuperAdminDashboard() {
       </div>
     );
   }
+
+  if (!user || userRole !== 'super_admin') {
+    return <Navigate to="/" replace />;
+  }
+
+  return <SuperAdminContent />;
+}
+
+// Separate component for the actual dashboard content
+function SuperAdminContent() {
+  const { user, userRole } = useAuth();
+  const { toast } = useToast();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [yearlyRevenue, setYearlyRevenue] = useState(0);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (user && userRole === 'super_admin') {
@@ -191,10 +203,6 @@ export default function SuperAdminDashboard() {
     };
     return <Badge variant={variants[role] || 'outline'}>{role}</Badge>;
   };
-
-  if (!user || userRole !== 'super_admin') {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="min-h-screen bg-background">
