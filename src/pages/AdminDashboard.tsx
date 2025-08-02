@@ -97,7 +97,7 @@ export default function AdminDashboard() {
   const [isAddingFarm, setIsAddingFarm] = useState(false);
 
   useEffect(() => {
-    if (user && userRole === 'admin') {
+    if (user && (userRole === 'admin' || userRole === 'super_admin')) {
       fetchAllData();
     }
   }, [user, userRole]);
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user || userRole !== 'admin') {
+  if (!user || (userRole !== 'admin' && userRole !== 'super_admin')) {
     return <Navigate to="/" replace />;
   }
 
