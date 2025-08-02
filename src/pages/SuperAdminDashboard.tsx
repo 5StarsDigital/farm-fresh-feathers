@@ -264,11 +264,23 @@ function SuperAdminContent() {
   // Helper functions
   const getUserFromTransaction = (transaction: Transaction) => {
     const farm = farms.find(f => f.id === transaction.farm_id);
-    return farm ? users.find(u => u.id === farm.user_id) : null;
+    if (!farm) {
+      console.log(`Farm not found for transaction ${transaction.id} with farm_id: ${transaction.farm_id}`);
+      return null;
+    }
+    const user = users.find(u => u.id === farm.user_id);
+    if (!user) {
+      console.log(`User not found for farm ${farm.id} with user_id: ${farm.user_id}`);
+    }
+    return user || null;
   };
 
   const getUserFromPayment = (payment: Payment) => {
-    return users.find(u => u.id === payment.user_id);
+    const user = users.find(u => u.id === payment.user_id);
+    if (!user) {
+      console.log(`User not found for payment ${payment.id} with user_id: ${payment.user_id}`);
+    }
+    return user;
   };
 
   // Filter transactions and payments based on search
