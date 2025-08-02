@@ -41,8 +41,14 @@ interface UserProfile {
 
 export default function SuperAdminDashboard() {
   const { user, userRole, loading } = useAuth();
+  const { toast } = useToast();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
+  const [yearlyRevenue, setYearlyRevenue] = useState(0);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Handle loading and authentication BEFORE any other hooks
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -55,24 +61,6 @@ export default function SuperAdminDashboard() {
       </div>
     );
   }
-
-  if (!user || userRole !== 'super_admin') {
-    return <Navigate to="/" replace />;
-  }
-
-  return <SuperAdminContent />;
-}
-
-// Separate component for the actual dashboard content
-function SuperAdminContent() {
-  const { user, userRole } = useAuth();
-  const { toast } = useToast();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [monthlyRevenue, setMonthlyRevenue] = useState(0);
-  const [yearlyRevenue, setYearlyRevenue] = useState(0);
-  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (user && userRole === 'super_admin') {
@@ -199,11 +187,14 @@ function SuperAdminContent() {
       'super_admin': 'destructive',
       'admin': 'default',
       'seller': 'secondary',
-      'staff': 'outline',
       'customer': 'outline',
     };
     return <Badge variant={variants[role] || 'outline'}>{role}</Badge>;
   };
+
+  if (!user || userRole !== 'super_admin') {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -398,7 +389,6 @@ function SuperAdminContent() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="customer">Customer</SelectItem>
-                                <SelectItem value="staff">Staff</SelectItem>
                                 <SelectItem value="seller">Seller</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                                 <SelectItem value="super_admin">Super Admin</SelectItem>
@@ -440,7 +430,7 @@ function SuperAdminContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {['super_admin', 'admin', 'seller', 'staff', 'customer'].map(role => {
+                    {['super_admin', 'admin', 'seller', 'customer'].map(role => {
                       const count = users.filter(u => u.role === role).length;
                       return (
                         <div key={role} className="p-3 bg-muted rounded-lg flex justify-between items-center">
@@ -450,7 +440,6 @@ function SuperAdminContent() {
                               {role === 'super_admin' && 'Quyền cao nhất hệ thống'}
                               {role === 'admin' && 'Quản trị viên'}
                               {role === 'seller' && 'Người bán hàng'}
-                              {role === 'staff' && 'Nhân viên hỗ trợ'}
                               {role === 'customer' && 'Khách hàng'}
                             </p>
                           </div>
