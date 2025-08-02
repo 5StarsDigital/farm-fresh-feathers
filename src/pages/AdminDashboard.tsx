@@ -283,7 +283,7 @@ export default function AdminDashboard() {
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mx-[5px]">Khu vực Quản trị</h1>
+          <h1 className="text-3xl font-bold mx-[5px] my-[5px]">Khu vực Quản trị</h1>
           <p className="text-muted-foreground">Quản lý hệ thống và cửa hàng</p>
         </div>
 
