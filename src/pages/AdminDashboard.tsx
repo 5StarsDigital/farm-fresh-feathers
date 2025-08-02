@@ -2,10 +2,275 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/ui/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Store, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+
+interface AvailableFarm {
+  id: string;
+  name: string;
+  location: string;
+  image_url: string;
+  monthly_cost: number;
+  rating: number;
+  review_count: number;
+  available_coops: number;
+  total_coops: number;
+  rental_price: number;
+}
+
+interface ChickenType {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  egg_production_rate: number;
+}
+
+interface Accessory {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  effect_type: string;
+  effect_value: number;
+}
+
+interface UserAccessory {
+  id: string;
+  farm_id: string;
+  accessory_id: string;
+  quantity: number;
+  created_at: string;
+  accessories: Accessory;
+  farms: {
+    user_id: string;
+    farm_name: string;
+  };
+}
+
+interface Transaction {
+  id: string;
+  farm_id: string;
+  transaction_type: string;
+  amount: number;
+  quantity: number;
+  description: string;
+  created_at: string;
+  user_email: string;
+  user_name: string;
+}
+
+interface PaymentTransaction {
+  id: string;
+  user_id: string;
+  farm_id: string;
+  amount: number;
+  status: string;
+  payment_method: string;
+  transaction_id: string;
+  created_at: string;
+  user_email: string;
+  user_name: string;
+}
 
 export default function AdminDashboard() {
   const { user, userRole, loading } = useAuth();
+  const [farms, setFarms] = useState<AvailableFarm[]>([]);
+  const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
+  const [accessories, setAccessories] = useState<Accessory[]>([]);
+  const [userAccessories, setUserAccessories] = useState<UserAccessory[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransaction[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingFarm, setEditingFarm] = useState<AvailableFarm | null>(null);
+  const [isAddingFarm, setIsAddingFarm] = useState(false);
+
+  useEffect(() => {
+    if (user && userRole === 'admin') {
+      fetchAllData();
+    }
+  }, [user, userRole]);
+
+  const fetchAllData = async () => {
+    try {
+      // Fetch farms
+      const { data: farmsData } = await supabase
+        .from('available_farms')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Fetch chicken types
+      const { data: chickenData } = await supabase
+        .from('chicken_types')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Fetch accessories
+      const { data: accessoriesData } = await supabase
+        .from('accessories')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Fetch user accessories with user info
+      const { data: userAccessoriesData } = await supabase
+        .from('user_accessories')
+        .select(`
+          *,
+          accessories(*),
+          farms(user_id, farm_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      // Fetch transactions
+      const { data: transactionsData } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      // Fetch payment transactions  
+      const { data: paymentData } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      setFarms(farmsData || []);
+      setChickenTypes(chickenData || []);
+      setAccessories(accessoriesData || []);
+      setUserAccessories(userAccessoriesData || []);
+      setTransactions(transactionsData || []);
+      setPaymentTransactions(paymentData || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Lỗi khi tải dữ liệu');
+    }
+  };
+
+  const handleDeleteUserAccessory = async (accessoryRecord: UserAccessory) => {
+    try {
+      // Calculate refund amount
+      const refundAmount = accessoryRecord.accessories.price * accessoryRecord.quantity;
+      
+      // Delete the user accessory
+      const { error: deleteError } = await supabase
+        .from('user_accessories')
+        .delete()
+        .eq('id', accessoryRecord.id);
+
+      if (deleteError) throw deleteError;
+
+      // Get current balance and update it
+      const { data: farmData } = await supabase
+        .from('farms')
+        .select('account_balance')
+        .eq('id', accessoryRecord.farm_id)
+        .single();
+
+      if (farmData) {
+        const newBalance = (farmData.account_balance || 0) + refundAmount;
+        const { error: refundError } = await supabase
+          .from('farms')
+          .update({ account_balance: newBalance })
+          .eq('id', accessoryRecord.farm_id);
+
+        if (refundError) throw refundError;
+      }
+
+      toast.success(`Đã xóa sản phẩm và hoàn trả ${refundAmount.toLocaleString('vi-VN')} ₫`);
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting accessory:', error);
+      toast.error('Lỗi khi xóa sản phẩm');
+    }
+  };
+
+  const handleSaveFarm = async (farmData: any) => {
+    try {
+      if (editingFarm) {
+        // Update existing farm
+        const { error } = await supabase
+          .from('available_farms')
+          .update(farmData)
+          .eq('id', editingFarm.id);
+        
+        if (error) throw error;
+        toast.success('Cập nhật trại thành công');
+      } else {
+        // Add new farm
+        const { error } = await supabase
+          .from('available_farms')
+          .insert(farmData);
+        
+        if (error) throw error;
+        toast.success('Thêm trại mới thành công');
+      }
+      
+      setEditingFarm(null);
+      setIsAddingFarm(false);
+      fetchAllData();
+    } catch (error) {
+      console.error('Error saving farm:', error);
+      toast.error('Lỗi khi lưu trại');
+    }
+  };
+
+  const handleDeleteFarm = async (farmId: string) => {
+    try {
+      const { error } = await supabase
+        .from('available_farms')
+        .delete()
+        .eq('id', farmId);
+      
+      if (error) throw error;
+      toast.success('Xóa trại thành công');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting farm:', error);
+      toast.error('Lỗi khi xóa trại');
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
+      completed: "default",
+      pending: "secondary", 
+      failed: "destructive"
+    };
+    return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
+  };
+
+  const filteredTransactions = transactions.filter(t =>
+    t.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredPayments = paymentTransactions.filter(p =>
+    p.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.user_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredUserAccessories = userAccessories.filter(ua =>
+    ua.accessories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    ua.farms?.farm_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -30,99 +295,418 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Khu vực Quản trị</h1>
-          <p className="text-muted-foreground">Quản lý hệ thống và người dùng</p>
+          <p className="text-muted-foreground">Quản lý hệ thống và cửa hàng</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1,284</div>
-              <p className="text-xs text-muted-foreground">+15 người dùng mới</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Người bán</CardTitle>
+              <CardTitle className="text-sm font-medium">Tổng trại</CardTitle>
               <Store className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">89</div>
-              <p className="text-xs text-muted-foreground">+3 người bán mới</p>
+              <div className="text-2xl font-bold">{farms.length}</div>
+              <p className="text-xs text-muted-foreground">Trại có sẵn</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đơn hàng</CardTitle>
+              <CardTitle className="text-sm font-medium">Giống gà</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{chickenTypes.length}</div>
+              <p className="text-xs text-muted-foreground">Loại có sẵn</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Phụ kiện</CardTitle>
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">452</div>
-              <p className="text-xs text-muted-foreground">+28 đơn hàng hôm nay</p>
+              <div className="text-2xl font-bold">{accessories.length}</div>
+              <p className="text-xs text-muted-foreground">Sản phẩm</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Báo cáo</CardTitle>
+              <CardTitle className="text-sm font-medium">Đã bán</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">Cần xem xét</p>
+              <div className="text-2xl font-bold">{userAccessories.length}</div>
+              <p className="text-xs text-muted-foreground">Sản phẩm đã mua</p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quản lý người dùng</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Xem và quản lý tài khoản người dùng
-              </p>
-              <div className="space-y-2">
-                <div className="p-3 bg-muted rounded-lg">
-                  <h4 className="font-medium">Người dùng mới</h4>
-                  <p className="text-sm text-muted-foreground">15 tài khoản mới hôm nay</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <h4 className="font-medium">Tài khoản đã xác thực</h4>
-                  <p className="text-sm text-muted-foreground">1,201 / 1,284 tài khoản</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="farms" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
+            <TabsTrigger value="purchases">Sản phẩm đã bán</TabsTrigger>
+            <TabsTrigger value="activities">Hoạt động SuperAdmin</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Hoạt động hệ thống</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Theo dõi hoạt động và báo cáo
-              </p>
-              <div className="space-y-2">
-                <div className="p-3 bg-muted rounded-lg">
-                  <h4 className="font-medium">Giao dịch hôm nay</h4>
-                  <p className="text-sm text-muted-foreground">128 giao dịch thành công</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <h4 className="font-medium">Doanh thu hệ thống</h4>
-                  <p className="text-sm text-muted-foreground">45,600,000 ₫ hôm nay</p>
-                </div>
+          <TabsContent value="farms" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Quản lý Trại gà cho thuê</h2>
+              <Dialog open={isAddingFarm} onOpenChange={setIsAddingFarm}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => setIsAddingFarm(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Thêm trại mới
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Thêm trại mới</DialogTitle>
+                  </DialogHeader>
+                  <FarmForm onSave={handleSaveFarm} onCancel={() => setIsAddingFarm(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid gap-4">
+              {farms.map((farm) => (
+                <Card key={farm.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-4">
+                        {farm.image_url && (
+                          <img 
+                            src={farm.image_url} 
+                            alt={farm.name}
+                            className="w-20 h-20 object-cover rounded-lg"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-lg">{farm.name}</h3>
+                          <p className="text-muted-foreground">{farm.location}</p>
+                          <div className="flex gap-4 mt-2 text-sm">
+                            <span>Giá thuê: {formatCurrency(farm.rental_price)}</span>
+                            <span>Chi phí hàng tháng: {formatCurrency(farm.monthly_cost)}</span>
+                            <span>Chuồng: {farm.available_coops}/{farm.total_coops}</span>
+                            <span>⭐ {farm.rating} ({farm.review_count} đánh giá)</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => setEditingFarm(farm)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Chỉnh sửa trại</DialogTitle>
+                            </DialogHeader>
+                            <FarmForm 
+                              farm={farm}
+                              onSave={handleSaveFarm} 
+                              onCancel={() => setEditingFarm(null)} 
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteFarm(farm.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="purchases" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Sản phẩm khách hàng đã mua</h2>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tìm kiếm theo tên, email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-64"
+                />
+                <Button onClick={fetchAllData} variant="outline">
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Khách hàng</TableHead>
+                    <TableHead>Sản phẩm</TableHead>
+                    <TableHead>Số lượng</TableHead>
+                    <TableHead>Giá trị</TableHead>
+                    <TableHead>Ngày mua</TableHead>
+                    <TableHead>Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUserAccessories.map((userAccessory) => (
+                    <TableRow key={userAccessory.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">Trại: {userAccessory.farms?.farm_name || 'N/A'}</div>
+                          <div className="text-sm text-muted-foreground">ID: {userAccessory.farms?.user_id}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {userAccessory.accessories?.image_url && (
+                            <img 
+                              src={userAccessory.accessories.image_url} 
+                              alt={userAccessory.accessories.name}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{userAccessory.accessories?.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatCurrency(userAccessory.accessories?.price || 0)}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{userAccessory.quantity}</TableCell>
+                      <TableCell>
+                        {formatCurrency((userAccessory.accessories?.price || 0) * userAccessory.quantity)}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(userAccessory.created_at).toLocaleDateString('vi-VN')}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteUserAccessory(userAccessory)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Xóa & Hoàn tiền
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="activities" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Hoạt động hệ thống</h2>
+              <Input
+                placeholder="Tìm kiếm giao dịch..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64"
+              />
+            </div>
+
+            <Tabs defaultValue="transactions" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="transactions">Giao dịch</TabsTrigger>
+                <TabsTrigger value="payments">Thanh toán</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="transactions">
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Người dùng</TableHead>
+                        <TableHead>Loại</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Mô tả</TableHead>
+                        <TableHead>Ngày</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTransactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{transaction.user_name || 'N/A'}</div>
+                              <div className="text-sm text-muted-foreground">{transaction.user_email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{transaction.transaction_type}</TableCell>
+                          <TableCell>{formatCurrency(transaction.amount || 0)}</TableCell>
+                          <TableCell>{transaction.description}</TableCell>
+                          <TableCell>{new Date(transaction.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="payments">
+                <Card>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Người dùng</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Phương thức</TableHead>
+                        <TableHead>Ngày</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPayments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{payment.user_name || 'N/A'}</div>
+                              <div className="text-sm text-muted-foreground">{payment.user_email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                          <TableCell>{payment.payment_method}</TableCell>
+                          <TableCell>{new Date(payment.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
+  );
+}
+
+// Farm form component
+function FarmForm({ 
+  farm, 
+  onSave, 
+  onCancel 
+}: { 
+  farm?: AvailableFarm; 
+  onSave: (data: Partial<AvailableFarm>) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: farm?.name || '',
+    location: farm?.location || '',
+    image_url: farm?.image_url || '',
+    monthly_cost: farm?.monthly_cost || 0,
+    rental_price: farm?.rental_price || 0,
+    rating: farm?.rating || 4.5,
+    review_count: farm?.review_count || 0,
+    available_coops: farm?.available_coops || 0,
+    total_coops: farm?.total_coops || 0,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Tên trại</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="location">Địa điểm</Label>
+        <Input
+          id="location"
+          value={formData.location}
+          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          required
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="image_url">URL hình ảnh</Label>
+        <Input
+          id="image_url"
+          value={formData.image_url}
+          onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="rental_price">Giá thuê</Label>
+          <Input
+            id="rental_price"
+            type="number"
+            value={formData.rental_price}
+            onChange={(e) => setFormData({ ...formData, rental_price: Number(e.target.value) })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="monthly_cost">Chi phí hàng tháng</Label>
+          <Input
+            id="monthly_cost"
+            type="number"
+            value={formData.monthly_cost}
+            onChange={(e) => setFormData({ ...formData, monthly_cost: Number(e.target.value) })}
+            required
+          />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="available_coops">Chuồng có sẵn</Label>
+          <Input
+            id="available_coops"
+            type="number"
+            value={formData.available_coops}
+            onChange={(e) => setFormData({ ...formData, available_coops: Number(e.target.value) })}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="total_coops">Tổng chuồng</Label>
+          <Input
+            id="total_coops"
+            type="number"
+            value={formData.total_coops}
+            onChange={(e) => setFormData({ ...formData, total_coops: Number(e.target.value) })}
+            required
+          />
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Hủy
+        </Button>
+        <Button type="submit">
+          {farm ? 'Cập nhật' : 'Thêm mới'}
+        </Button>
+      </div>
+    </form>
   );
 }

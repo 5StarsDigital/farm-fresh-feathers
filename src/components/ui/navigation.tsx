@@ -135,11 +135,7 @@ const Navigation = () => {
                     Thông tin tài khoản
                   </DropdownMenuItem>
                   
-                  {/* Always show all workspace buttons for easy navigation */}
-                  <DropdownMenuItem onClick={() => navigate('/seller')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Khu vực Seller
-                  </DropdownMenuItem>
+                  {/* Admin workspace buttons */}
                   <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
                     <Shield className="w-4 h-4 mr-2" />
                     Khu vực Admin
@@ -203,12 +199,6 @@ const Navigation = () => {
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
                   </a>
-                  {userRole === 'seller' && (
-                    <a href="/seller" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                      <Shield className="w-5 h-5" />
-                      <span>Khu vực Seller</span>
-                    </a>
-                  )}
                   {userRole === 'admin' && (
                     <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
