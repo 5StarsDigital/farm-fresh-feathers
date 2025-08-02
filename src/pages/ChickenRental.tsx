@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bird } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import gaDongTao from '@/assets/ga-dong-tao.jpg';
 import gaRi from '@/assets/ga-ri.jpg';
 const ChickenRental = () => {
+  const navigate = useNavigate();
   const {
     user
   } = useAuth();
@@ -148,8 +149,14 @@ const ChickenRental = () => {
                     <span className="text-sm text-muted-foreground">Giá thuê:</span>
                     <span className="font-semibold text-primary">{formatCurrency(chicken.price)}/con/tháng</span>
                   </div>
-                  <Button className="w-full" disabled={rentingChickenId === chicken.id?.toString()} onClick={() => handleRentChicken(chicken.id?.toString() || chicken.id)}>
-                    {rentingChickenId === chicken.id?.toString() ? 'Đang thuê...' : 'Thuê ngay'}
+                  <Button 
+                    className="w-full" 
+                    disabled={rentingChickenId === chicken.id?.toString()} 
+                    onClick={() => {
+                      navigate('/checkout');
+                    }}
+                  >
+                    Thuê ngay
                   </Button>
                 </CardContent>
               </Card>)}

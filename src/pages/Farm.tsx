@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon } from 'lucide-react';
+import UserPackagesSection from '@/components/ui/user-packages-section';
 
 // Using any types temporarily until Supabase types are updated
 interface Farm {
@@ -414,6 +415,16 @@ const Farm = () => {
                     <p className="text-2xl font-bold">{chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} con</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* User Packages Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Gói dịch vụ đã mua</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UserPackagesSection farmId={farm?.id} />
               </CardContent>
             </Card>
 

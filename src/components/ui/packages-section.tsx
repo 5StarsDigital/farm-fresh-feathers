@@ -173,7 +173,7 @@ const PackagesSection = () => {
                   }}
                   disabled={pkg.id !== 'basic' && pkg.id !== 'advanced' && pkg.id !== 'vip'}
                 >
-                  {pkg.id === 'basic' || pkg.id === 'advanced' || pkg.id === 'vip' ? 'Chọn gói này' : 'Sắp ra mắt'}
+                  {pkg.id === 'basic' || pkg.id === 'advanced' || pkg.id === 'vip' ? 'Thuê ngay' : 'Sắp ra mắt'}
                 </Button>
               </CardContent>
             </Card>

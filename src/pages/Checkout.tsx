@@ -139,6 +139,7 @@ export default function Checkout() {
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [selectedCoop, setSelectedCoop] = useState<string>("");
   const [selectedChickens, setSelectedChickens] = useState<{[key: string]: number}>({});
+  const [selectedChickenType, setSelectedChickenType] = useState<string>("");
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
   const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,8 +210,7 @@ export default function Checkout() {
 
   const updateChickenQuantity = (chickenId: string, quantity: number) => {
     setSelectedChickens(prev => ({
-      ...prev,
-      [chickenId]: Math.max(0, quantity)
+      [chickenId]: Math.max(1, quantity)
     }));
   };
 
@@ -248,14 +248,40 @@ export default function Checkout() {
            getTotalChickens() > 0;
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!canProceedToPayment()) {
       toast.error('Vui lòng chọn đầy đủ các mục trước khi thanh toán');
       return;
     }
 
-    toast.success('Chuyển đến trang thanh toán...');
-    // TODO: Implement payment logic
+    try {
+      const { data, error } = await supabase.functions.invoke('checkout-payment', {
+        body: {
+          packageId: selectedPackage,
+          coopId: selectedCoop,
+          selectedChickens,
+          totalAmount: getTotalPrice()
+        }
+      });
+
+      if (error) {
+        console.error('Payment error:', error);
+        if (error.message.includes('Insufficient balance')) {
+          toast.error('Số dư tài khoản không đủ để thanh toán');
+        } else {
+          toast.error('Có lỗi xảy ra khi thanh toán');
+        }
+        return;
+      }
+
+      toast.success('Thanh toán thành công! Chuyển đến trang trại của bạn...');
+      setTimeout(() => {
+        navigate('/farm');
+      }, 2000);
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Có lỗi xảy ra khi thanh toán');
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -432,56 +458,103 @@ export default function Checkout() {
             )}
 
             {/* Chicken Selection */}
-            {selectedPackage && selectedCoop && (
+            {selectedPackage && (
               <Card>
                 <CardHeader>
                   <CardTitle>3. Chọn Giống Gà và Số Lượng</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {chickenTypes.map((chicken) => (
-                      <Card key={chicken.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
-                            <img 
-                              src={chicken.image_url || "/placeholder.svg"} 
-                              alt={chicken.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <h4 className="font-semibold mb-1">{chicken.name}</h4>
-                          <p className="text-sm text-muted-foreground mb-2">{chicken.description}</p>
-                          <p className="text-lg font-bold text-green-600 mb-3">
-                            {formatCurrency(chicken.price)}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateChickenQuantity(chicken.id, (selectedChickens[chicken.id] || 0) - 1)}
-                              disabled={(selectedChickens[chicken.id] || 0) <= 0}
-                            >
-                              -
-                            </Button>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={selectedChickens[chicken.id] || 0}
-                              onChange={(e) => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 0)}
-                              className="w-20 text-center"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateChickenQuantity(chicken.id, (selectedChickens[chicken.id] || 0) + 1)}
-                            >
-                              +
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                  {!selectedChickenType ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {chickenTypes.map((chicken) => (
+                        <Card key={chicken.id} className="border cursor-pointer hover:shadow-md transition-shadow" onClick={() => {
+                          setSelectedChickenType(chicken.id);
+                          setSelectedChickens({[chicken.id]: 1});
+                        }}>
+                          <CardContent className="p-4">
+                            <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
+                              <img 
+                                src={chicken.image_url || "/placeholder.svg"} 
+                                alt={chicken.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <h4 className="font-semibold mb-1">{chicken.name}</h4>
+                            <p className="text-sm text-muted-foreground mb-2">{chicken.description}</p>
+                            <div className="mb-3">
+                              <p className="text-lg font-bold text-green-600">{formatCurrency(chicken.price)}/con</p>
+                              <p className="text-xs text-muted-foreground">
+                                Sản lượng: {chicken.egg_production_rate} trứng/2 ngày
+                              </p>
+                            </div>
+                            <Button className="w-full">Chọn giống này</Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="max-w-md mx-auto">
+                      {(() => {
+                        const selectedChicken = chickenTypes.find(c => c.id === selectedChickenType);
+                        if (!selectedChicken) return null;
+                        return (
+                          <Card className="border">
+                            <CardContent className="p-4">
+                              <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
+                                <img 
+                                  src={selectedChicken.image_url || "/placeholder.svg"} 
+                                  alt={selectedChicken.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <h4 className="font-semibold mb-1">{selectedChicken.name}</h4>
+                              <p className="text-sm text-muted-foreground mb-2">{selectedChicken.description}</p>
+                              <div className="mb-3">
+                                <p className="text-lg font-bold text-green-600">{formatCurrency(selectedChicken.price)}/con</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Sản lượng: {selectedChicken.egg_production_rate} trứng/2 ngày
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 mb-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateChickenQuantity(selectedChicken.id, (selectedChickens[selectedChicken.id] || 0) - 1)}
+                                  disabled={!selectedChickens[selectedChicken.id] || selectedChickens[selectedChicken.id] <= 1}
+                                >
+                                  -
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={selectedChickens[selectedChicken.id] || 1}
+                                  onChange={(e) => updateChickenQuantity(selectedChicken.id, Math.max(1, parseInt(e.target.value) || 1))}
+                                  className="text-center h-8"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateChickenQuantity(selectedChicken.id, (selectedChickens[selectedChicken.id] || 0) + 1)}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                className="w-full"
+                                onClick={() => {
+                                  setSelectedChickenType("");
+                                  setSelectedChickens({});
+                                }}
+                              >
+                                Chọn giống gà khác
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
