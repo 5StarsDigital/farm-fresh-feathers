@@ -149,12 +149,6 @@ const Navigation = () => {
                     Khu vực Super Admin
                   </DropdownMenuItem>
                   
-                  {userRole === 'super_admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Quản lý người dùng
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Đăng xuất
@@ -227,12 +221,8 @@ const Navigation = () => {
                         <Shield className="w-5 h-5" />
                         <span>Khu vực Super Admin</span>
                       </a>
-                      <a href="/admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                        <Shield className="w-5 h-5" />
-                        <span>Quản lý người dùng</span>
-                      </a>
-                    </>
-                  )}
+                     </>
+                   )}
                   <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>

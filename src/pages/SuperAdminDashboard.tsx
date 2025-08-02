@@ -468,8 +468,8 @@ function SuperAdminContent() {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>Quản lý người dùng</CardTitle>
-                <p className="text-muted-foreground">Thay đổi vai trò và quản lý người dùng</p>
+                <CardTitle>Quản lý vai trò người dùng</CardTitle>
+                <p className="text-muted-foreground">Thay đổi vai trò và quản lý quyền hạn người dùng</p>
               </CardHeader>
               <CardContent>
                 {loadingData ? (
@@ -477,43 +477,80 @@ function SuperAdminContent() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Tên</TableHead>
-                        <TableHead>Vai trò</TableHead>
-                        <TableHead>Ngày tạo</TableHead>
-                        <TableHead>Hành động</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.full_name || 'Chưa cập nhật'}</TableCell>
-                          <TableCell>{getRoleBadge(user.role)}</TableCell>
-                          <TableCell>{new Date(user.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                          <TableCell>
-                            <Select
-                              value={user.role}
-                              onValueChange={(value) => updateUserRole(user.id, value)}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="customer">Customer</SelectItem>
-                                <SelectItem value="seller">Seller</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="super_admin">Super Admin</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
+                  <div className="space-y-6">
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{users.length}</div>
+                          <p className="text-sm text-muted-foreground">Tổng người dùng</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
+                          <p className="text-sm text-muted-foreground">Customer</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'seller').length}</div>
+                          <p className="text-sm text-muted-foreground">Seller</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-2xl font-bold">{users.filter(u => u.role === 'admin' || u.role === 'super_admin').length}</div>
+                          <p className="text-sm text-muted-foreground">Admin</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Users Table */}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Tên</TableHead>
+                          <TableHead>Vai trò hiện tại</TableHead>
+                          <TableHead>Ngày tham gia</TableHead>
+                          <TableHead>Thay đổi vai trò</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.email}</TableCell>
+                            <TableCell>{user.full_name || 'Chưa cập nhật'}</TableCell>
+                            <TableCell>{getRoleBadge(user.role)}</TableCell>
+                            <TableCell>{new Date(user.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                            <TableCell>
+                              <Select
+                                value={user.role}
+                                onValueChange={(value) => updateUserRole(user.id, value)}
+                              >
+                                <SelectTrigger className="w-40 bg-background border border-border">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border border-border shadow-lg z-50">
+                                  <SelectItem value="customer">Khách hàng</SelectItem>
+                                  <SelectItem value="seller">Người bán</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    
+                    {users.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Không có người dùng nào
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
