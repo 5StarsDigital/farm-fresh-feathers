@@ -33,27 +33,6 @@ interface ChickenType {
   image_url: string;
   egg_production_rate: number;
 }
-interface Accessory {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  effect_type: string;
-  effect_value: number;
-}
-interface UserAccessory {
-  id: string;
-  farm_id: string;
-  accessory_id: string;
-  quantity: number;
-  created_at: string;
-  accessories: Accessory;
-  farms: {
-    user_id: string;
-    farm_name: string;
-  };
-}
 interface Transaction {
   id: string;
   farm_id: string;
@@ -85,8 +64,6 @@ export default function AdminDashboard() {
   } = useAuth();
   const [farms, setFarms] = useState<AvailableFarm[]>([]);
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
-  const [accessories, setAccessories] = useState<Accessory[]>([]);
-  const [userAccessories, setUserAccessories] = useState<UserAccessory[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,24 +92,6 @@ export default function AdminDashboard() {
         ascending: false
       });
 
-      // Fetch accessories
-      const {
-        data: accessoriesData
-      } = await supabase.from('accessories').select('*').order('created_at', {
-        ascending: false
-      });
-
-      // Fetch user accessories with user info
-      const {
-        data: userAccessoriesData
-      } = await supabase.from('user_accessories').select(`
-          *,
-          accessories(*),
-          farms(user_id, farm_name)
-        `).order('created_at', {
-        ascending: false
-      });
-
       // Fetch transactions
       const {
         data: transactionsData
@@ -148,44 +107,11 @@ export default function AdminDashboard() {
       });
       setFarms(farmsData || []);
       setChickenTypes(chickenData || []);
-      setAccessories(accessoriesData || []);
-      setUserAccessories(userAccessoriesData || []);
       setTransactions(transactionsData || []);
       setPaymentTransactions(paymentData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Lỗi khi tải dữ liệu');
-    }
-  };
-  const handleDeleteUserAccessory = async (accessoryRecord: UserAccessory) => {
-    try {
-      // Calculate refund amount
-      const refundAmount = accessoryRecord.accessories.price * accessoryRecord.quantity;
-
-      // Delete the user accessory
-      const {
-        error: deleteError
-      } = await supabase.from('user_accessories').delete().eq('id', accessoryRecord.id);
-      if (deleteError) throw deleteError;
-
-      // Get current balance and update it
-      const {
-        data: farmData
-      } = await supabase.from('farms').select('account_balance').eq('id', accessoryRecord.farm_id).single();
-      if (farmData) {
-        const newBalance = (farmData.account_balance || 0) + refundAmount;
-        const {
-          error: refundError
-        } = await supabase.from('farms').update({
-          account_balance: newBalance
-        }).eq('id', accessoryRecord.farm_id);
-        if (refundError) throw refundError;
-      }
-      toast.success(`Đã xóa sản phẩm và hoàn trả ${refundAmount.toLocaleString('vi-VN')} ₫`);
-      fetchAllData();
-    } catch (error) {
-      console.error('Error deleting accessory:', error);
-      toast.error('Lỗi khi xóa sản phẩm');
     }
   };
   const handleSaveFarm = async (farmData: any) => {
@@ -282,7 +208,6 @@ export default function AdminDashboard() {
   };
   const filteredTransactions = transactions.filter(t => t.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || t.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || t.description?.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredPayments = paymentTransactions.filter(p => p.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) || p.user_name?.toLowerCase().includes(searchQuery.toLowerCase()));
-  const filteredUserAccessories = userAccessories.filter(ua => ua.accessories?.name?.toLowerCase().includes(searchQuery.toLowerCase()) || ua.farms?.farm_name?.toLowerCase().includes(searchQuery.toLowerCase()));
   if (loading) {
     return <div className="min-h-screen bg-background">
         <Navigation />
@@ -327,34 +252,12 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Phụ kiện</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{accessories.length}</div>
-              <p className="text-xs text-muted-foreground">Sản phẩm</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đã bán</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{userAccessories.length}</div>
-              <p className="text-xs text-muted-foreground">Sản phẩm đã mua</p>
-            </CardContent>
-          </Card>
         </div>
 
         <Tabs defaultValue="farms" className="space-y-4">
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
-            <TabsTrigger value="purchases">Sản phẩm đã bán</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
@@ -476,66 +379,6 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
-          <TabsContent value="purchases" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Sản phẩm khách hàng đã mua</h2>
-              <div className="flex gap-2">
-                <Input placeholder="Tìm kiếm theo tên, email..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-64" />
-                <Button onClick={fetchAllData} variant="outline">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Khách hàng</TableHead>
-                    <TableHead>Sản phẩm</TableHead>
-                    <TableHead>Số lượng</TableHead>
-                    <TableHead>Giá trị</TableHead>
-                    <TableHead>Ngày mua</TableHead>
-                    <TableHead>Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUserAccessories.map(userAccessory => <TableRow key={userAccessory.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">Trại: {userAccessory.farms?.farm_name || 'N/A'}</div>
-                          <div className="text-sm text-muted-foreground">ID: {userAccessory.farms?.user_id}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {userAccessory.accessories?.image_url && <img src={userAccessory.accessories.image_url} alt={userAccessory.accessories.name} className="w-10 h-10 object-cover rounded" />}
-                          <div>
-                            <div className="font-medium">{userAccessory.accessories?.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {formatCurrency(userAccessory.accessories?.price || 0)}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{userAccessory.quantity}</TableCell>
-                      <TableCell>
-                        {formatCurrency((userAccessory.accessories?.price || 0) * userAccessory.quantity)}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(userAccessory.created_at).toLocaleDateString('vi-VN')}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteUserAccessory(userAccessory)}>
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Xóa & Hoàn tiền
-                        </Button>
-                      </TableCell>
-                    </TableRow>)}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">
             <div className="flex justify-between items-center">
