@@ -199,6 +199,7 @@ function SuperAdminContent() {
       'super_admin': 'destructive',
       'admin': 'default',
       'seller': 'secondary',
+      'staff': 'outline',
       'customer': 'outline',
     };
     return <Badge variant={variants[role] || 'outline'}>{role}</Badge>;
@@ -397,6 +398,7 @@ function SuperAdminContent() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="customer">Customer</SelectItem>
+                                <SelectItem value="staff">Staff</SelectItem>
                                 <SelectItem value="seller">Seller</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                                 <SelectItem value="super_admin">Super Admin</SelectItem>
@@ -438,7 +440,7 @@ function SuperAdminContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {['super_admin', 'admin', 'seller', 'customer'].map(role => {
+                    {['super_admin', 'admin', 'seller', 'staff', 'customer'].map(role => {
                       const count = users.filter(u => u.role === role).length;
                       return (
                         <div key={role} className="p-3 bg-muted rounded-lg flex justify-between items-center">
@@ -448,6 +450,7 @@ function SuperAdminContent() {
                               {role === 'super_admin' && 'Quyền cao nhất hệ thống'}
                               {role === 'admin' && 'Quản trị viên'}
                               {role === 'seller' && 'Người bán hàng'}
+                              {role === 'staff' && 'Nhân viên hỗ trợ'}
                               {role === 'customer' && 'Khách hàng'}
                             </p>
                           </div>

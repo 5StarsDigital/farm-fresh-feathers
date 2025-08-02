@@ -138,6 +138,10 @@ const Navigation = () => {
                     <Shield className="w-4 h-4 mr-2" />
                     Khu vực Seller
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.location.href = '/staff'}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Khu vực Staff
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => window.location.href = '/admin-dashboard'}>
                     <Shield className="w-4 h-4 mr-2" />
                     Khu vực Admin
