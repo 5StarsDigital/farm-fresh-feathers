@@ -22,21 +22,21 @@ const Shop = () => {
   const loadFarms = async () => {
     try {
       const { data, error } = await supabase
-        .from('available_farms' as any)
+        .from('available_farms')
         .select('*')
+        .order('rating', { ascending: false })
         .order('name');
       
       if (error) {
         console.error('Error loading farms:', error);
-        // Use static data as fallback
-        setAvailableFarms(staticFarms);
+        setAvailableFarms([]);
         return;
       }
       
-      setAvailableFarms(data || staticFarms);
+      setAvailableFarms(data || []);
     } catch (error) {
       console.error('Error loading farms:', error);
-      setAvailableFarms(staticFarms);
+      setAvailableFarms([]);
     } finally {
       setLoading(false);
     }
@@ -84,40 +84,6 @@ const Shop = () => {
     }
   };
 
-  const staticFarms = [{
-    id: 1,
-    name: "Trang trại Xanh An",
-    location: "Hà Nội, Việt Nam",
-    availableCoops: 15,
-    totalCoops: 20,
-    rentalPrice: 2500000,
-    monthlyCost: 800000,
-    rating: 4.8,
-    reviewCount: 124,
-    image: "/lovable-uploads/05e0ef0f-6969-420a-857d-097c9220c184.png"
-  }, {
-    id: 2,
-    name: "Trang trại Bình Minh",
-    location: "TP. Hồ Chí Minh, Việt Nam",
-    availableCoops: 8,
-    totalCoops: 25,
-    rentalPrice: 3200000,
-    monthlyCost: 950000,
-    rating: 4.6,
-    reviewCount: 87,
-    image: "/lovable-uploads/81d89db6-5363-4583-afcc-727f9e30aade.png"
-  }, {
-    id: 3,
-    name: "Trang trại Phú Quý",
-    location: "Đà Nẵng, Việt Nam",
-    availableCoops: 12,
-    totalCoops: 18,
-    rentalPrice: 2800000,
-    monthlyCost: 750000,
-    rating: 4.9,
-    reviewCount: 156,
-    image: "/lovable-uploads/85a5a39e-52b9-44c5-b46c-63478a1e8080.png"
-  }];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -158,6 +124,10 @@ const Shop = () => {
             {loading ? (
               <div className="col-span-full text-center py-8">
                 <p>Đang tải danh sách trang trại...</p>
+              </div>
+            ) : availableFarms.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p>Chưa có trang trại nào được thêm bởi quản trị viên.</p>
               </div>
             ) : (
               availableFarms.map(farm => {
