@@ -98,17 +98,21 @@ function SuperAdminContent() {
         .order('created_at', { ascending: false })
         .limit(50);
       
-      // Fetch users with profiles and roles
-      const { data: profilesData } = await supabase
+      // Fetch users with profiles and roles separately for better error handling
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          email,
-          full_name,
-          created_at,
-          user_roles!inner(role)
-        `)
+        .select('id, email, full_name, created_at')
         .order('created_at', { ascending: false });
+
+      console.log('Profiles data:', profilesData);
+      console.log('Profiles error:', profilesError);
+
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      console.log('Roles data:', rolesData);
+      console.log('Roles error:', rolesError);
 
       // Calculate revenue
       const currentMonth = new Date().getMonth() + 1;
@@ -129,11 +133,16 @@ function SuperAdminContent() {
       setTransactions(transactionsData || []);
       setPayments(paymentsData || []);
       
-      // Transform users data
-      const usersWithRoles = profilesData?.map((profile: any) => ({
-        ...profile,
-        role: (profile.user_roles as any)?.[0]?.role || 'customer'
-      })) || [];
+      // Transform users data by combining profiles and roles
+      const usersWithRoles = profilesData?.map((profile: any) => {
+        const userRole = rolesData?.find(role => role.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || 'customer'
+        };
+      }) || [];
+      
+      console.log('Users with roles:', usersWithRoles);
       setUsers(usersWithRoles);
       
       setMonthlyRevenue(monthlyData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0);
