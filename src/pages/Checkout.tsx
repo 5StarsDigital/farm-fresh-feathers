@@ -295,11 +295,11 @@ export default function Checkout() {
             </Card>
 
             {/* Coop Design Selection */}
-            {selectedPackage && <Card>
-                <CardHeader>
-                  <CardTitle>
-                    2. {showFarmDesigns ? 'Chọn Thiết Kế Trại Gà Cho Thuê' : 'Chọn Thiết Kế Chuồng Gà'}
-                  </CardTitle>
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  2. {showFarmDesigns ? 'Chọn Thiết Kế Trại Gà Cho Thuê' : 'Chọn Thiết Kế Chuồng Gà'}
+                </CardTitle>
                   {selectedPackage === "basic" && <p className="text-sm text-muted-foreground">
                       Gói cơ bản sử dụng chuồng nuôi chung mặc định
                     </p>}
@@ -308,7 +308,12 @@ export default function Checkout() {
                     </p>}
                 </CardHeader>
                 <CardContent>
-                  <RadioGroup value={selectedCoop} onValueChange={setSelectedCoop}>
+                  {!selectedPackage ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      Vui lòng chọn gói gà trước
+                    </p>
+                  ) : (
+                    <RadioGroup value={selectedCoop} onValueChange={setSelectedCoop}>
                     {showFarmDesigns ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {availableFarms.map(farm => <div key={farm.id} className="relative">
                             <Label htmlFor={farm.id} className="cursor-pointer">
@@ -364,76 +369,70 @@ export default function Checkout() {
                             </Label>
                           </div>)}
                       </div>}
-                  </RadioGroup>
+                    </RadioGroup>
+                  )}
                 </CardContent>
-              </Card>}
+              </Card>
 
             {/* Chicken Selection */}
-            {selectedPackage && <Card>
-                <CardHeader>
-                  <CardTitle>3. Chọn Giống Gà và Số Lượng</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!selectedChickenType ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {chickenTypes.map(chicken => <Card key={chicken.id} className="border cursor-pointer hover:shadow-md transition-shadow" onClick={() => {
-                  setSelectedChickenType(chicken.id);
-                  setSelectedChickens({
-                    [chicken.id]: 1
-                  });
-                }}>
-                          <CardContent className="p-4">
-                            <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
-                              <img src={chicken.image_url || "/placeholder.svg"} alt={chicken.name} className="w-full h-full object-cover" />
-                            </div>
-                            <h4 className="font-semibold mb-1">{chicken.name}</h4>
-                            <p className="text-sm text-muted-foreground mb-2">{chicken.description}</p>
-                            <div className="mb-3">
-                              <p className="text-lg font-bold text-green-600">{formatCurrency(chicken.price)}/con</p>
-                              <p className="text-xs text-muted-foreground">
-                                Sản lượng: {chicken.egg_production_rate} trứng/2 ngày
-                              </p>
-                            </div>
-                            <Button className="w-full">Chọn giống này</Button>
-                          </CardContent>
-                        </Card>)}
-                    </div> : <div className="max-w-md mx-auto">
-                      {(() => {
-                  const selectedChicken = chickenTypes.find(c => c.id === selectedChickenType);
-                  if (!selectedChicken) return null;
-                  return <Card className="border">
-                            <CardContent className="p-4">
-                              <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
-                                <img src={selectedChicken.image_url || "/placeholder.svg"} alt={selectedChicken.name} className="w-full h-full object-cover" />
-                              </div>
-                              <h4 className="font-semibold mb-1">{selectedChicken.name}</h4>
-                              <p className="text-sm text-muted-foreground mb-2">{selectedChicken.description}</p>
-                              <div className="mb-3">
-                                <p className="text-lg font-bold text-green-600">{formatCurrency(selectedChicken.price)}/con</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Sản lượng: {selectedChicken.egg_production_rate} trứng/2 ngày
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2 mb-3">
-                                <Button variant="outline" size="sm" onClick={() => updateChickenQuantity(selectedChicken.id, (selectedChickens[selectedChicken.id] || 0) - 1)} disabled={!selectedChickens[selectedChicken.id] || selectedChickens[selectedChicken.id] <= 1}>
-                                  -
-                                </Button>
-                                <Input type="number" min="1" value={selectedChickens[selectedChicken.id] || 1} onChange={e => updateChickenQuantity(selectedChicken.id, Math.max(1, parseInt(e.target.value) || 1))} className="text-center h-8" />
-                                <Button variant="outline" size="sm" onClick={() => updateChickenQuantity(selectedChicken.id, (selectedChickens[selectedChicken.id] || 0) + 1)}>
-                                  +
-                                </Button>
-                              </div>
-                              <Button variant="outline" className="w-full" onClick={() => {
-                        setSelectedChickenType("");
-                        setSelectedChickens({});
-                      }}>
-                                Chọn giống gà khác
-                              </Button>
-                            </CardContent>
-                          </Card>;
-                })()}
-                    </div>}
-                </CardContent>
-              </Card>}
+            <Card>
+              <CardHeader>
+                <CardTitle>3. Chọn Giống Gà và Số Lượng</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!selectedPackage ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Vui lòng chọn gói gà trước
+                  </p>
+                ) : (
+                  <RadioGroup value={selectedChickenType} onValueChange={(value) => {
+                    setSelectedChickenType(value);
+                    setSelectedChickens({ [value]: 1 });
+                  }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {chickenTypes.map(chicken => (
+                        <div key={chicken.id} className="relative">
+                          <Label htmlFor={chicken.id} className="cursor-pointer">
+                            <Card className={`transition-all hover:shadow-lg ${selectedChickenType === chicken.id ? 'ring-2 ring-primary' : ''}`}>
+                              <CardContent className="p-4">
+                                <div className="flex items-center space-x-2 mb-3">
+                                  <RadioGroupItem value={chicken.id} id={chicken.id} />
+                                  <div className="flex-1">
+                                    <div className="aspect-square mb-3 rounded-lg overflow-hidden bg-gray-100">
+                                      <img src={chicken.image_url || "/placeholder.svg"} alt={chicken.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <h4 className="font-semibold mb-1">{chicken.name}</h4>
+                                    <p className="text-sm text-muted-foreground mb-2">{chicken.description}</p>
+                                    <div className="mb-3">
+                                      <p className="text-lg font-bold text-green-600">{formatCurrency(chicken.price)}/con</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Sản lượng: {chicken.egg_production_rate} trứng/2 ngày
+                                      </p>
+                                    </div>
+                                    {selectedChickenType === chicken.id && (
+                                      <div className="flex items-center gap-2 mt-3">
+                                        <Label>Số lượng:</Label>
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          value={selectedChickens[chicken.id] || 1}
+                                          onChange={(e) => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)}
+                                          className="w-20"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Order Summary */}
             {selectedPackage && <Card>
