@@ -86,6 +86,35 @@ function SuperAdminContent() {
   useEffect(() => {
     if (user && userRole === 'super_admin') {
       fetchAllData();
+
+      // Set up real-time subscriptions for revenue updates
+      const paymentsSubscription = supabase
+        .channel('payment_transactions_changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'payment_transactions' },
+          () => {
+            console.log('Payment transaction changed, updating revenue...');
+            fetchAllData(); // Refresh all data when payments change
+          }
+        )
+        .subscribe();
+
+      const transactionsSubscription = supabase
+        .channel('transactions_changes')
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'transactions' },
+          () => {
+            console.log('Transaction changed, updating revenue...');
+            fetchAllData(); // Refresh all data when transactions change
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscriptions on unmount
+      return () => {
+        supabase.removeChannel(paymentsSubscription);
+        supabase.removeChannel(transactionsSubscription);
+      };
     }
   }, [user, userRole]);
 
