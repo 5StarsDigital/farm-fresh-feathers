@@ -1,83 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/ui/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, QrCode, Copy, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const TopUp = () => {
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [copySuccess, setCopySuccess] = useState('');
 
-  // Predefined amounts
-  const predefinedAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
+  // Thông tin chuyển khoản
+  const bankInfo = {
+    bankName: 'ACB',
+    accountNumber: '18144631',
+    accountName: 'NGUYỄN THẾ ANH',
+    transferContent: `chicken${user?.id || ''}`
   };
 
-  const handleAmountSelect = (selectedAmount: number) => {
-    setAmount(selectedAmount.toString());
-  };
+  // URL QR Code từ VietQR
+  const qrCodeUrl = `https://img.vietqr.io/image/acb-18144631-compact2.jpg?accountName=NGUYEN+THE+ANH&addInfo=${bankInfo.transferContent}`;
 
-  const handleTopUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      setError('Vui lòng đăng nhập để nạp tiền');
-      return;
-    }
-
-    const numAmount = parseInt(amount);
-    if (!numAmount || numAmount < 10000) {
-      setError('Số tiền nạp tối thiểu là 10,000 VND');
-      return;
-    }
-
-    if (numAmount > 50000000) {
-      setError('Số tiền nạp tối đa là 50,000,000 VND');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
+  const copyToClipboard = async (text: string, label: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('web2m-payment', {
-        body: {
-          amount: numAmount,
-          description: `Nạp tiền vào tài khoản Nuôi Gà 5.0 - ${formatCurrency(numAmount)}`
-        }
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(label);
+      toast({
+        title: "Đã sao chép!",
+        description: `${label} đã được sao chép vào clipboard`,
       });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.payment_url) {
-        // Open payment URL in new tab
-        window.open(data.payment_url, '_blank');
-      } else {
-        throw new Error('Không nhận được URL thanh toán');
-      }
-
-    } catch (error) {
-      console.error('Payment error:', error);
-      setError(error.message || 'Đã xảy ra lỗi khi tạo thanh toán');
-    } finally {
-      setLoading(false);
+      setTimeout(() => setCopySuccess(''), 2000);
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể sao chép. Vui lòng thử lại.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -101,93 +64,159 @@ const TopUp = () => {
       <Navigation />
       
       <main className="pt-20 pb-16">
-        <div className="container mx-auto px-4 max-w-2xl">
+        <div className="container mx-auto px-4 max-w-4xl">
           <div className="flex items-center gap-4 mb-6">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">Nạp tiền</h1>
+            <h1 className="text-3xl font-bold text-foreground">Nạp tiền tự động</h1>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Nạp tiền vào tài khoản
-              </CardTitle>
-              <CardDescription>
-                Nạp tiền để mua gà, phụ kiện và thuê chuồng gà
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleTopUp} className="space-y-6">
-                <div>
-                  <Label htmlFor="amount">Số tiền nạp (VND)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="Nhập số tiền"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    min="10000"
-                    max="50000000"
-                    required
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* QR Code Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <QrCode className="w-5 h-5" />
+                  Mã QR chuyển khoản
+                </CardTitle>
+                <CardDescription>
+                  Quét mã QR bằng app ngân hàng để chuyển khoản
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="bg-white p-4 rounded-lg inline-block border">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code chuyển khoản" 
+                    className="w-64 h-64 mx-auto"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Tối thiểu: 10,000 VND - Tối đa: 50,000,000 VND
-                  </p>
                 </div>
-
-                <div>
-                  <Label>Chọn nhanh số tiền</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                    {predefinedAmounts.map((preAmount) => (
-                      <Button
-                        key={preAmount}
-                        type="button"
-                        variant={amount === preAmount.toString() ? "default" : "outline"}
-                        className="h-12"
-                        onClick={() => handleAmountSelect(preAmount)}
-                      >
-                        {formatCurrency(preAmount)}
-                      </Button>
-                    ))}
+                <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-center gap-2 text-green-700">
+                    <Smartphone className="w-4 h-4" />
+                    <span className="text-sm font-medium">Quét QR bằng app ngân hàng</span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                {amount && (
-                  <div className="bg-muted p-4 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Số tiền nạp:</span>
-                      <span className="font-semibold text-lg">{formatCurrency(parseInt(amount) || 0)}</span>
+            {/* Bank Info Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Thông tin chuyển khoản</CardTitle>
+                <CardDescription>
+                  Thông tin chi tiết để chuyển khoản thủ công
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Ngân hàng</div>
+                      <div className="font-semibold">{bankInfo.bankName}</div>
                     </div>
                   </div>
-                )}
 
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                    <div className="flex-1">
+                      <div className="text-sm text-muted-foreground">Số tài khoản</div>
+                      <div className="font-semibold font-mono">{bankInfo.accountNumber}</div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => copyToClipboard(bankInfo.accountNumber, 'Số tài khoản')}
+                      className="ml-2"
+                    >
+                      {copySuccess === 'Số tài khoản' ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-lg" 
-                  disabled={loading || !amount}
-                >
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Tiến hành nạp tiền
-                </Button>
-              </form>
+                  <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                    <div className="flex-1">
+                      <div className="text-sm text-muted-foreground">Chủ tài khoản</div>
+                      <div className="font-semibold">{bankInfo.accountName}</div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => copyToClipboard(bankInfo.accountName, 'Tên chủ tài khoản')}
+                      className="ml-2"
+                    >
+                      {copySuccess === 'Tên chủ tài khoản' ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
 
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Lưu ý:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Giao dịch được xử lý qua cổng thanh toán Web2M</li>
-                  <li>• Tiền sẽ được cộng vào tài khoản sau khi thanh toán thành công</li>
-                  <li>• Vui lòng kiểm tra email xác nhận sau khi hoàn tất</li>
-                  <li>• Liên hệ hỗ trợ nếu có vấn đề với giao dịch</li>
-                </ul>
+                  <div className="flex justify-between items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex-1">
+                      <div className="text-sm text-yellow-700 font-medium">Nội dung chuyển khoản</div>
+                      <div className="font-bold font-mono text-yellow-800">{bankInfo.transferContent}</div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => copyToClipboard(bankInfo.transferContent, 'Nội dung chuyển khoản')}
+                      className="ml-2"
+                    >
+                      {copySuccess === 'Nội dung chuyển khoản' ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Important Notes */}
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Hướng dẫn nạp tiền
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-800">
+                  <div>
+                    <div className="font-medium mb-2">Cách 1: Quét mã QR</div>
+                    <ul className="space-y-1 ml-4">
+                      <li>• Mở app ngân hàng của bạn</li>
+                      <li>• Chọn "Chuyển khoản" → "Quét QR"</li>
+                      <li>• Quét mã QR ở bên trái</li>
+                      <li>• Nhập số tiền và xác nhận</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="font-medium mb-2">Cách 2: Chuyển khoản thủ công</div>
+                    <ul className="space-y-1 ml-4">
+                      <li>• Chọn ngân hàng ACB</li>
+                      <li>• Nhập số tài khoản: <span className="font-mono">{bankInfo.accountNumber}</span></li>
+                      <li>• <strong>Quan trọng:</strong> Ghi đúng nội dung: <span className="font-mono font-bold">{bankInfo.transferContent}</span></li>
+                      <li>• Nhập số tiền và thực hiện chuyển khoản</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-yellow-100 rounded border border-yellow-300">
+                  <div className="text-yellow-800 font-medium text-center">
+                    ⚠️ Chuyển khoản đúng nội dung: <span className="font-mono font-bold">{bankInfo.transferContent}</span>
+                    <br />
+                    💰 Tiền sẽ tự động cộng vào tài khoản trong vòng 1 phút
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
