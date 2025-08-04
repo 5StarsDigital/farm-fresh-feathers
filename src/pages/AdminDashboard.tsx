@@ -372,7 +372,7 @@ export default function AdminDashboard() {
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
-            <TabsTrigger value="activities">Hoạt động</TabsTrigger>
+            <TabsTrigger value="activities">Hoạt động khách hàng</TabsTrigger>
           </TabsList>
 
           <TabsContent value="farms" className="space-y-4">
@@ -495,8 +495,13 @@ export default function AdminDashboard() {
 
 
           <TabsContent value="activities" className="space-y-4">
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold mb-2">Hoạt động khách hàng</h2>
+              <p className="text-muted-foreground">Giao dịch và thanh toán của khách hàng</p>
+            </div>
+            
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Hoạt động hệ thống</h2>
+              <h3 className="text-lg font-semibold">Danh sách giao dịch</h3>
               <Input placeholder="Tìm kiếm giao dịch..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-64" />
             </div>
 
