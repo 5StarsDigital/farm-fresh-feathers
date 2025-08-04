@@ -44,7 +44,7 @@ export default function ACBAutoTopup() {
     checkACB(); // Initial check
     const interval = setInterval(checkACB, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card className="border-2 border-primary/20 bg-gradient-to-br from-green-50 to-blue-50">
