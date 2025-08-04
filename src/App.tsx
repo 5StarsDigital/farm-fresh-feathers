@@ -12,6 +12,7 @@ import Farm from "./pages/Farm";
 import Shop from "./pages/Shop";
 import FarmRental from "./pages/FarmRental";
 import ChickenRental from "./pages/ChickenRental";
+import Wallet from "./pages/Wallet";
 
 import TopUp from "./pages/TopUp";
 import Checkout from "./pages/Checkout";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/farm" element={<Farm />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/shop/chickens" element={<ChickenRental />} />
+            <Route path="/wallet" element={<Wallet />} />
             
             <Route path="/topup" element={<TopUp />} />
             <Route path="/checkout" element={<Checkout />} />

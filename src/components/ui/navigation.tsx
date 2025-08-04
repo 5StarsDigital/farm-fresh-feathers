@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, ShoppingCart, MapPin, MessageSquare, BookOpen, LogOut, Shield, Wallet } from 'lucide-react';
+import { Menu, X, User, ShoppingCart, MapPin, CreditCard, BookOpen, LogOut, Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
@@ -72,9 +72,9 @@ const Navigation = () => {
     href: '/farm',
     icon: MapPin
   }, {
-    name: 'Hộp thư',
-    href: '/messages',
-    icon: MessageSquare
+    name: 'Nạp/Rút',
+    href: '/wallet',
+    icon: CreditCard
   }, {
     name: 'Hướng dẫn',
     href: '/guide',
