@@ -311,6 +311,36 @@ export type Database = {
           },
         ]
       }
+      processed_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          posting_date: number
+          processed_at: string
+          transaction_number: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          posting_date: number
+          processed_at?: string
+          transaction_number: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          posting_date?: number
+          processed_at?: string
+          transaction_number?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
