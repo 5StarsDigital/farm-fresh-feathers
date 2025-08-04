@@ -447,7 +447,7 @@ const Farm = () => {
                     <span className="text-2xl">🐣</span>
                     Thuê gà
                   </Button>
-                  <Button onClick={() => navigate('/wallet')} variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-blue-500 text-blue-700 hover:bg-blue-50 rounded-xl shadow-lg font-bold">
+                  <Button onClick={() => navigate('/topup')} variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-blue-500 text-blue-700 hover:bg-blue-50 rounded-xl shadow-lg font-bold">
                     <Wallet className="h-8 w-8" />
                     💰 Ví tiền
                   </Button>
