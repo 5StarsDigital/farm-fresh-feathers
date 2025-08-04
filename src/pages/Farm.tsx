@@ -443,7 +443,7 @@ const Farm = () => {
                     <ShoppingCart className="h-8 w-8" />
                     🛒 Cửa hàng
                   </Button>
-                  <Button onClick={() => navigate('/chicken-rental')} variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-purple-500 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg font-bold">
+                  <Button onClick={() => navigate('/shop/chickens')} variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-purple-500 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg font-bold">
                     <span className="text-2xl">🐣</span>
                     Thuê gà
                   </Button>
