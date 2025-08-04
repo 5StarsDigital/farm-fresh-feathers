@@ -174,6 +174,18 @@ serve(async (req) => {
         console.log('Farm rentals removed successfully');
       }
 
+      // Remove user farm (delete the farm itself)
+      const { error: farmDeleteError } = await supabase
+        .from('farms')
+        .delete()
+        .eq('user_id', payment.user_id);
+
+      if (farmDeleteError) {
+        console.error('Error removing user farm:', farmDeleteError);
+      } else {
+        console.log('User farm removed successfully');
+      }
+
       // Update payment status to refunded
       const { error: statusError } = await supabase
         .from('payment_transactions')

@@ -303,29 +303,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handle transaction deletion
-  const handleDeleteTransaction = async (transactionId: string) => {
-    try {
-      const transaction = transactions.find(t => t.id === transactionId);
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', transactionId);
-      
-      if (error) throw error;
-
-      // Log admin activity
-      await logAdminActivity('transaction_delete', `Xóa giao dịch: ${transaction?.description || 'Unknown'}`, {
-        deletedTransaction: transaction
-      }, 'transactions', transactionId);
-
-      toast.success('Xóa giao dịch thành công');
-      fetchAllData();
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-      toast.error('Lỗi khi xóa giao dịch');
-    }
-  };
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -558,28 +535,20 @@ export default function AdminDashboard() {
                            <TableCell>{formatCurrency(transaction.amount || 0)}</TableCell>
                            <TableCell>{transaction.description}</TableCell>
                            <TableCell>{new Date(transaction.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                           <TableCell>
-                             <div className="flex gap-2">
-                               {transaction.transaction_type !== 'refund' && (
-                                 <Button 
-                                   variant="outline" 
-                                   size="sm"
-                                   onClick={() => handleRefundTransaction(transaction.id)}
-                                   title="Hoàn trả"
-                                 >
-                                   <Undo2 className="h-4 w-4" />
-                                 </Button>
-                               )}
-                               <Button 
-                                 variant="destructive" 
-                                 size="sm"
-                                 onClick={() => handleDeleteTransaction(transaction.id)}
-                                 title="Xóa giao dịch"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </div>
-                           </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                {transaction.transaction_type !== 'refund' && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleRefundTransaction(transaction.id)}
+                                    title="Hoàn trả"
+                                  >
+                                    <Undo2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
                          </TableRow>)}
                     </TableBody>
                   </Table>
