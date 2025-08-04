@@ -569,10 +569,15 @@ export default function AdminDashboard() {
                                  >
                                    <Undo2 className="h-4 w-4" />
                                  </Button>
-                               )}
-                               
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
+                                )}
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => handleDeleteTransaction(transaction.id)}
+                                  title="Xóa giao dịch"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                              </div>
                            </TableCell>
                          </TableRow>)}
