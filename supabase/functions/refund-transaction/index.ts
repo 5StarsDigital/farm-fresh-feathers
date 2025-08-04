@@ -100,6 +100,69 @@ serve(async (req) => {
             }
           }
         }
+      } else if (transaction.transaction_type === 'package_purchase') {
+        // For package purchases, remove ALL related data
+        console.log('Refunding package purchase - removing all farm data');
+        
+        // Remove all user chickens in this farm
+        const { error: chickensDeleteError } = await supabase
+          .from('user_chickens')
+          .delete()
+          .eq('farm_id', transaction.farm_id);
+        
+        if (chickensDeleteError) {
+          console.error('Error removing user chickens:', chickensDeleteError);
+        } else {
+          console.log('All user chickens removed successfully');
+        }
+
+        // Remove all user accessories in this farm
+        const { error: accessoriesDeleteError } = await supabase
+          .from('user_accessories')
+          .delete()
+          .eq('farm_id', transaction.farm_id);
+        
+        if (accessoriesDeleteError) {
+          console.error('Error removing user accessories:', accessoriesDeleteError);
+        } else {
+          console.log('All user accessories removed successfully');
+        }
+
+        // Remove farm rentals
+        const { error: rentalDeleteError } = await supabase
+          .from('farm_rentals')
+          .delete()
+          .eq('farm_id', transaction.farm_id);
+        
+        if (rentalDeleteError) {
+          console.error('Error removing farm rentals:', rentalDeleteError);
+        } else {
+          console.log('Farm rentals removed successfully');
+        }
+
+        // Remove eggs inventory
+        const { error: eggsDeleteError } = await supabase
+          .from('eggs_inventory')
+          .delete()
+          .eq('farm_id', transaction.farm_id);
+        
+        if (eggsDeleteError) {
+          console.error('Error removing eggs inventory:', eggsDeleteError);
+        } else {
+          console.log('Eggs inventory removed successfully');
+        }
+
+        // Finally remove the farm itself
+        const { error: farmDeleteError } = await supabase
+          .from('farms')
+          .delete()
+          .eq('id', transaction.farm_id);
+        
+        if (farmDeleteError) {
+          console.error('Error removing farm:', farmDeleteError);
+        } else {
+          console.log('Farm removed successfully');
+        }
       }
 
       // Create refund transaction record using service role
