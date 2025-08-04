@@ -17,3 +17,6 @@ email_confirm = false
 
 [functions.generate-chicken-coop]
 verify_jwt = false
+
+[functions.acb-auto-topup]
+verify_jwt = false
