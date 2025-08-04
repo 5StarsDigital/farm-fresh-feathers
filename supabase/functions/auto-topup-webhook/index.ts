@@ -18,6 +18,41 @@ serve(async (req) => {
     
     console.log('Auto top-up webhook received:', payload);
 
+    // Get the Web2M token from environment
+    const web2mToken = Deno.env.get('WEB2M_TOKEN');
+    
+    if (!web2mToken) {
+      console.error('WEB2M_TOKEN not configured');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      );
+    }
+
+    // Verify token from request (check both headers and payload)
+    const tokenFromHeader = req.headers.get('Authorization')?.replace('Bearer ', '') || 
+                           req.headers.get('X-Web2M-Token') ||
+                           req.headers.get('token');
+    const tokenFromPayload = payload.token;
+    
+    const receivedToken = tokenFromHeader || tokenFromPayload;
+    
+    if (!receivedToken || receivedToken !== web2mToken) {
+      console.error('Invalid or missing Web2M token');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      );
+    }
+
+    console.log('Token validation successful');
+
     // Create Supabase service client
     const supabaseService = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
