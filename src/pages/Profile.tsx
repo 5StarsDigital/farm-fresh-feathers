@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Save, Eye, EyeOff, Trash2 } from 'lucide-react';
 
 interface ProfileData {
   full_name: string;
@@ -25,6 +25,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
     email: '',
@@ -155,6 +156,45 @@ const Profile = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleClearUserData = async () => {
+    if (!user) return;
+
+    if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử giao dịch và sản phẩm đã mua? Hành động này không thể hoàn tác.')) {
+      return;
+    }
+
+    setClearing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Không có phiên đăng nhập');
+
+      const { data, error } = await supabase.functions.invoke('clear-user-data', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Thành công',
+        description: 'Đã xóa thành công lịch sử giao dịch và sản phẩm đã mua'
+      });
+
+      // Refresh the page to update data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể xóa dữ liệu',
+        variant: 'destructive'
+      });
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -310,6 +350,35 @@ const Profile = () => {
             >
               <Save className="w-4 h-4 mr-2" />
               {saving ? 'Đang cập nhật...' : 'Thay đổi mật khẩu'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Clear Data Card */}
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Xóa dữ liệu</CardTitle>
+            <CardDescription>Xóa toàn bộ lịch sử giao dịch và sản phẩm đã mua</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Hành động này sẽ xóa vĩnh viễn:
+            </p>
+            <ul className="text-sm text-muted-foreground mb-4 list-disc list-inside space-y-1">
+              <li>Tất cả lịch sử giao dịch</li>
+              <li>Tất cả gà đã mua</li>
+              <li>Tất cả phụ kiện đã mua</li>
+              <li>Lịch sử thuê trang trại</li>
+              <li>Số dư tài khoản (reset về 0)</li>
+            </ul>
+            <Button 
+              onClick={handleClearUserData} 
+              disabled={clearing}
+              variant="destructive"
+              className="w-full"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {clearing ? 'Đang xóa...' : 'Xóa toàn bộ dữ liệu'}
             </Button>
           </CardContent>
         </Card>
