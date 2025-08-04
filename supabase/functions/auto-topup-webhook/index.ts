@@ -39,8 +39,8 @@ serve(async (req) => {
       );
     }
 
-    // Check if description matches the pattern "chicken[USER_ID]"
-    const chickensMatch = description?.match(/^chicken([a-f0-9-]{36})$/i);
+    // Check if description matches the pattern "chicken[NUMBER]"
+    const chickensMatch = description?.match(/^chicken(\d+)$/i);
     
     if (!chickensMatch) {
       console.log('Description does not match chicken pattern:', description);
@@ -53,15 +53,26 @@ serve(async (req) => {
       );
     }
 
-    const userId = chickensMatch[1];
-    console.log('Extracted user ID:', userId);
+    const userNumericId = parseInt(chickensMatch[1]);
+    console.log('Extracted user numeric ID:', userNumericId);
 
-    // Verify user exists
-    const { data: userProfile, error: userError } = await supabaseService
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
+    // Map numeric ID to actual user ID by creating a mapping table or use profiles table with a numeric field
+    // For now, we'll assume you have a mapping or use the numeric ID directly if stored in profiles
+    // This needs to be adjusted based on your user ID mapping strategy
+    
+    console.log('Note: You need to create a mapping between numeric IDs and actual user UUIDs');
+    
+    return new Response(
+      JSON.stringify({ 
+        message: 'Need to implement user ID mapping',
+        numeric_id: userNumericId,
+        note: 'Create a mapping table or field to convert numeric ID to UUID'
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      }
+    );
 
     if (userError || !userProfile) {
       console.error('User not found:', userId);
