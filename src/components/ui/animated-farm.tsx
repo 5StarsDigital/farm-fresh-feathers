@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Egg, Wallet, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import cardBackground from '@/assets/card-background.png';
 
 interface Chicken {
   id: string;
@@ -180,62 +179,32 @@ export default function AnimatedFarm({
         
         <div className="relative text-center">
           <div className="bg-amber-600 text-white px-6 py-3 rounded-xl inline-block mb-4 border-4 border-amber-800 shadow-lg">
-            <h1 className="text-2xl font-bold">🎉 Chào mừng: {farmName}</h1>
+            <h1 className="text-2xl font-bold">🎉 Chào mừng: {shop_name}</h1>
           </div>
           
           <div className="grid grid-cols-3 gap-4 mt-4">
-            <div 
-              className="relative text-white p-4 rounded-xl border-4 border-amber-700 shadow-lg overflow-hidden"
-              style={{
-                backgroundImage: `url(${cardBackground})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            >
-              <div className="absolute inset-0 bg-amber-500/80"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-center mb-2">
-                  <Wallet className="h-8 w-8" />
-                </div>
-                <p className="text-sm font-semibold drop-shadow-lg">Số dư tài khoản</p>
-                <p className="text-lg font-bold drop-shadow-lg">{balance.toLocaleString()} VND</p>
+            <div className="bg-amber-500 text-white p-4 rounded-xl border-4 border-amber-700 shadow-lg">
+              <div className="flex items-center justify-center mb-2">
+                <Wallet className="h-8 w-8" />
               </div>
+              <p className="text-sm font-semibold">Số dư tài khoản</p>
+              <p className="text-lg font-bold">{balance.toLocaleString()} VND</p>
             </div>
             
-            <div 
-              className="relative text-white p-4 rounded-xl border-4 border-orange-700 shadow-lg overflow-hidden"
-              style={{
-                backgroundImage: `url(${cardBackground})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            >
-              <div className="absolute inset-0 bg-orange-500/80"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-center mb-2">
-                  <Egg className="h-8 w-8" />
-                </div>
-                <p className="text-sm font-semibold drop-shadow-lg">Số trứng hiện có</p>
-                <p className="text-lg font-bold drop-shadow-lg">{totalEggs} quả</p>
+            <div className="bg-orange-500 text-white p-4 rounded-xl border-4 border-orange-700 shadow-lg">
+              <div className="flex items-center justify-center mb-2">
+                <Egg className="h-8 w-8" />
               </div>
+              <p className="text-sm font-semibold">Số trứng hiện có</p>
+              <p className="text-lg font-bold">{totalEggs} quả</p>
             </div>
             
-            <div 
-              className="relative text-white p-4 rounded-xl border-4 border-red-700 shadow-lg overflow-hidden"
-              style={{
-                backgroundImage: `url(${cardBackground})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            >
-              <div className="absolute inset-0 bg-red-500/80"></div>
-              <div className="relative z-10">
-                <div className="flex items-center justify-center mb-2">
-                  <span className="text-2xl">🐔</span>
-                </div>
-                <p className="text-sm font-semibold drop-shadow-lg">Tổng số gà</p>
-                <p className="text-lg font-bold drop-shadow-lg">{totalChickens} con</p>
+            <div className="bg-red-500 text-white p-4 rounded-xl border-4 border-red-700 shadow-lg">
+              <div className="flex items-center justify-center mb-2">
+                <span className="text-2xl">🐔</span>
               </div>
+              <p className="text-sm font-semibold">Tổng số gà</p>
+              <p className="text-lg font-bold">{totalChickens} con</p>
             </div>
           </div>
         </div>
