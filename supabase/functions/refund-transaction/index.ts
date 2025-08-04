@@ -100,72 +100,6 @@ serve(async (req) => {
             }
           }
         }
-      } else if (transaction.transaction_type === 'package_purchase') {
-        // For package purchases, only remove items that were purchased in this specific transaction
-        console.log('Refunding package purchase - removing specific transaction items');
-        console.log('Transaction details:', transaction);
-        
-        // For package purchases, we need to remove the specific quantities that were purchased
-        // Based on the transaction description, determine what to remove
-        const quantity = transaction.quantity || 1;
-        
-        if (transaction.description?.includes('gà') || transaction.description?.includes('chicken')) {
-          // Remove chickens based on transaction quantity
-          console.log('Removing chickens from package purchase...');
-          const { data: userChickens, error: chickenFetchError } = await supabase
-            .from('user_chickens')
-            .select('*')
-            .eq('farm_id', transaction.farm_id)
-            .order('created_at', { ascending: false })
-            .limit(quantity);
-
-          if (!chickenFetchError && userChickens && userChickens.length > 0) {
-            for (const chicken of userChickens) {
-              const newQuantity = Math.max(0, chicken.quantity - quantity);
-              if (newQuantity === 0) {
-                await supabase
-                  .from('user_chickens')
-                  .delete()
-                  .eq('id', chicken.id);
-              } else {
-                await supabase
-                  .from('user_chickens')
-                  .update({ quantity: newQuantity })
-                  .eq('id', chicken.id);
-              }
-            }
-            console.log('Package chickens removed successfully');
-          }
-        }
-
-        if (transaction.description?.includes('phụ kiện') || transaction.description?.includes('accessory')) {
-          // Remove accessories based on transaction quantity
-          console.log('Removing accessories from package purchase...');
-          const { data: userAccessories, error: accessoryFetchError } = await supabase
-            .from('user_accessories')
-            .select('*')
-            .eq('farm_id', transaction.farm_id)
-            .order('created_at', { ascending: false })
-            .limit(quantity);
-
-          if (!accessoryFetchError && userAccessories && userAccessories.length > 0) {
-            for (const accessory of userAccessories) {
-              const newQuantity = Math.max(0, accessory.quantity - quantity);
-              if (newQuantity === 0) {
-                await supabase
-                  .from('user_accessories')
-                  .delete()
-                  .eq('id', accessory.id);
-              } else {
-                await supabase
-                  .from('user_accessories')
-                  .update({ quantity: newQuantity })
-                  .eq('id', accessory.id);
-              }
-            }
-            console.log('Package accessories removed successfully');
-          }
-        }
       }
 
       // Create refund transaction record using service role
@@ -186,13 +120,13 @@ serve(async (req) => {
         throw refundError;
       }
 
-      // Mark original transaction as refunded instead of deleting it
-      const { error: updateError } = await supabase
+      // Delete original transaction
+      const { error: deleteError } = await supabase
         .from('transactions')
-        .update({ transaction_type: 'refunded', description: `[ĐÃ HOÀN TRẢ] ${transaction.description}` })
+        .delete()
         .eq('id', transactionId);
 
-      if (updateError) throw updateError;
+      if (deleteError) throw deleteError;
 
     } else if (type === 'payment') {
       // Handle payment refund
@@ -238,18 +172,6 @@ serve(async (req) => {
         console.error('Error removing farm rentals:', rentalError);
       } else {
         console.log('Farm rentals removed successfully');
-      }
-
-      // Remove user farm (delete the farm itself)
-      const { error: farmDeleteError } = await supabase
-        .from('farms')
-        .delete()
-        .eq('user_id', payment.user_id);
-
-      if (farmDeleteError) {
-        console.error('Error removing user farm:', farmDeleteError);
-      } else {
-        console.log('User farm removed successfully');
       }
 
       // Update payment status to refunded

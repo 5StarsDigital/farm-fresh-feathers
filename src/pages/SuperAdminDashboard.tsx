@@ -436,7 +436,7 @@ function SuperAdminContent() {
 
         <Tabs defaultValue="activities" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="activities">Hoạt động khách hàng</TabsTrigger>
+            <TabsTrigger value="activities">Hoạt động</TabsTrigger>
             <TabsTrigger value="admin-activities">Hoạt động Admin</TabsTrigger>
             <TabsTrigger value="users">Quản lý Role</TabsTrigger>
             <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
@@ -445,8 +445,8 @@ function SuperAdminContent() {
           <TabsContent value="activities">
             <Card>
               <CardHeader>
-                <CardTitle>Hoạt động giao dịch khách hàng</CardTitle>
-                <p className="text-muted-foreground">Tất cả hoạt động mua bán, thu hoạch trứng của khách hàng</p>
+                <CardTitle>Hoạt động giao dịch</CardTitle>
+                <p className="text-muted-foreground">Tất cả hoạt động mua bán, thu hoạch trứng với thông tin người dùng</p>
               </CardHeader>
               <CardContent>
                 {loadingData ? (

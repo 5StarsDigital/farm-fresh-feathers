@@ -303,6 +303,29 @@ export default function AdminDashboard() {
     }
   };
 
+  // Handle transaction deletion
+  const handleDeleteTransaction = async (transactionId: string) => {
+    try {
+      const transaction = transactions.find(t => t.id === transactionId);
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transactionId);
+      
+      if (error) throw error;
+
+      // Log admin activity
+      await logAdminActivity('transaction_delete', `Xóa giao dịch: ${transaction?.description || 'Unknown'}`, {
+        deletedTransaction: transaction
+      }, 'transactions', transactionId);
+
+      toast.success('Xóa giao dịch thành công');
+      fetchAllData();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast.error('Lỗi khi xóa giao dịch');
+    }
+  };
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -372,7 +395,7 @@ export default function AdminDashboard() {
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
-            <TabsTrigger value="activities">Hoạt động khách hàng</TabsTrigger>
+            <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
           <TabsContent value="farms" className="space-y-4">
@@ -495,13 +518,8 @@ export default function AdminDashboard() {
 
 
           <TabsContent value="activities" className="space-y-4">
-            <div className="mb-4">
-              <h2 className="text-2xl font-bold mb-2">Hoạt động khách hàng</h2>
-              <p className="text-muted-foreground">Giao dịch và thanh toán của khách hàng</p>
-            </div>
-            
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Danh sách giao dịch</h3>
+              <h2 className="text-2xl font-bold">Hoạt động hệ thống</h2>
               <Input placeholder="Tìm kiếm giao dịch..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-64" />
             </div>
 
@@ -540,20 +558,28 @@ export default function AdminDashboard() {
                            <TableCell>{formatCurrency(transaction.amount || 0)}</TableCell>
                            <TableCell>{transaction.description}</TableCell>
                            <TableCell>{new Date(transaction.created_at).toLocaleDateString('vi-VN')}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                {transaction.transaction_type !== 'refund' && (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleRefundTransaction(transaction.id)}
-                                    title="Hoàn trả"
-                                  >
-                                    <Undo2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               {transaction.transaction_type !== 'refund' && (
+                                 <Button 
+                                   variant="outline" 
+                                   size="sm"
+                                   onClick={() => handleRefundTransaction(transaction.id)}
+                                   title="Hoàn trả"
+                                 >
+                                   <Undo2 className="h-4 w-4" />
+                                 </Button>
+                               )}
+                               <Button 
+                                 variant="destructive" 
+                                 size="sm"
+                                 onClick={() => handleDeleteTransaction(transaction.id)}
+                                 title="Xóa giao dịch"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
                          </TableRow>)}
                     </TableBody>
                   </Table>
