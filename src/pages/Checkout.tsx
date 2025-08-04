@@ -112,6 +112,7 @@ export default function Checkout() {
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
   const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   useEffect(() => {
     const packageId = searchParams.get("package");
     if (packageId && packages.find(p => p.id === packageId)) {
@@ -204,6 +205,9 @@ export default function Checkout() {
       toast.error('Vui lòng chọn đầy đủ các mục trước khi thanh toán');
       return;
     }
+    
+    setIsProcessingPayment(true);
+    
     try {
       const {
         data,
@@ -232,6 +236,8 @@ export default function Checkout() {
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Có lỗi xảy ra khi thanh toán');
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
   const formatCurrency = (amount: number) => {
@@ -245,7 +251,18 @@ export default function Checkout() {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background relative">
+      {/* Payment Processing Overlay */}
+      {isProcessingPayment && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 shadow-xl text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold mb-2">Đang xử lý thanh toán</h3>
+            <p className="text-muted-foreground">Vui lòng không đóng trang này...</p>
+          </div>
+        </div>
+      )}
+      
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -471,8 +488,8 @@ export default function Checkout() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-6" size="lg" onClick={handlePayment} disabled={!canProceedToPayment()}>
-                      Thanh Toán
+                    <Button className="w-full mt-6" size="lg" onClick={handlePayment} disabled={!canProceedToPayment() || isProcessingPayment}>
+                      {isProcessingPayment ? 'Đang xử lý...' : 'Thanh Toán'}
                     </Button>
 
                     {!canProceedToPayment() && <p className="text-sm text-muted-foreground text-center mt-2">
