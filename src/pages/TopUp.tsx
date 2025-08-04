@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import ACBAutoTopup from '@/components/ui/acb-auto-topup';
 
 const TopUp = () => {
   const { user } = useAuth();
@@ -91,6 +92,11 @@ const TopUp = () => {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <h1 className="text-3xl font-bold text-foreground">Nạp tiền tự động</h1>
+          </div>
+
+          {/* ACB Auto Top-up Status */}
+          <div className="mb-6">
+            <ACBAutoTopup />
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
