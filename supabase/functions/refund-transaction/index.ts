@@ -103,11 +103,14 @@ serve(async (req) => {
       } else if (transaction.transaction_type === 'package_purchase') {
         // For package purchases, remove ALL related data for this user
         console.log('Refunding package purchase - removing all user farm data');
+        console.log('Farm user ID:', farm.user_id);
+        console.log('Transaction farm ID:', transaction.farm_id);
         
         // Get user_id from farm
         const farmUserId = farm.user_id;
         
-        // Remove all user chickens for this user
+        // Remove all user chickens for this farm
+        console.log('Removing user chickens...');
         const { error: chickensDeleteError } = await supabase
           .from('user_chickens')
           .delete()
@@ -119,7 +122,8 @@ serve(async (req) => {
           console.log('All user chickens removed successfully');
         }
 
-        // Remove all user accessories for this user
+        // Remove all user accessories for this farm
+        console.log('Removing user accessories...');
         const { error: accessoriesDeleteError } = await supabase
           .from('user_accessories')
           .delete()
@@ -132,6 +136,7 @@ serve(async (req) => {
         }
 
         // Remove ALL farm rentals for this user (not just for this farm)
+        console.log('Removing farm rentals for user:', farmUserId);
         const { error: rentalDeleteError } = await supabase
           .from('farm_rentals')
           .delete()
@@ -143,7 +148,8 @@ serve(async (req) => {
           console.log('All farm rentals removed successfully');
         }
 
-        // Remove eggs inventory
+        // Remove eggs inventory for this farm
+        console.log('Removing eggs inventory...');
         const { error: eggsDeleteError } = await supabase
           .from('eggs_inventory')
           .delete()
@@ -155,16 +161,18 @@ serve(async (req) => {
           console.log('Eggs inventory removed successfully');
         }
 
-        // Finally remove ALL farms for this user
+        // Finally remove the farm itself (but keep the transaction for history)
+        console.log('Removing user farm...');
         const { error: farmDeleteError } = await supabase
           .from('farms')
           .delete()
-          .eq('user_id', farmUserId);
+          .eq('id', transaction.farm_id);
         
         if (farmDeleteError) {
-          console.error('Error removing all user farms:', farmDeleteError);
+          console.error('Error removing user farm:', farmDeleteError);
+          // Don't throw error, just log it for now
         } else {
-          console.log('All user farms removed successfully');
+          console.log('User farm removed successfully');
         }
       }
 
