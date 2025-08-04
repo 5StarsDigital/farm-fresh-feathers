@@ -370,31 +370,33 @@ const Farm = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-gradient-to-b from-sky-200 via-green-200 to-green-300">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 my-0">
-          <h1 className="text-3xl font-bold my-[50px]">Trang trại của tôi</h1>
-          <p className="text-muted-foreground">Quản lý trang trại gà và thu hoạch trứng</p>
+        <div className="mb-8 text-center">
+          <div className="bg-amber-600 text-white px-8 py-4 rounded-2xl inline-block border-4 border-amber-800 shadow-xl">
+            <h1 className="text-4xl font-bold">🎮 Trang trại của tôi</h1>
+            <p className="text-amber-100 mt-2">Quản lý trang trại gà và thu hoạch trứng</p>
+          </div>
         </div>
 
         <Tabs defaultValue="home" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="home" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-4 bg-amber-500 border-4 border-amber-700 shadow-lg">
+            <TabsTrigger value="home" className="flex items-center gap-2 text-white font-bold data-[state=active]:bg-amber-700 data-[state=active]:text-white">
               <Home className="h-4 w-4" />
-              Trang chủ
+              🏠 Trang chủ
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsTrigger value="profile" className="flex items-center gap-2 text-white font-bold data-[state=active]:bg-amber-700 data-[state=active]:text-white">
               <UserIcon className="h-4 w-4" />
-              Thông tin
+              👤 Thông tin
             </TabsTrigger>
-            <TabsTrigger value="camera" className="flex items-center gap-2">
+            <TabsTrigger value="camera" className="flex items-center gap-2 text-white font-bold data-[state=active]:bg-amber-700 data-[state=active]:text-white">
               <Camera className="h-4 w-4" />
-              Camera
+              📹 Camera
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
+            <TabsTrigger value="history" className="flex items-center gap-2 text-white font-bold data-[state=active]:bg-amber-700 data-[state=active]:text-white">
               <History className="h-4 w-4" />
-              Lịch sử
+              📋 Lịch sử
             </TabsTrigger>
           </TabsList>
 
@@ -411,78 +413,93 @@ const Farm = () => {
             />
 
             {/* User Packages Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Gói dịch vụ đã mua</CardTitle>
+            <Card className="bg-amber-50 border-4 border-amber-300 shadow-lg">
+              <CardHeader className="bg-amber-500 text-white border-b-4 border-amber-700">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-6 w-6" />
+                  🎁 Gói dịch vụ đã mua
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <UserPackagesSection farmId={farm?.id} refreshTrigger={refreshTrigger} />
               </CardContent>
             </Card>
 
             {/* Chickens Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Các loại gà đang sở hữu</CardTitle>
+            <Card className="bg-orange-50 border-4 border-orange-300 shadow-lg">
+              <CardHeader className="bg-orange-500 text-white border-b-4 border-orange-700">
+                <CardTitle className="flex items-center gap-2">
+                  🐔 Các loại gà đang sở hữu
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                {chickens.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {chickens.map(chicken => <div key={chicken.id} className="border rounded-lg p-4">
-                        <h3 className="font-semibold">{chicken.chicken_types.name}</h3>
-                        <p className="text-sm text-muted-foreground">{chicken.chicken_types.description}</p>
-                        <div className="mt-2 flex justify-between items-center">
-                          <span>Số lượng: {chicken.quantity} con</span>
-                          <Badge variant="secondary">
+              <CardContent className="p-6">
+                {chickens.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {chickens.map(chicken => (
+                      <div key={chicken.id} className="bg-white border-4 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                        <div className="text-center mb-2">
+                          <span className="text-4xl">🐔</span>
+                        </div>
+                        <h3 className="font-bold text-lg text-center">{chicken.chicken_types.name}</h3>
+                        <p className="text-sm text-gray-600 text-center mb-3">{chicken.chicken_types.description}</p>
+                        <div className="flex justify-between items-center">
+                          <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            {chicken.quantity} con
+                          </div>
+                          <Badge className="bg-yellow-500 text-white border-2 border-yellow-700">
                             {chicken.chicken_types.egg_production_rate} trứng/2 ngày
                           </Badge>
                         </div>
-                      </div>)}
-                  </div> : <p className="text-center text-muted-foreground py-8">
-                    Bạn chưa có gà nào. Hãy mua gà từ cửa hàng!
-                  </p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">😢</div>
+                    <p className="text-gray-600 font-semibold">Bạn chưa có gà nào. Hãy mua gà từ cửa hàng!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Camera Feed */}
-            <Card>
-              <CardHeader>
+            {/* Quick Actions */}
+            <Card className="bg-blue-50 border-4 border-blue-300 shadow-lg">
+              <CardHeader className="bg-blue-500 text-white border-b-4 border-blue-700">
                 <CardTitle className="flex items-center gap-2">
-                  <Camera className="h-5 w-5" />
-                  Camera trực tiếp
+                  ⚡ Hành động nhanh
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <Camera className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-muted-foreground">Camera sẽ được tích hợp sau</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Hành động</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button onClick={collectEggs} className="flex flex-col items-center gap-2 h-auto py-4">
-                    <Egg className="h-6 w-6" />
-                    Thu hoạch trứng
+                  <Button 
+                    onClick={() => navigate('/shop')}
+                    className="flex flex-col items-center gap-2 h-24 bg-green-500 hover:bg-green-600 text-white border-4 border-green-700 rounded-xl shadow-lg font-bold"
+                  >
+                    <ShoppingCart className="h-8 w-8" />
+                    🛒 Cửa hàng
                   </Button>
-                  <Button onClick={() => sellEggs(Math.min(10, eggInventory.total_eggs))} variant="outline" className="flex flex-col items-center gap-2 h-auto py-4" disabled={eggInventory.total_eggs === 0}>
-                    <Truck className="h-6 w-6" />
-                    Bán 10 trứng
+                  <Button 
+                    onClick={() => navigate('/chicken-rental')}
+                    variant="outline" 
+                    className="flex flex-col items-center gap-2 h-24 border-4 border-purple-500 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg font-bold"
+                  >
+                    <span className="text-2xl">🐣</span>
+                    Thuê gà
                   </Button>
-                  <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                    <MapPin className="h-6 w-6" />
-                    Giao hàng
+                  <Button 
+                    onClick={() => navigate('/wallet')}
+                    variant="outline" 
+                    className="flex flex-col items-center gap-2 h-24 border-4 border-blue-500 text-blue-700 hover:bg-blue-50 rounded-xl shadow-lg font-bold"
+                  >
+                    <Wallet className="h-8 w-8" />
+                    💰 Ví tiền
                   </Button>
-                  <Button variant="outline" className="flex flex-col items-center gap-2 h-auto py-4">
-                    <ShoppingCart className="h-6 w-6" />
-                    Cửa hàng
+                  <Button 
+                    variant="outline" 
+                    className="flex flex-col items-center gap-2 h-24 border-4 border-red-500 text-red-700 hover:bg-red-50 rounded-xl shadow-lg font-bold"
+                  >
+                    <MessageCircle className="h-8 w-8" />
+                    💬 Hỗ trợ
                   </Button>
                 </div>
               </CardContent>
@@ -490,13 +507,13 @@ const Farm = () => {
           </TabsContent>
 
           <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardHeader>
+            <Card className="bg-purple-50 border-4 border-purple-300 shadow-lg">
+              <CardHeader className="bg-purple-500 text-white border-b-4 border-purple-700">
                 <CardTitle className="flex items-center gap-2">
                   <UserIcon className="h-5 w-5" />
-                  Thông tin cá nhân
+                  👤 Thông tin cá nhân
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-purple-100">
                   Cập nhật thông tin cá nhân của bạn
                 </CardDescription>
               </CardHeader>
