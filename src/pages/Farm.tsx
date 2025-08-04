@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon } from 'lucide-react';
 import UserPackagesSection from '@/components/ui/user-packages-section';
+import AnimatedFarm from '@/components/ui/animated-farm';
 
 // Using any types temporarily until Supabase types are updated
 interface Farm {
@@ -398,34 +399,16 @@ const Farm = () => {
           </TabsList>
 
           <TabsContent value="home" className="space-y-6">
-            {/* Welcome Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Home className="h-5 w-5" />
-                  Chào mừng: {farm?.farm_name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <Wallet className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                    <p className="text-sm text-muted-foreground">Số dư tài khoản</p>
-                    <p className="text-2xl font-bold">{farm?.account_balance.toLocaleString()} VND</p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <Egg className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-                    <p className="text-sm text-muted-foreground">Số trứng hiện có</p>
-                    <p className="text-2xl font-bold">{eggInventory.total_eggs} quả</p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <Badge className="h-8 w-8 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Tổng số gà</p>
-                    <p className="text-2xl font-bold">{chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} con</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Animated Farm Section */}
+            <AnimatedFarm
+              farmName={farm?.farm_name || "Trang trại của bạn"}
+              balance={farm?.account_balance || 0}
+              totalEggs={eggInventory.total_eggs}
+              totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)}
+              chickens={chickens}
+              onCollectEgg={collectEggs}
+              onSellEggs={sellEggs}
+            />
 
             {/* User Packages Section */}
             <Card>
