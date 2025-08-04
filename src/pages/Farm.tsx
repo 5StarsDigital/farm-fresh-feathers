@@ -16,6 +16,7 @@ import { useForm } from 'react-hook-form';
 import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon } from 'lucide-react';
 import UserPackagesSection from '@/components/ui/user-packages-section';
 import AnimatedFarm from '@/components/ui/animated-farm';
+import farmBackground from '@/assets/farm-background.jpg';
 
 // Using any types temporarily until Supabase types are updated
 interface Farm {
@@ -352,7 +353,7 @@ const Farm = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-gradient-to-b from-sky-200 via-green-200 to-green-300">
+  return <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${farmBackground})`}}>
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
