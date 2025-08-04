@@ -56,26 +56,15 @@ serve(async (req) => {
     const userNumericId = parseInt(chickensMatch[1]);
     console.log('Extracted user numeric ID:', userNumericId);
 
-    // Map numeric ID to actual user ID by creating a mapping table or use profiles table with a numeric field
-    // For now, we'll assume you have a mapping or use the numeric ID directly if stored in profiles
-    // This needs to be adjusted based on your user ID mapping strategy
-    
-    console.log('Note: You need to create a mapping between numeric IDs and actual user UUIDs');
-    
-    return new Response(
-      JSON.stringify({ 
-        message: 'Need to implement user ID mapping',
-        numeric_id: userNumericId,
-        note: 'Create a mapping table or field to convert numeric ID to UUID'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    );
+    // Find user by numeric_id in profiles table
+    const { data: userProfile, error: userError } = await supabaseService
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('numeric_id', userNumericId)
+      .single();
 
     if (userError || !userProfile) {
-      console.error('User not found:', userId);
+      console.error('User not found with numeric ID:', userNumericId);
       return new Response(
         JSON.stringify({ error: 'User not found' }),
         {
@@ -84,6 +73,8 @@ serve(async (req) => {
         }
       );
     }
+
+    const userId = userProfile.id;
 
     // Get or create user's farm
     let { data: farm, error: farmError } = await supabaseService

@@ -8,19 +8,40 @@ import { ArrowLeft, QrCode, Copy, CheckCircle, Smartphone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const TopUp = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [userNumericId, setUserNumericId] = useState<number | null>(null);
   const { toast } = useToast();
   const [copySuccess, setCopySuccess] = useState('');
+
+  // Lấy numeric_id của user
+  useEffect(() => {
+    const fetchUserNumericId = async () => {
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('numeric_id')
+          .eq('id', user.id)
+          .single();
+        
+        if (data && !error) {
+          setUserNumericId((data as any).numeric_id);
+        }
+      }
+    };
+
+    fetchUserNumericId();
+  }, [user?.id]);
 
   // Thông tin chuyển khoản
   const bankInfo = {
     bankName: 'ACB',
     accountNumber: '18144631',
     accountName: 'NGUYỄN THẾ ANH',
-    transferContent: `chicken${user?.id || ''}`
+    transferContent: `chicken${userNumericId || ''}`
   };
 
   // URL QR Code từ VietQR
