@@ -65,7 +65,7 @@ export default function AnimatedFarm({
 }: AnimatedFarmProps) {
   const [animatedChickens, setAnimatedChickens] = useState<Chicken[]>([]);
   const [floatingEggs, setFloatingEggs] = useState<Array<{id: string, x: number, y: number, opacity: number}>>([]);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const farmRef = useRef<HTMLDivElement>(null);
 
