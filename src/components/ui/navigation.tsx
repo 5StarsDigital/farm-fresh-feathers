@@ -73,7 +73,7 @@ const Navigation = () => {
     icon: MapPin
   }, {
     name: 'Nạp/Rút',
-    href: '/wallet',
+    href: '/topup',
     icon: CreditCard
   }, {
     name: 'Hướng dẫn',
