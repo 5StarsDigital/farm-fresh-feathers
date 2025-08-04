@@ -673,7 +673,10 @@ const Farm = () => {
 
             {/* Additional Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate('/wallet')}
+              >
                 <CardContent className="p-6 text-center">
                   <Wallet className="h-8 w-8 mx-auto mb-2 text-blue-500" />
                   <h3 className="font-semibold">Ví tiền</h3>
