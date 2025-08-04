@@ -384,63 +384,6 @@ const Farm = () => {
           </TabsList>
 
           <TabsContent value="home" className="space-y-6">
-            {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {/* Account Balance Card */}
-              <Card className="bg-gradient-to-br from-orange-400 to-orange-600 border-4 border-orange-700 shadow-xl">
-                <CardContent className="p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="bg-white/20 p-3 rounded-lg">
-                      <Wallet className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-orange-100 text-lg font-medium">Số dư tài khoản</p>
-                    <p className="text-3xl font-bold text-white">
-                      {(farm?.account_balance || 0).toLocaleString()}
-                    </p>
-                    <p className="text-orange-100 text-xl font-semibold">VND</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Eggs Inventory Card */}
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-4 border-red-600 shadow-xl">
-                <CardContent className="p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="bg-white/20 p-3 rounded-lg">
-                      <Egg className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-orange-100 text-lg font-medium">Số trứng hiện có</p>
-                    <p className="text-3xl font-bold text-white">
-                      {eggInventory.total_eggs}
-                    </p>
-                    <p className="text-orange-100 text-xl font-semibold">quả</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Total Chickens Card */}
-              <Card className="bg-gradient-to-br from-red-500 to-red-600 border-4 border-red-700 shadow-xl">
-                <CardContent className="p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="bg-white/20 p-3 rounded-lg">
-                      <span className="text-2xl">🐔</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-red-100 text-lg font-medium">Tổng số gà</p>
-                    <p className="text-3xl font-bold text-white">
-                      {chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)}
-                    </p>
-                    <p className="text-red-100 text-xl font-semibold">con</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Animated Farm Section */}
             <AnimatedFarm farmName={farm?.farm_name || "Trang trại của bạn"} balance={farm?.account_balance || 0} totalEggs={eggInventory.total_eggs} totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} chickens={chickens} onCollectEgg={collectEggs} onSellEggs={sellEggs} />
 
