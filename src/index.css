@@ -129,7 +129,7 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-[https://drive.google.com/file/d/1NZ4PSqpjDxwnkLH49Q1d4po00FbHlLjJ/view?usp=sharing('/path/to/image.jpg')] bg-cover bg-center text-foreground font-poppins;
+    @apply bg-background text-foreground font-poppins;
   }
   
   /* Custom animations for farm elements */
