@@ -46,7 +46,6 @@ interface Transaction {
   description: string | null;
   created_at: string;
 }
-
 interface UserProfile {
   id: string;
   email: string | null;
@@ -55,7 +54,6 @@ interface UserProfile {
   date_of_birth: string | null;
   avatar_url: string | null;
 }
-
 interface ProfileFormData {
   full_name: string;
   shop_name: string;
@@ -77,7 +75,6 @@ const Farm = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   const form = useForm<ProfileFormData>({
     defaultValues: {
       full_name: '',
@@ -102,47 +99,40 @@ const Farm = () => {
       await loadFarmData(user.id);
     };
     initializeFarm();
-    
+
     // Auto refresh every 30 seconds to catch admin refunds
     const interval = setInterval(() => {
       setRefreshTrigger(prev => prev + 1);
       if (user?.id) loadFarmData(user.id);
     }, 30000);
-
     return () => clearInterval(interval);
   }, [navigate]);
-
   const loadUserProfile = async (userId: string) => {
     try {
-      let { data: profileData, error: profileError } = await (supabase as any)
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
+      let {
+        data: profileData,
+        error: profileError
+      } = await (supabase as any).from('profiles').select('*').eq('id', userId).single();
       if (profileError && profileError.code === 'PGRST116') {
         // Create profile if doesn't exist
-        const { data: newProfile, error: createError } = await (supabase as any)
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: user?.email || '',
-            full_name: '',
-            shop_name: '',
-            date_of_birth: null,
-            avatar_url: null
-          })
-          .select()
-          .single();
-
+        const {
+          data: newProfile,
+          error: createError
+        } = await (supabase as any).from('profiles').insert({
+          id: userId,
+          email: user?.email || '',
+          full_name: '',
+          shop_name: '',
+          date_of_birth: null,
+          avatar_url: null
+        }).select().single();
         if (createError) throw createError;
         profileData = newProfile;
       } else if (profileError) {
         throw profileError;
       }
-
       setProfile(profileData);
-      
+
       // Update form with loaded data
       form.reset({
         full_name: profileData.full_name || '',
@@ -150,7 +140,6 @@ const Farm = () => {
         date_of_birth: profileData.date_of_birth || '',
         email: profileData.email || user?.email || ''
       });
-
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
@@ -160,23 +149,18 @@ const Farm = () => {
       });
     }
   };
-
   const saveProfile = async (data: ProfileFormData) => {
     if (!user || !profile) return;
-
     try {
-      const { error } = await (supabase as any)
-        .from('profiles')
-        .update({
-          full_name: data.full_name,
-          shop_name: data.shop_name,
-          date_of_birth: data.date_of_birth || null,
-          email: data.email
-        })
-        .eq('id', user.id);
-
+      const {
+        error
+      } = await (supabase as any).from('profiles').update({
+        full_name: data.full_name,
+        shop_name: data.shop_name,
+        date_of_birth: data.date_of_birth || null,
+        email: data.email
+      }).eq('id', user.id);
       if (error) throw error;
-
       setProfile(prev => prev ? {
         ...prev,
         full_name: data.full_name,
@@ -184,12 +168,10 @@ const Farm = () => {
         date_of_birth: data.date_of_birth,
         email: data.email
       } : null);
-
       toast({
         title: "Thành công!",
         description: "Thông tin cá nhân đã được lưu"
       });
-
     } catch (error) {
       console.error('Error saving profile:', error);
       toast({
@@ -374,7 +356,7 @@ const Farm = () => {
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
-          <div className="bg-amber-600 text-white px-8 py-4 rounded-2xl inline-block border-4 border-amber-800 shadow-xl">
+          <div className="bg-amber-600 text-white px-8 py-4 rounded-2xl inline-block border-4 border-amber-800 shadow-xl my-[50px]">
             <h1 className="text-4xl font-bold">🎮 Trang trại của tôi</h1>
             <p className="text-amber-100 mt-2">Quản lý trang trại gà và thu hoạch trứng</p>
           </div>
@@ -402,15 +384,7 @@ const Farm = () => {
 
           <TabsContent value="home" className="space-y-6">
             {/* Animated Farm Section */}
-            <AnimatedFarm
-              farmName={farm?.farm_name || "Trang trại của bạn"}
-              balance={farm?.account_balance || 0}
-              totalEggs={eggInventory.total_eggs}
-              totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)}
-              chickens={chickens}
-              onCollectEgg={collectEggs}
-              onSellEggs={sellEggs}
-            />
+            <AnimatedFarm farmName={farm?.farm_name || "Trang trại của bạn"} balance={farm?.account_balance || 0} totalEggs={eggInventory.total_eggs} totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} chickens={chickens} onCollectEgg={collectEggs} onSellEggs={sellEggs} />
 
             {/* User Packages Section */}
             <Card className="bg-amber-50 border-4 border-amber-300 shadow-lg">
@@ -433,10 +407,8 @@ const Farm = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                {chickens.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {chickens.map(chicken => (
-                      <div key={chicken.id} className="bg-white border-4 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                {chickens.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {chickens.map(chicken => <div key={chicken.id} className="bg-white border-4 border-orange-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:scale-105">
                         <div className="text-center mb-2">
                           <span className="text-4xl">🐔</span>
                         </div>
@@ -450,15 +422,11 @@ const Farm = () => {
                             {chicken.chicken_types.egg_production_rate} trứng/2 ngày
                           </Badge>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
+                      </div>)}
+                  </div> : <div className="text-center py-8">
                     <div className="text-6xl mb-4">😢</div>
                     <p className="text-gray-600 font-semibold">Bạn chưa có gà nào. Hãy mua gà từ cửa hàng!</p>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
 
@@ -471,33 +439,19 @@ const Farm = () => {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button 
-                    onClick={() => navigate('/shop')}
-                    className="flex flex-col items-center gap-2 h-24 bg-green-500 hover:bg-green-600 text-white border-4 border-green-700 rounded-xl shadow-lg font-bold"
-                  >
+                  <Button onClick={() => navigate('/shop')} className="flex flex-col items-center gap-2 h-24 bg-green-500 hover:bg-green-600 text-white border-4 border-green-700 rounded-xl shadow-lg font-bold">
                     <ShoppingCart className="h-8 w-8" />
                     🛒 Cửa hàng
                   </Button>
-                  <Button 
-                    onClick={() => navigate('/chicken-rental')}
-                    variant="outline" 
-                    className="flex flex-col items-center gap-2 h-24 border-4 border-purple-500 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg font-bold"
-                  >
+                  <Button onClick={() => navigate('/chicken-rental')} variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-purple-500 text-purple-700 hover:bg-purple-50 rounded-xl shadow-lg font-bold">
                     <span className="text-2xl">🐣</span>
                     Thuê gà
                   </Button>
-                  <Button 
-                    onClick={() => navigate('/wallet')}
-                    variant="outline" 
-                    className="flex flex-col items-center gap-2 h-24 border-4 border-blue-500 text-blue-700 hover:bg-blue-50 rounded-xl shadow-lg font-bold"
-                  >
+                  <Button onClick={() => navigate('/wallet')} variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-blue-500 text-blue-700 hover:bg-blue-50 rounded-xl shadow-lg font-bold">
                     <Wallet className="h-8 w-8" />
                     💰 Ví tiền
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex flex-col items-center gap-2 h-24 border-4 border-red-500 text-red-700 hover:bg-red-50 rounded-xl shadow-lg font-bold"
-                  >
+                  <Button variant="outline" className="flex flex-col items-center gap-2 h-24 border-4 border-red-500 text-red-700 hover:bg-red-50 rounded-xl shadow-lg font-bold">
                     <MessageCircle className="h-8 w-8" />
                     💬 Hỗ trợ
                   </Button>
@@ -521,61 +475,45 @@ const Farm = () => {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(saveProfile)} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="full_name"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="full_name" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Họ và tên</FormLabel>
                             <FormControl>
                               <Input placeholder="Nhập họ và tên" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="shop_name"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="shop_name" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Tên shop gà</FormLabel>
                             <FormControl>
                               <Input placeholder="Nhập tên shop gà" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="email" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
                               <Input placeholder="Email" {...field} disabled />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                       
-                      <FormField
-                        control={form.control}
-                        name="date_of_birth"
-                        render={({ field }) => (
-                          <FormItem>
+                      <FormField control={form.control} name="date_of_birth" render={({
+                      field
+                    }) => <FormItem>
                             <FormLabel>Ngày sinh</FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          </FormItem>} />
                     </div>
                     
                     <Button type="submit" className="w-full">
@@ -673,10 +611,7 @@ const Farm = () => {
 
             {/* Additional Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate('/wallet')}
-              >
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/wallet')}>
                 <CardContent className="p-6 text-center">
                   <Wallet className="h-8 w-8 mx-auto mb-2 text-blue-500" />
                   <h3 className="font-semibold">Ví tiền</h3>
