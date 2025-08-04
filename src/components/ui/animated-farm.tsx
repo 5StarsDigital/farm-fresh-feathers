@@ -17,6 +17,7 @@ interface Chicken {
 
 interface AnimatedFarmProps {
   farmName: string;
+  shop_name?: string;
   balance: number;
   totalEggs: number;
   totalChickens: number;
@@ -56,6 +57,7 @@ const playCollectSound = () => createBeepSound(1200, 0.4);
 
 export default function AnimatedFarm({
   farmName,
+  shop_name,
   balance,
   totalEggs,
   totalChickens,
@@ -179,7 +181,7 @@ export default function AnimatedFarm({
         
         <div className="relative text-center">
           <div className="bg-amber-600 text-white px-6 py-3 rounded-xl inline-block mb-4 border-4 border-amber-800 shadow-lg">
-            <h1 className="text-2xl font-bold">🎉 Chào mừng: {farmName}</h1>
+            <h1 className="text-2xl font-bold">🎉 Chào mừng: {shop_name || farmName}</h1>
           </div>
           
           <div className="grid grid-cols-3 gap-4 mt-4">
