@@ -64,6 +64,7 @@ export default function AnimatedFarm({
   }>>([]);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [uncollectedEggs, setUncollectedEggs] = useState(0);
   const farmRef = useRef<HTMLDivElement>(null);
 
   // Initialize animated chickens
@@ -148,11 +149,39 @@ export default function AnimatedFarm({
     }, 50);
     return () => clearInterval(interval);
   }, []);
+
+  // Egg production system - each chicken produces 1 egg every 48 hours
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Random time between 32-42 hours (8 AM to 6 PM on day 2)
+      const randomDelay = Math.random() * (42 - 32) + 32;
+      
+      setTimeout(() => {
+        if (totalChickens > 0) {
+          // Add eggs based on total chickens
+          const newEggs = Math.floor(Math.random() * totalChickens) + 1;
+          setUncollectedEggs(prev => prev + newEggs);
+          if (soundEnabled) playEggSound();
+        }
+      }, randomDelay * 60 * 60 * 1000); // Convert hours to milliseconds
+    }, 48 * 60 * 60 * 1000); // Every 48 hours
+
+    return () => clearInterval(interval);
+  }, [totalChickens, soundEnabled]);
   const handleCollectEgg = () => {
-    if (soundEnabled) playCollectSound();
-    setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 1000);
-    onCollectEgg();
+    if (uncollectedEggs > 0) {
+      if (soundEnabled) playCollectSound();
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 1000);
+      
+      // Add uncollected eggs to total eggs by calling multiple times
+      for (let i = 0; i < uncollectedEggs; i++) {
+        onCollectEgg();
+      }
+      
+      // Reset uncollected eggs
+      setUncollectedEggs(0);
+    }
   };
   const handleSellEggs = () => {
     if (soundEnabled) playCollectSound();
@@ -303,6 +332,25 @@ export default function AnimatedFarm({
               </div>
             </div>
 
+            {/* Egg Basket in top right */}
+            <div className="absolute top-4 right-4 bg-amber-600 p-2 rounded-lg border-4 border-amber-800 shadow-lg z-10">
+              <div className="relative w-24 h-16 bg-amber-200 rounded border-2 border-amber-400">
+                <div className="absolute top-1 left-1 text-xs text-amber-800 font-bold">
+                  🧺 Giỏ trứng
+                </div>
+                <div className="flex items-center justify-center h-full flex-wrap gap-1 pt-3">
+                  {Array.from({ length: Math.min(uncollectedEggs, 6) }, (_, i) => (
+                    <span key={i} className="text-sm animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>
+                      🥚
+                    </span>
+                  ))}
+                  {uncollectedEggs > 6 && (
+                    <span className="text-xs text-amber-800 font-bold">+{uncollectedEggs - 6}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Animated Chickens */}
             {animatedChickens.map(chicken => <div key={chicken.id} className={cn("absolute transition-all duration-1000 ease-in-out cursor-pointer transform hover:scale-110", chicken.animationState === 'jumping' && "animate-bounce", chicken.animationState === 'crowing' && "animate-pulse scale-110", chicken.direction === 'left' && "scale-x-[-1]")} style={{
               left: `${chicken.x}%`,
@@ -340,7 +388,7 @@ export default function AnimatedFarm({
 
             {/* Bottom info bar */}
             <div className="absolute bottom-2 left-4 text-sm text-green-800 font-semibold bg-white/80 px-3 py-1 rounded-full z-10">
-              Các loại gà đang sở hữu
+              Số trứng gà chưa thu hoạch: {uncollectedEggs}
             </div>
             </div>
 
