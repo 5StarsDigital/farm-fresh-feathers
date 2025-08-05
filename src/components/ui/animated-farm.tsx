@@ -77,8 +77,8 @@ export default function AnimatedFarm({
       for (let i = 0; i < Math.min(chicken.quantity, 8); i++) {
         initialChickens.push({
           id: `${chicken.id}-${i}`,
-          x: Math.random() * 80 + 10, // 10-90% of container width
-          y: Math.random() * 40 + 40, // 40-80% of container height  
+          x: Math.random() * 60 + 20, // 20-80% of container width (within fence area)
+          y: Math.random() * 30 + 50, // 50-80% of container height (within fence area)
           type: chicken.chicken_types.name,
           isLayingEgg: false,
           animationState: 'idle',
@@ -109,9 +109,9 @@ export default function AnimatedFarm({
           newChicken.direction = Math.random() > 0.5 ? 'left' : 'right';
           
           if (newChicken.direction === 'left') {
-            newChicken.x = Math.max(5, newChicken.x - Math.random() * 10);
+            newChicken.x = Math.max(20, newChicken.x - Math.random() * 8); // Stay within fence
           } else {
-            newChicken.x = Math.min(95, newChicken.x + Math.random() * 10);
+            newChicken.x = Math.min(80, newChicken.x + Math.random() * 8); // Stay within fence
           }
         } else if (action < 0.45) {
           // Lay egg
@@ -249,48 +249,74 @@ export default function AnimatedFarm({
             {/* Left Side - Chicken Coop Animation */}
             <div 
               ref={farmRef}
-              className="relative bg-gradient-to-b from-sky-300 via-sky-200 to-green-300 overflow-hidden border-4 border-amber-700 rounded-l-lg"
+              className="relative overflow-hidden border-4 border-amber-700 rounded-l-lg"
               style={{
-                backgroundImage: `
-                  linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%),
-                  url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23228B22' fill-opacity='0.1'%3E%3Cpath d='M20 0h20v20H20z'/%3E%3C/g%3E%3C/svg%3E")
-                `
+                background: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%)'
               }}
             >
-            {/* Background elements */}
-            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-green-400 to-transparent"></div>
             
-            {/* Clouds */}
-            <div className="absolute top-4 left-10 animate-pulse">
-              <div className="w-16 h-8 bg-white rounded-full opacity-80"></div>
-              <div className="w-12 h-6 bg-white rounded-full opacity-80 -mt-3 ml-2"></div>
+            {/* Wooden Fence */}
+            <div className="absolute inset-4">
+              {/* Top fence */}
+              <div className="absolute top-0 left-0 right-0 h-4 bg-amber-700 border-2 border-amber-900 rounded-t-lg shadow-lg"></div>
+              <div className="absolute top-0 left-0 right-0 h-2 bg-amber-600"></div>
+              
+              {/* Bottom fence */}
+              <div className="absolute bottom-0 left-0 right-0 h-4 bg-amber-700 border-2 border-amber-900 rounded-b-lg shadow-lg"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-2 bg-amber-600"></div>
+              
+              {/* Left fence */}
+              <div className="absolute top-0 bottom-0 left-0 w-4 bg-amber-700 border-2 border-amber-900 rounded-l-lg shadow-lg"></div>
+              <div className="absolute top-0 bottom-0 left-0 w-2 bg-amber-600"></div>
+              
+              {/* Right fence */}
+              <div className="absolute top-0 bottom-0 right-0 w-4 bg-amber-700 border-2 border-amber-900 rounded-r-lg shadow-lg"></div>
+              <div className="absolute top-0 bottom-0 right-0 w-2 bg-amber-600"></div>
+              
+              {/* Vertical fence posts */}
+              <div className="absolute top-1 bottom-1 left-8 w-2 bg-amber-800 rounded shadow"></div>
+              <div className="absolute top-1 bottom-1 left-16 w-2 bg-amber-800 rounded shadow"></div>
+              <div className="absolute top-1 bottom-1 right-8 w-2 bg-amber-800 rounded shadow"></div>
+              <div className="absolute top-1 bottom-1 right-16 w-2 bg-amber-800 rounded shadow"></div>
             </div>
-            <div className="absolute top-8 right-20 animate-pulse delay-1000">
-              <div className="w-20 h-10 bg-white rounded-full opacity-70"></div>
-              <div className="w-14 h-7 bg-white rounded-full opacity-70 -mt-4 ml-3"></div>
-            </div>
-
-            {/* Farm House */}
-            <div className="absolute bottom-8 right-8">
+            
+            {/* Chicken Coop House */}
+            <div className="absolute bottom-6 right-6">
               <div className="relative">
                 {/* House base */}
-                <div className="w-24 h-16 bg-red-600 rounded-t-lg border-2 border-red-800"></div>
+                <div className="w-20 h-12 bg-amber-600 rounded-t-lg border-2 border-amber-800 shadow-lg"></div>
                 {/* Roof */}
-                <div className="w-28 h-8 bg-amber-700 -mt-2 -ml-2 border-2 border-amber-900 relative">
-                  <div className="absolute inset-0 bg-amber-700" style={{clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)'}}></div>
+                <div className="w-24 h-6 bg-amber-700 -mt-1 -ml-2 border-2 border-amber-900 relative rounded shadow-lg">
+                  <div className="absolute inset-0 bg-amber-700 rounded" style={{clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)'}}></div>
                 </div>
                 {/* Door */}
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-10 bg-amber-800 rounded-t-lg border border-amber-900"></div>
-                {/* Eggs nest */}
-                <div className="absolute -bottom-2 -right-4 w-8 h-4 bg-yellow-400 rounded-full">
-                  <div className="absolute top-1 left-1 w-2 h-3 bg-white rounded-full"></div>
-                  <div className="absolute top-1 right-1 w-2 h-3 bg-white rounded-full"></div>
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-8 bg-amber-800 rounded-t border border-amber-900"></div>
+                {/* Nest area */}
+                <div className="absolute -bottom-1 -right-3 w-6 h-3 bg-yellow-400 rounded-full border border-yellow-600">
+                  <div className="absolute top-0.5 left-0.5 w-1.5 h-2 bg-white rounded-full"></div>
+                  <div className="absolute top-0.5 right-0.5 w-1.5 h-2 bg-white rounded-full"></div>
                 </div>
+              </div>
+            </div>
+            
+            {/* Moving Clouds */}
+            <div className="absolute top-2 left-0 w-full h-full pointer-events-none">
+              <div className="absolute top-4 animate-[slide-in-right_20s_linear_infinite] opacity-70">
+                <div className="w-16 h-8 bg-white rounded-full shadow-sm"></div>
+                <div className="w-12 h-6 bg-white rounded-full shadow-sm -mt-3 ml-2"></div>
+              </div>
+              <div className="absolute top-12 animate-[slide-in-right_25s_linear_infinite_2s] opacity-60">
+                <div className="w-20 h-10 bg-white rounded-full shadow-sm"></div>
+                <div className="w-14 h-7 bg-white rounded-full shadow-sm -mt-4 ml-3"></div>
+              </div>
+              <div className="absolute top-6 animate-[slide-in-right_30s_linear_infinite_5s] opacity-50">
+                <div className="w-14 h-6 bg-white rounded-full shadow-sm"></div>
+                <div className="w-10 h-5 bg-white rounded-full shadow-sm -mt-2 ml-2"></div>
               </div>
             </div>
 
             {/* TV Monitor */}
-            <div className="absolute top-4 left-4 bg-orange-600 p-2 rounded-lg border-4 border-orange-800 shadow-lg">
+            <div className="absolute top-4 left-4 bg-orange-600 p-2 rounded-lg border-4 border-orange-800 shadow-lg z-10">
               <div className="relative w-24 h-16 bg-gray-800 rounded border-2 border-gray-600">
                 <div className="absolute top-1 left-1 w-4 h-2 bg-red-500 text-white text-xs text-center rounded">
                   LIVE
@@ -361,7 +387,7 @@ export default function AnimatedFarm({
             )}
 
             {/* Bottom info bar */}
-            <div className="absolute bottom-2 left-4 text-sm text-green-800 font-semibold bg-white/80 px-3 py-1 rounded-full">
+            <div className="absolute bottom-2 left-4 text-sm text-green-800 font-semibold bg-white/80 px-3 py-1 rounded-full z-10">
               Các loại gà đang sở hữu
             </div>
             </div>
