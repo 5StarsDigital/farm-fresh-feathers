@@ -241,79 +241,22 @@ export default function AnimatedFarm({
         </div>
       </div>
 
-      {/* Camera Monitoring Section */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">📹</span>
-            <h2 className="text-xl font-bold text-gray-800">Camera giám sát</h2>
-          </div>
-          <p className="text-gray-600 mb-6">Theo dõi trang trại của bạn trong thời gian thực</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Camera 1 */}
-            <div className="space-y-3">
-              <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                <iframe 
-                  width="100%" 
-                  height="100%" 
-                  src="https://rtsp.me/embed/bz78RBsB/" 
-                  frameBorder="0" 
-                  allowFullScreen
-                  className="absolute inset-0"
-                  title="Camera 1 - Khu vực chính"
-                >
-                </iframe>
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-gray-700">Camera 1 - Khu vực chính</h3>
-              </div>
-            </div>
 
-            {/* Camera 2 */}
-            <div className="space-y-3">
-              <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                <iframe 
-                  width="100%" 
-                  height="100%" 
-                  src="https://rtsp.me/embed/QRKErRyA/" 
-                  frameBorder="0" 
-                  title="Camera 2 - Khu ăn uống" 
-                  allowFullScreen
-                  className="absolute inset-0"
-                >
-                </iframe>
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-gray-700">Camera 2 - Khu ăn uống</h3>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-gray-700 mb-2">Tính năng camera:</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Theo dõi hoạt động của gà 24/7</li>
-              <li>• Cảnh báo khi có bất thường</li>
-              <li>• Ghi lại các khoảnh khắc quan trọng</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Main Farm Area */}
+      {/* Main Farm Area - Split View */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <div 
-            ref={farmRef}
-            className="relative h-96 bg-gradient-to-b from-sky-300 via-sky-200 to-green-300 overflow-hidden"
-            style={{
-              backgroundImage: `
-                linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%),
-                url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23228B22' fill-opacity='0.1'%3E%3Cpath d='M20 0h20v20H20z'/%3E%3C/g%3E%3C/svg%3E")
-              `
-            }}
-          >
+          <div className="grid grid-cols-1 lg:grid-cols-2 h-96">
+            {/* Left Side - Chicken Coop Animation */}
+            <div 
+              ref={farmRef}
+              className="relative bg-gradient-to-b from-sky-300 via-sky-200 to-green-300 overflow-hidden border-4 border-amber-700 rounded-l-lg"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%),
+                  url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23228B22' fill-opacity='0.1'%3E%3Cpath d='M20 0h20v20H20z'/%3E%3C/g%3E%3C/svg%3E")
+                `
+              }}
+            >
             {/* Background elements */}
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-green-400 to-transparent"></div>
             
@@ -420,6 +363,26 @@ export default function AnimatedFarm({
             {/* Bottom info bar */}
             <div className="absolute bottom-2 left-4 text-sm text-green-800 font-semibold bg-white/80 px-3 py-1 rounded-full">
               Các loại gà đang sở hữu
+            </div>
+            </div>
+
+            {/* Right Side - Live Camera */}
+            <div className="relative bg-gray-100 flex flex-col">
+              <div className="bg-red-600 text-white text-center py-2 font-bold text-lg">
+                CAMERA TRỰC TIẾP
+              </div>
+              <div className="flex-1 relative">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src="https://rtsp.me/embed/bz78RBsB/" 
+                  frameBorder="0" 
+                  allowFullScreen
+                  className="absolute inset-0"
+                  title="Camera trực tiếp - Khu vực chính"
+                >
+                </iframe>
+              </div>
             </div>
           </div>
         </CardContent>
