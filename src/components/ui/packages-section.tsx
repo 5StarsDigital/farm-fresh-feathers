@@ -186,7 +186,7 @@ const PackagesSection = () => {
             Cần tư vấn thêm? Liên hệ với chúng tôi
           </p>
           <Button variant="outline" size="lg" className="hover:bg-primary hover:text-primary-foreground transition-all duration-300">
-            📞 Gọi hotline: 1900-XXX-XXX
+            📞 Gọi hotline: 0985.24.6666
           </Button>
         </div>
       </div>
