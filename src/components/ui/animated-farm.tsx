@@ -391,7 +391,7 @@ export default function AnimatedFarm({
                   🧺 Giỏ trứng
                 </div>
                 <div className="flex items-center justify-center h-full flex-wrap gap-1 pt-3">
-                  {Array.from({ length: Math.min(uncollectedEggs, 6) }, (_, i) => (
+                  {Array.from({ length: Math.min(uncollectedEggs, 1) }, (_, i) => (
                     <span key={i} className="text-sm animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>
                       🥚
                     </span>
