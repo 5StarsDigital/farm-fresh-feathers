@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Egg, Wallet, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import cardBackground from '@/assets/card-background.png';
 interface Chicken {
   id: string;
@@ -20,6 +21,7 @@ interface AnimatedFarmProps {
   totalEggs: number;
   totalChickens: number;
   chickens: any[];
+  farmId: string;
   onCollectEgg: () => void;
   onSellEggs: (quantity: number) => void;
 }
@@ -52,6 +54,7 @@ export default function AnimatedFarm({
   totalEggs,
   totalChickens,
   chickens,
+  farmId,
   onCollectEgg,
   onSellEggs
 }: AnimatedFarmProps) {
@@ -66,6 +69,55 @@ export default function AnimatedFarm({
   const [showCelebration, setShowCelebration] = useState(false);
   const [uncollectedEggs, setUncollectedEggs] = useState(0);
   const farmRef = useRef<HTMLDivElement>(null);
+
+  // Load uncollected eggs from database on mount
+  useEffect(() => {
+    const loadUncollectedEggs = async () => {
+      if (!farmId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('eggs_inventory')
+          .select('uncollected_eggs')
+          .eq('farm_id', farmId)
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          // Column might not exist yet, ignore the error
+          if (error.message?.includes('uncollected_eggs')) {
+            console.log('uncollected_eggs column not found, using default value');
+            return;
+          }
+          throw error;
+        }
+        
+        setUncollectedEggs((data as any)?.uncollected_eggs || 0);
+      } catch (error) {
+        console.error('Error loading uncollected eggs:', error);
+      }
+    };
+
+    loadUncollectedEggs();
+  }, [farmId]);
+
+  // Update database when uncollected eggs change
+  const updateUncollectedEggs = async (newCount: number) => {
+    if (!farmId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('eggs_inventory')
+        .upsert({
+          farm_id: farmId,
+          uncollected_eggs: newCount
+        });
+      
+      if (error) throw error;
+      setUncollectedEggs(newCount);
+    } catch (error) {
+      console.error('Error updating uncollected eggs:', error);
+    }
+  };
 
   // Initialize animated chickens
   useEffect(() => {
@@ -160,7 +212,7 @@ export default function AnimatedFarm({
         if (totalChickens > 0) {
           // Add eggs based on total chickens
           const newEggs = Math.floor(Math.random() * totalChickens) + 1;
-          setUncollectedEggs(prev => prev + newEggs);
+          updateUncollectedEggs(uncollectedEggs + newEggs);
           if (soundEnabled) playEggSound();
         }
       }, randomDelay * 60 * 60 * 1000); // Convert hours to milliseconds
@@ -179,8 +231,8 @@ export default function AnimatedFarm({
         onCollectEgg();
       }
       
-      // Reset uncollected eggs
-      setUncollectedEggs(0);
+      // Reset uncollected eggs in database
+      updateUncollectedEggs(0);
     }
   };
   const handleSellEggs = () => {

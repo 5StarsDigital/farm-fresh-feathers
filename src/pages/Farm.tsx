@@ -385,7 +385,7 @@ const Farm = () => {
 
           <TabsContent value="home" className="space-y-6">
             {/* Animated Farm Section */}
-            <AnimatedFarm farmName={farm?.farm_name || "Trang trại của bạn"} balance={farm?.account_balance || 0} totalEggs={eggInventory.total_eggs} totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} chickens={chickens} onCollectEgg={collectEggs} onSellEggs={sellEggs} />
+            <AnimatedFarm farmName={farm?.farm_name || "Trang trại của bạn"} balance={farm?.account_balance || 0} totalEggs={eggInventory.total_eggs} totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} chickens={chickens} farmId={farm?.id || ""} onCollectEgg={collectEggs} onSellEggs={sellEggs} />
 
             {/* User Packages Section */}
             <Card className="bg-amber-50 border-4 border-amber-300 shadow-lg">
