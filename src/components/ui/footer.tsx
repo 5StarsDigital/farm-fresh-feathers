@@ -70,9 +70,7 @@ const Footer = () => {
               </div>
               <span className="text-xl font-bold text-primary">Nuôi Gà 5.0</span>
             </div>
-            <p className="text-muted-foreground leading-relaxed">
-              Nền tảng nuôi gà từ xa hàng đầu Việt Nam. Mang lại trải nghiệm nuôi gà thật với công nghệ hiện đại.
-            </p>
+            <p className="text-muted-foreground leading-relaxed">Nền tảng nuôi gà từ xa đầu tiên tại Việt Nam. Mang lại trải nghiệm nuôi gà thật với công nghệ hiện đại.</p>
             
             {/* Newsletter */}
             <div className="space-y-3">
