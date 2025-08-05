@@ -373,9 +373,9 @@ export default function AnimatedFarm({
               </div>
               <div className="flex-1 relative">
                 <iframe 
-                  width="100%" 
-                  height="100%" 
-                  src="https://rtsp.me/embed/NFG5zGhs/" 
+                  width="640" 
+                  height="480" 
+                  src="https://rtsp.me/embed/bz78RBsB/" 
                   frameBorder="0" 
                   allowFullScreen
                   className="absolute inset-0"
