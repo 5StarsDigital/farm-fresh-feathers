@@ -7,16 +7,16 @@ const Footer = () => {
     title: 'Liên hệ',
     items: [{
       icon: Phone,
-      text: 'Hotline: 1900-XXX-XXX',
-      href: 'tel:1900xxxxxx'
+      text: 'Hotline: 0985.24.6666',
+      href: 'tel:0985246666'
     }, {
       icon: Mail,
       text: 'Email: support@nuoiga5stars.vn',
       href: 'mailto:support@nuoiga5stars.vn'
     }, {
       icon: MapPin,
-      text: 'Zalo: 0987-XXX-XXX',
-      href: 'https://zalo.me'
+      text: 'Zalo: 0985.24.6666',
+      href: 'https://zalo.me/0985246666'
     }]
   }, {
     title: 'Chính sách',
@@ -70,7 +70,9 @@ const Footer = () => {
               </div>
               <span className="text-xl font-bold text-primary">Nuôi Gà 5.0</span>
             </div>
-            <p className="text-muted-foreground leading-relaxed">Nền tảng nuôi gà từ xa đầu tiên tại Việt Nam. Mang lại trải nghiệm nuôi gà thật với công nghệ hiện đại.</p>
+            <p className="text-muted-foreground leading-relaxed">
+              Nền tảng nuôi gà từ xa hàng đầu Việt Nam. Mang lại trải nghiệm nuôi gà thật với công nghệ hiện đại.
+            </p>
             
             {/* Newsletter */}
             <div className="space-y-3">
