@@ -244,16 +244,31 @@ export default function AnimatedFarm({
       {/* Main Farm Area */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <div 
-            ref={farmRef}
-            className="relative h-96 bg-gradient-to-b from-sky-300 via-sky-200 to-green-300 overflow-hidden"
-            style={{
-              backgroundImage: `
-                linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%),
-                url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23228B22' fill-opacity='0.1'%3E%3Cpath d='M20 0h20v20H20z'/%3E%3C/g%3E%3C/svg%3E")
-              `
-            }}
-          >
+          <div className="relative">
+            {/* Camera trực tiếp title */}
+            <div className="absolute top-0 left-0 right-0 bg-red-500 text-white text-center py-2 font-bold text-lg z-20 border-4 border-red-700">
+              CAMERA TRỰC TIẾP
+            </div>
+            
+            {/* Main Camera iframe */}
+            <div className="relative h-96 border-4 border-red-600 overflow-hidden">
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://rtsp.me/embed/bz78RBsB/" 
+                frameBorder="0" 
+                allowFullScreen
+                className="absolute inset-0"
+                title="Main Farm Camera"
+              >
+              </iframe>
+            </div>
+            
+            {/* Overlay elements on camera */}
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              style={{ top: '40px' }} /* Account for title bar */
+            >
             {/* Background elements */}
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-green-400 to-transparent"></div>
             
@@ -286,15 +301,22 @@ export default function AnimatedFarm({
               </div>
             </div>
 
-            {/* TV Monitor */}
+            {/* TV Monitor with Camera 2 */}
             <div className="absolute top-4 left-4 bg-orange-600 p-2 rounded-lg border-4 border-orange-800 shadow-lg">
-              <div className="relative w-24 h-16 bg-gray-800 rounded border-2 border-gray-600">
-                <div className="absolute top-1 left-1 w-4 h-2 bg-red-500 text-white text-xs text-center rounded">
+              <div className="relative w-32 h-24 bg-gray-800 rounded border-2 border-gray-600 overflow-hidden">
+                <div className="absolute top-1 left-1 w-8 h-3 bg-red-500 text-white text-xs text-center rounded z-10">
                   LIVE
                 </div>
-                <div className="flex items-center justify-center h-full">
-                  <span className="text-white text-2xl">🐔</span>
-                </div>
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src="https://rtsp.me/embed/QRKErRyA/" 
+                  frameBorder="0" 
+                  title="RTSP Stream Player" 
+                  allowFullScreen
+                  className="absolute inset-0"
+                >
+                </iframe>
               </div>
             </div>
 
@@ -360,6 +382,7 @@ export default function AnimatedFarm({
             {/* Bottom info bar */}
             <div className="absolute bottom-2 left-4 text-sm text-green-800 font-semibold bg-white/80 px-3 py-1 rounded-full">
               Các loại gà đang sở hữu
+            </div>
             </div>
           </div>
         </CardContent>
