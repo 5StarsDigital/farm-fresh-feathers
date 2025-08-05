@@ -538,17 +538,42 @@ const Farm = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Camera 1 */}
+                  <div className="space-y-3">
+                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                      <iframe 
+                        width="100%" 
+                        height="100%" 
+                        src="https://rtsp.me/embed/bz78RBsB/" 
+                        frameBorder="0" 
+                        allowFullScreen
+                        className="absolute inset-0"
+                        title="Camera 1 - Khu vực chính"
+                      >
+                      </iframe>
+                    </div>
                     <div className="text-center">
-                      <Camera className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-muted-foreground">Camera 1 - Khu vực chính</p>
+                      <h3 className="font-semibold text-gray-700">Camera 1 - Khu vực chính</h3>
                     </div>
                   </div>
-                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+
+                  {/* Camera 2 */}
+                  <div className="space-y-3">
+                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+                      <iframe 
+                        width="100%" 
+                        height="100%" 
+                        src="https://rtsp.me/embed/QRKErRyA/" 
+                        frameBorder="0" 
+                        title="Camera 2 - Khu ăn uống" 
+                        allowFullScreen
+                        className="absolute inset-0"
+                      >
+                      </iframe>
+                    </div>
                     <div className="text-center">
-                      <Camera className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-muted-foreground">Camera 2 - Khu ăn uống</p>
+                      <h3 className="font-semibold text-gray-700">Camera 2 - Khu ăn uống</h3>
                     </div>
                   </div>
                 </div>
