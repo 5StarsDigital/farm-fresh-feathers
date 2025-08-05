@@ -273,12 +273,7 @@ export default function AnimatedFarm({
               <div className="absolute top-0 bottom-0 right-0 w-4 bg-amber-700 border-2 border-amber-900 rounded-r-lg shadow-lg"></div>
               <div className="absolute top-0 bottom-0 right-0 w-2 bg-amber-600"></div>
               
-              {/* Vertical fence posts */}
-              <div className="absolute top-1 bottom-1 left-8 w-2 bg-amber-800 rounded shadow"></div>
-              <div className="absolute top-1 bottom-1 left-16 w-2 bg-amber-800 rounded shadow"></div>
-              <div className="absolute top-1 bottom-1 right-8 w-2 bg-amber-800 rounded shadow"></div>
-              <div className="absolute top-1 bottom-1 right-16 w-2 bg-amber-800 rounded shadow"></div>
-            </div>
+            
             
             {/* Chicken Coop House */}
             <div className="absolute bottom-6 right-6">
