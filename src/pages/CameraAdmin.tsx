@@ -44,42 +44,29 @@ export default function CameraAdmin() {
 
   const fetchServicePackages = async () => {
     try {
-      // First get all service packages
+      // Get service packages with user info in one query using joins
       const { data: packagesData, error: packagesError } = await supabase
         .from('service_packages')
-        .select('*')
+        .select(`
+          *,
+          farms!inner(
+            user_id,
+            profiles!inner(
+              email,
+              full_name
+            )
+          )
+        `)
         .order('purchased_at', { ascending: false });
 
       if (packagesError) throw packagesError;
 
-      // Get user info for each package
-      const packagesWithUserInfo = await Promise.all(
-        (packagesData || []).map(async (pkg) => {
-          // Get farm owner info
-          const { data: farmData } = await supabase
-            .from('farms')
-            .select('user_id')
-            .eq('id', pkg.farm_id)
-            .single();
-
-          if (farmData?.user_id) {
-            // Get user profile
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('email, full_name')
-              .eq('id', farmData.user_id)
-              .single();
-
-            return {
-              ...pkg,
-              user_email: profileData?.email,
-              user_name: profileData?.full_name
-            };
-          }
-
-          return pkg;
-        })
-      );
+      // Map the joined data to include user info directly
+      const packagesWithUserInfo = (packagesData || []).map((pkg: any) => ({
+        ...pkg,
+        user_email: pkg.farms?.profiles?.email,
+        user_name: pkg.farms?.profiles?.full_name
+      }));
 
       setPackages(packagesWithUserInfo);
     } catch (error) {
