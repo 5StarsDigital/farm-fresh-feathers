@@ -74,21 +74,23 @@ interface ServicePackage {
   status: string;
   selected_chicken_type_id: string;
 }
-
 const Farm = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [farm, setFarm] = useState<Farm | null>(null);
   const [chickens, setChickens] = useState<UserChicken[]>([]);
   const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
-  const [eggInventory, setEggInventory] = useState<EggInventory>({ total_eggs: 0 });
+  const [eggInventory, setEggInventory] = useState<EggInventory>({
+    total_eggs: 0
+  });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [addingChickens, setAddingChickens] = useState<string | null>(null);
-  
   const form = useForm<ProfileFormData>({
     defaultValues: {
       full_name: '',
@@ -220,13 +222,12 @@ const Farm = () => {
       setFarm(farmData);
 
       // Get service packages
-      const { data: servicePackageData, error: servicePackageError } = await (supabase as any)
-        .from('service_packages')
-        .select('*')
-        .eq('farm_id', farmData.id)
-        .eq('status', 'active')
-        .order('purchased_at', { ascending: false });
-      
+      const {
+        data: servicePackageData,
+        error: servicePackageError
+      } = await (supabase as any).from('service_packages').select('*').eq('farm_id', farmData.id).eq('status', 'active').order('purchased_at', {
+        ascending: false
+      });
       if (servicePackageError) throw servicePackageError;
       setServicePackages(servicePackageData || []);
 
@@ -369,26 +370,25 @@ const Farm = () => {
       });
     }
   };
-
   const addChickensToPackage = async (packageId: string, additionalQuantity: number) => {
     try {
       setAddingChickens(packageId);
-      
-      const { data, error } = await supabase.functions.invoke('add-chickens-to-package', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('add-chickens-to-package', {
         body: {
           packageId,
           additionalQuantity
         }
       });
-
       if (error) throw error;
-
       if (data.success) {
         toast({
           title: "Mua thêm gà thành công!",
           description: `Đã thêm ${additionalQuantity} con gà. Số dư còn lại: ${data.new_balance.toLocaleString()} VND`
         });
-        
+
         // Reload farm data
         if (user) await loadFarmData(user.id);
       } else {
@@ -405,7 +405,6 @@ const Farm = () => {
       setAddingChickens(null);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -420,7 +419,9 @@ const Farm = () => {
         </div>
       </div>;
   }
-  return <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: `url(${farmBackground})`}}>
+  return <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{
+    backgroundImage: `url(${farmBackground})`
+  }}>
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
@@ -466,10 +467,8 @@ const Farm = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                {servicePackages.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {servicePackages.map((pkg) => (
-                      <Card key={pkg.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105 border-2 border-purple-200">
+                {servicePackages.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {servicePackages.map(pkg => <Card key={pkg.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105 border-2 border-purple-200">
                         <CardHeader className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4">
                           <CardTitle className="text-lg">{pkg.package_name}</CardTitle>
                           <CardDescription className="text-orange-100 text-sm">
@@ -500,50 +499,29 @@ const Farm = () => {
                           </div>
                           
                           <div className="pt-4 border-t">
-                            <Button
-                              onClick={() => {
-                                const quantity = prompt("Nhập số lượng gà muốn mua thêm:", "1");
-                                if (quantity && parseInt(quantity) > 0) {
-                                  addChickensToPackage(pkg.id, parseInt(quantity));
-                                }
-                              }}
-                              disabled={addingChickens === pkg.id}
-                              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold"
-                            >
+                            <Button onClick={() => {
+                        const quantity = prompt("Nhập số lượng gà muốn mua thêm:", "1");
+                        if (quantity && parseInt(quantity) > 0) {
+                          addChickensToPackage(pkg.id, parseInt(quantity));
+                        }
+                      }} disabled={addingChickens === pkg.id} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
                               {addingChickens === pkg.id ? "Đang xử lý..." : "🛒 Mua thêm gà"}
                             </Button>
                           </div>
                         </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
+                      </Card>)}
+                  </div> : <div className="text-center py-8">
                     <div className="text-6xl mb-4">📦</div>
                     <p className="text-gray-600 font-semibold">Bạn chưa mua gói dịch vụ nào. Hãy mua từ cửa hàng!</p>
-                    <Button 
-                      onClick={() => navigate('/shop')}
-                      className="mt-4 bg-purple-500 hover:bg-purple-600 text-white"
-                    >
+                    <Button onClick={() => navigate('/shop')} className="mt-4 bg-purple-500 hover:bg-purple-600 text-white">
                       🛒 Đi đến cửa hàng
                     </Button>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
 
             {/* User Packages Section */}
-            <Card className="bg-amber-50 border-4 border-amber-300 shadow-lg">
-              <CardHeader className="bg-amber-500 text-white border-b-4 border-amber-700">
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-6 w-6" />
-                  📊 Thống kê gói cũ
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <UserPackagesSection farmId={farm?.id} refreshTrigger={refreshTrigger} />
-              </CardContent>
-            </Card>
+            
 
             {/* Chickens Section */}
             <Card className="bg-orange-50 border-4 border-orange-300 shadow-lg">
@@ -686,16 +664,10 @@ const Farm = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Camera 1 */}
                   <div className="space-y-3">
-                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                      <iframe 
-                        width="100%" 
-                        height="100%" 
-                        src="https://rtsp.me/embed/NFG5zGhs/" 
-                        frameBorder="0" 
-                        allowFullScreen
-                        className="absolute inset-0"
-                        title="Camera 1 - Khu vực chính"
-                      >
+                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{
+                    aspectRatio: '4/3'
+                  }}>
+                      <iframe width="100%" height="100%" src="https://rtsp.me/embed/NFG5zGhs/" frameBorder="0" allowFullScreen className="absolute inset-0" title="Camera 1 - Khu vực chính">
                       </iframe>
                     </div>
                     <div className="text-center">
@@ -705,16 +677,10 @@ const Farm = () => {
 
                   {/* Camera 2 */}
                   <div className="space-y-3">
-                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                      <iframe 
-                        width="100%" 
-                        height="100%" 
-                        src="https://rtsp.me/embed/QRKErRyA/" 
-                        frameBorder="0" 
-                        title="Camera 2 - Khu ăn uống" 
-                        allowFullScreen
-                        className="absolute inset-0"
-                      >
+                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{
+                    aspectRatio: '4/3'
+                  }}>
+                      <iframe width="100%" height="100%" src="https://rtsp.me/embed/QRKErRyA/" frameBorder="0" title="Camera 2 - Khu ăn uống" allowFullScreen className="absolute inset-0">
                       </iframe>
                     </div>
                     <div className="text-center">
