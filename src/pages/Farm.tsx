@@ -75,6 +75,13 @@ interface ServicePackage {
   status: string;
   selected_chicken_type_id: string;
 }
+
+interface CoopLimits {
+  [coopName: string]: {
+    min_chickens: number;
+    max_chickens: number;
+  };
+}
 const Farm = () => {
   const navigate = useNavigate();
   const {
@@ -84,6 +91,7 @@ const Farm = () => {
   const [farm, setFarm] = useState<Farm | null>(null);
   const [chickens, setChickens] = useState<UserChicken[]>([]);
   const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
+  const [coopLimits, setCoopLimits] = useState<CoopLimits>({});
   const [eggInventory, setEggInventory] = useState<EggInventory>({
     total_eggs: 0
   });
@@ -233,6 +241,11 @@ const Farm = () => {
       if (servicePackageError) throw servicePackageError;
       setServicePackages(servicePackageData || []);
 
+      // Load coop limits for service packages
+      if (servicePackageData && servicePackageData.length > 0) {
+        await loadCoopLimits(servicePackageData);
+      }
+
       // Get chickens
       const {
         data: chickenData,
@@ -282,6 +295,40 @@ const Farm = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCoopLimits = async (packages: ServicePackage[]) => {
+    try {
+      const uniqueCoopNames = [...new Set(packages.map(pkg => pkg.coop_name))];
+      const { data: coopData, error } = await supabase
+        .from('available_farms')
+        .select('name, min_chickens_per_coop, max_chickens_per_coop')
+        .in('name', uniqueCoopNames);
+
+      if (error) throw error;
+
+      const limits: CoopLimits = {};
+      coopData?.forEach(coop => {
+        limits[coop.name] = {
+          min_chickens: coop.min_chickens_per_coop || 10,
+          max_chickens: coop.max_chickens_per_coop || 100
+        };
+      });
+
+      // Set default limits for coops not found in available_farms
+      uniqueCoopNames.forEach(coopName => {
+        if (!limits[coopName]) {
+          limits[coopName] = {
+            min_chickens: 10,
+            max_chickens: 100
+          };
+        }
+      });
+
+      setCoopLimits(limits);
+    } catch (error) {
+      console.error('Error loading coop limits:', error);
     }
   };
   const collectEggs = async () => {
@@ -482,6 +529,11 @@ const Farm = () => {
                             <div className="flex items-center gap-2 text-sm">
                               <span>🏠</span>
                               <span><strong>Chuồng:</strong> {pkg.coop_name}</span>
+                              {coopLimits[pkg.coop_name] && (
+                                <Badge variant="outline" className="text-xs">
+                                  {coopLimits[pkg.coop_name].min_chickens}-{coopLimits[pkg.coop_name].max_chickens} con
+                                </Badge>
+                              )}
                             </div>
                             
                             <div className="flex items-center gap-2 text-sm">
