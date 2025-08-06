@@ -392,6 +392,66 @@ export type Database = {
         }
         Relationships: []
       }
+      service_packages: {
+        Row: {
+          coop_id: string | null
+          coop_name: string | null
+          coop_price: number | null
+          created_at: string
+          farm_id: string
+          id: string
+          package_id: string
+          package_name: string
+          package_price: number
+          purchased_at: string
+          selected_chicken_quantity: number | null
+          selected_chicken_type_id: string | null
+          selected_chicken_type_name: string | null
+          status: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coop_id?: string | null
+          coop_name?: string | null
+          coop_price?: number | null
+          created_at?: string
+          farm_id: string
+          id?: string
+          package_id: string
+          package_name: string
+          package_price: number
+          purchased_at?: string
+          selected_chicken_quantity?: number | null
+          selected_chicken_type_id?: string | null
+          selected_chicken_type_name?: string | null
+          status?: string | null
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coop_id?: string | null
+          coop_name?: string | null
+          coop_price?: number | null
+          created_at?: string
+          farm_id?: string
+          id?: string
+          package_id?: string
+          package_name?: string
+          package_price?: number
+          purchased_at?: string
+          selected_chicken_quantity?: number | null
+          selected_chicken_type_id?: string | null
+          selected_chicken_type_name?: string | null
+          status?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number | null
@@ -546,6 +606,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_chickens_to_package: {
+        Args: { package_id_param: string; additional_quantity: number }
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]

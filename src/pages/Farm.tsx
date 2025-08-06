@@ -61,21 +61,34 @@ interface ProfileFormData {
   date_of_birth: string;
   email: string;
 }
+interface ServicePackage {
+  id: string;
+  package_name: string;
+  package_price: number;
+  coop_name: string;
+  coop_price: number;
+  selected_chicken_type_name: string;
+  selected_chicken_quantity: number;
+  total_amount: number;
+  purchased_at: string;
+  status: string;
+  selected_chicken_type_id: string;
+}
+
 const Farm = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [farm, setFarm] = useState<Farm | null>(null);
   const [chickens, setChickens] = useState<UserChicken[]>([]);
-  const [eggInventory, setEggInventory] = useState<EggInventory>({
-    total_eggs: 0
-  });
+  const [servicePackages, setServicePackages] = useState<ServicePackage[]>([]);
+  const [eggInventory, setEggInventory] = useState<EggInventory>({ total_eggs: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [addingChickens, setAddingChickens] = useState<string | null>(null);
+  
   const form = useForm<ProfileFormData>({
     defaultValues: {
       full_name: '',
@@ -205,6 +218,17 @@ const Farm = () => {
         throw farmError;
       }
       setFarm(farmData);
+
+      // Get service packages
+      const { data: servicePackageData, error: servicePackageError } = await (supabase as any)
+        .from('service_packages')
+        .select('*')
+        .eq('farm_id', farmData.id)
+        .eq('status', 'active')
+        .order('purchased_at', { ascending: false });
+      
+      if (servicePackageError) throw servicePackageError;
+      setServicePackages(servicePackageData || []);
 
       // Get chickens
       const {
@@ -345,6 +369,49 @@ const Farm = () => {
       });
     }
   };
+
+  const addChickensToPackage = async (packageId: string, additionalQuantity: number) => {
+    try {
+      setAddingChickens(packageId);
+      
+      const { data, error } = await supabase.functions.invoke('add-chickens-to-package', {
+        body: {
+          packageId,
+          additionalQuantity
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "Mua thêm gà thành công!",
+          description: `Đã thêm ${additionalQuantity} con gà. Số dư còn lại: ${data.new_balance.toLocaleString()} VND`
+        });
+        
+        // Reload farm data
+        if (user) await loadFarmData(user.id);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error adding chickens:', error);
+      toast({
+        title: "Lỗi mua thêm gà",
+        description: error.message || "Có lỗi xảy ra khi mua thêm gà",
+        variant: "destructive"
+      });
+    } finally {
+      setAddingChickens(null);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
   if (loading) {
     return <div className="min-h-screen bg-background">
         <Navigation />
@@ -387,12 +454,90 @@ const Farm = () => {
             {/* Animated Farm Section */}
             <AnimatedFarm farmName={farm?.farm_name || "Trang trại của bạn"} balance={farm?.account_balance || 0} totalEggs={eggInventory.total_eggs} totalChickens={chickens.reduce((sum, chicken) => sum + chicken.quantity, 0)} chickens={chickens} farmId={farm?.id || ""} onCollectEgg={collectEggs} onSellEggs={sellEggs} />
 
+            {/* Service Packages Section */}
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-4 border-purple-300 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-b-4 border-purple-700">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-6 w-6" />
+                  🎁 Gói dịch vụ đã mua
+                </CardTitle>
+                <CardDescription className="text-purple-100">
+                  Quản lý và mua thêm gà cho các gói dịch vụ của bạn
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                {servicePackages.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {servicePackages.map((pkg) => (
+                      <Card key={pkg.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105 border-2 border-purple-200">
+                        <CardHeader className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4">
+                          <CardTitle className="text-lg">{pkg.package_name}</CardTitle>
+                          <CardDescription className="text-orange-100 text-sm">
+                            Đã mua: {new Date(pkg.purchased_at).toLocaleDateString('vi-VN')}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              <span>🏠</span>
+                              <span><strong>Chuồng:</strong> {pkg.coop_name}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 text-sm">
+                              <span>🐔</span>
+                              <span><strong>Gà:</strong> {pkg.selected_chicken_type_name}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 text-sm">
+                              <span>📊</span>
+                              <span><strong>Số lượng:</strong> <span className="font-semibold text-green-600">{pkg.selected_chicken_quantity} con</span></span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 text-sm">
+                              <span>💰</span>
+                              <span><strong>Tổng tiền:</strong> <span className="font-semibold text-purple-600">{formatCurrency(pkg.total_amount)}</span></span>
+                            </div>
+                          </div>
+                          
+                          <div className="pt-4 border-t">
+                            <Button
+                              onClick={() => {
+                                const quantity = prompt("Nhập số lượng gà muốn mua thêm:", "1");
+                                if (quantity && parseInt(quantity) > 0) {
+                                  addChickensToPackage(pkg.id, parseInt(quantity));
+                                }
+                              }}
+                              disabled={addingChickens === pkg.id}
+                              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold"
+                            >
+                              {addingChickens === pkg.id ? "Đang xử lý..." : "🛒 Mua thêm gà"}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">📦</div>
+                    <p className="text-gray-600 font-semibold">Bạn chưa mua gói dịch vụ nào. Hãy mua từ cửa hàng!</p>
+                    <Button 
+                      onClick={() => navigate('/shop')}
+                      className="mt-4 bg-purple-500 hover:bg-purple-600 text-white"
+                    >
+                      🛒 Đi đến cửa hàng
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* User Packages Section */}
             <Card className="bg-amber-50 border-4 border-amber-300 shadow-lg">
               <CardHeader className="bg-amber-500 text-white border-b-4 border-amber-700">
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-6 w-6" />
-                  🎁 Gói dịch vụ đã mua
+                  📊 Thống kê gói cũ
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">

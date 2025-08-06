@@ -45,6 +45,39 @@ serve(async (req) => {
     console.log('Processing checkout for user:', user.id);
     console.log('Package:', packageId, 'Coop:', coopId, 'Total:', totalAmount);
 
+    // Package info mapping
+    const packageInfo = {
+      'basic': { name: 'Gói Cơ Bản', price: 200000 },
+      'advanced': { name: 'Gói Nâng Cao', price: 400000 },
+      'vip': { name: 'Gói VIP', price: 800000 }
+    };
+
+    // Get the first selected chicken info (for single chicken type per package)
+    const selectedChickenEntries = Object.entries(selectedChickens).filter(([_, qty]) => qty > 0);
+    if (selectedChickenEntries.length === 0) {
+      return new Response(JSON.stringify({ error: 'No chickens selected' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const [selectedChickenTypeId, selectedQuantity] = selectedChickenEntries[0];
+    
+    // Get chicken type info
+    const { data: chickenType, error: chickenTypeError } = await supabaseServiceRole
+      .from('chicken_types')
+      .select('*')
+      .eq('id', selectedChickenTypeId)
+      .single();
+
+    if (chickenTypeError) {
+      console.error('Chicken type error:', chickenTypeError);
+      return new Response(JSON.stringify({ error: 'Chicken type not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Get user's farm
     const { data: farm, error: farmError } = await supabaseServiceRole
       .from('farms')
@@ -79,6 +112,9 @@ serve(async (req) => {
       throw balanceError;
     }
 
+    let coopName = 'Chuồng Nuôi Chung';
+    let coopPrice = 0;
+
     // Handle farm rental if it's advanced or vip package
     if ((packageId === 'advanced' || packageId === 'vip') && coopId) {
       // Check if coopId is actually an available_farm_id
@@ -89,6 +125,9 @@ serve(async (req) => {
         .single();
 
       if (!farmCheckError && availableFarm) {
+        coopName = availableFarm.name;
+        coopPrice = availableFarm.rental_price;
+
         // Create farm rental record
         const { error: rentalError } = await supabaseServiceRole
           .from('farm_rentals')
@@ -116,6 +155,19 @@ serve(async (req) => {
           console.error('Farm update error:', farmUpdateError);
           throw farmUpdateError;
         }
+      }
+    } else if (coopId) {
+      // Handle regular coop designs
+      const coopDesigns = {
+        'shared': { name: 'Chuồng Nuôi Chung', price: 0 },
+        'individual': { name: 'Chuồng Riêng Biệt', price: 100000 },
+        'luxury': { name: 'Chuồng Cao Cấp', price: 200000 },
+        'ai-designed': { name: 'Chuồng Thiết Kế AI', price: 300000 }
+      };
+      
+      if (coopDesigns[coopId]) {
+        coopName = coopDesigns[coopId].name;
+        coopPrice = coopDesigns[coopId].price;
       }
     }
 
@@ -164,6 +216,29 @@ serve(async (req) => {
       }
     }
 
+    // Create service package record
+    const { error: servicePackageError } = await supabaseServiceRole
+      .from('service_packages')
+      .insert({
+        user_id: user.id,
+        farm_id: farm.id,
+        package_id: packageId,
+        package_name: packageInfo[packageId].name,
+        package_price: packageInfo[packageId].price,
+        coop_id: coopId,
+        coop_name: coopName,
+        coop_price: coopPrice,
+        selected_chicken_type_id: selectedChickenTypeId,
+        selected_chicken_type_name: chickenType.name,
+        selected_chicken_quantity: parseInt(selectedQuantity as string),
+        total_amount: totalAmount
+      });
+
+    if (servicePackageError) {
+      console.error('Service package error:', servicePackageError);
+      throw servicePackageError;
+    }
+
     // Record transaction
     const { error: transactionError } = await supabaseServiceRole
       .from('transactions')
@@ -171,7 +246,7 @@ serve(async (req) => {
         farm_id: farm.id,
         transaction_type: 'package_purchase',
         amount: -totalAmount,
-        description: `Mua gói ${packageId} - Tổng tiền: ${totalAmount.toLocaleString()} VND`
+        description: `Mua gói ${packageInfo[packageId].name} - ${chickenType.name} (${selectedQuantity} con) - Tổng tiền: ${totalAmount.toLocaleString()} VND`
       });
 
     if (transactionError) {
