@@ -44,18 +44,26 @@ export default function CameraAdmin() {
 
   const fetchServicePackages = async () => {
     try {
+      console.log('Fetching service packages...');
       // Get service packages first
       const { data: packagesData, error: packagesError } = await supabase
         .from('service_packages')
         .select('*')
         .order('purchased_at', { ascending: false });
 
-      if (packagesError) throw packagesError;
+      if (packagesError) {
+        console.error('Error fetching packages:', packagesError);
+        throw packagesError;
+      }
+
+      console.log('Packages found:', packagesData?.length);
 
       // Get user info for each package
       const packagesWithUserInfo = await Promise.all(
         (packagesData || []).map(async (pkg) => {
           try {
+            console.log('Processing package:', pkg.id, 'farm_id:', pkg.farm_id);
+            
             // Get farm owner info
             const { data: farmData, error: farmError } = await supabase
               .from('farms')
@@ -63,11 +71,14 @@ export default function CameraAdmin() {
               .eq('id', pkg.farm_id)
               .single();
 
+            console.log('Farm data for package', pkg.id, ':', farmData, 'Error:', farmError);
+
             if (farmError || !farmData?.user_id) {
+              console.log('No farm found or no user_id for package:', pkg.id);
               return {
                 ...pkg,
-                user_email: 'N/A',
-                user_name: 'N/A'
+                user_email: 'No farm found',
+                user_name: 'No farm found'
               };
             }
 
@@ -78,30 +89,37 @@ export default function CameraAdmin() {
               .eq('id', farmData.user_id)
               .single();
 
+            console.log('Profile data for user', farmData.user_id, ':', profileData, 'Error:', profileError);
+
             if (profileError) {
+              console.log('Profile error for user:', farmData.user_id, profileError);
               return {
                 ...pkg,
-                user_email: 'N/A',
-                user_name: 'N/A'
+                user_email: `Profile error: ${profileError.message}`,
+                user_name: `Profile error: ${profileError.message}`
               };
             }
 
-            return {
+            const result = {
               ...pkg,
-              user_email: profileData?.email || 'N/A',
-              user_name: profileData?.full_name || 'N/A'
+              user_email: profileData?.email || 'No email',
+              user_name: profileData?.full_name || 'No name'
             };
+
+            console.log('Final result for package:', pkg.id, result.user_name, result.user_email);
+            return result;
           } catch (error) {
             console.error('Error fetching user info for package:', pkg.id, error);
             return {
               ...pkg,
-              user_email: 'N/A',
-              user_name: 'N/A'
+              user_email: `Error: ${error}`,
+              user_name: `Error: ${error}`
             };
           }
         })
       );
 
+      console.log('Final packages with user info:', packagesWithUserInfo);
       setPackages(packagesWithUserInfo);
     } catch (error) {
       console.error('Error fetching service packages:', error);
