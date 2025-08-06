@@ -115,6 +115,7 @@ export default function Checkout() {
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
   const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   useEffect(() => {
     const packageId = searchParams.get("package");
     if (packageId && packages.find(p => p.id === packageId)) {
@@ -170,6 +171,13 @@ export default function Checkout() {
   const showFarmDesigns = selectedPackage === "advanced" || selectedPackage === "vip";
   const selectedFarmData = availableFarms.find(f => f.id === selectedCoop);
   const updateChickenQuantity = (chickenId: string, quantity: number) => {
+    // Validate against farm/coop limits
+    if (showFarmDesigns && selectedFarmData) {
+      const minChickens = selectedFarmData.min_chickens_per_coop || 1;
+      const maxChickens = selectedFarmData.max_chickens_per_coop || 999;
+      quantity = Math.max(minChickens, Math.min(maxChickens, quantity));
+    }
+    
     setSelectedChickens(prev => ({
       [chickenId]: Math.max(1, quantity)
     }));
@@ -200,13 +208,35 @@ export default function Checkout() {
     return total;
   };
   const canProceedToPayment = () => {
-    return selectedPackage && selectedCoop && getTotalChickens() > 0;
+    if (!selectedPackage || !selectedCoop || getTotalChickens() === 0) {
+      return false;
+    }
+    
+    // Check if farm is available
+    if (showFarmDesigns && selectedFarmData && selectedFarmData.available_coops === 0) {
+      return false;
+    }
+    
+    // Check chicken quantity limits for farm
+    if (showFarmDesigns && selectedFarmData) {
+      const totalChickens = getTotalChickens();
+      const minChickens = selectedFarmData.min_chickens_per_coop || 1;
+      const maxChickens = selectedFarmData.max_chickens_per_coop || 999;
+      if (totalChickens < minChickens || totalChickens > maxChickens) {
+        return false;
+      }
+    }
+    
+    return true;
   };
   const handlePayment = async () => {
     if (!canProceedToPayment()) {
       toast.error('Vui lòng chọn đầy đủ các mục trước khi thanh toán');
       return;
     }
+    
+    setIsProcessingPayment(true);
+    
     try {
       const {
         data,
@@ -235,6 +265,8 @@ export default function Checkout() {
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Có lỗi xảy ra khi thanh toán');
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
   const formatCurrency = (amount: number) => {
@@ -319,24 +351,25 @@ export default function Checkout() {
                     <RadioGroup value={selectedCoop} onValueChange={setSelectedCoop}>
                     {showFarmDesigns ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {availableFarms.map(farm => <div key={farm.id} className="relative">
-                            <Label htmlFor={farm.id} className="cursor-pointer">
-                              <Card className={`transition-all hover:shadow-lg ${selectedCoop === farm.id ? 'ring-2 ring-primary' : ''}`}>
+                            <Label htmlFor={farm.id} className={`cursor-pointer ${farm.available_coops === 0 ? 'cursor-not-allowed' : ''}`}>
+                              <Card className={`transition-all hover:shadow-lg ${selectedCoop === farm.id ? 'ring-2 ring-primary' : ''} ${farm.available_coops === 0 ? 'opacity-50' : ''}`}>
                                 <div className="aspect-video overflow-hidden rounded-t-lg">
                                   <img src={farm.image_url || "/placeholder.svg"} alt={farm.name} className="w-full h-full object-cover" />
                                 </div>
-                                <CardContent className="p-4">
-                                  <div className="flex items-center space-x-2 mb-3">
-                                    <RadioGroupItem value={farm.id} id={farm.id} />
-                                    <div className="flex-1">
+                                 <CardContent className="p-4">
+                                   <div className="flex items-center space-x-2 mb-3">
+                                     <RadioGroupItem value={farm.id} id={farm.id} disabled={farm.available_coops === 0} />
+                                     <div className="flex-1">
                                       <h4 className="font-semibold text-lg">{farm.name}</h4>
                                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                                         📍 {farm.location}
                                       </p>
                                       <div className="space-y-2 mt-2">
-                                        <div className="flex items-center gap-2 text-sm">
-                                          <Users className="w-4 h-4 text-primary" />
-                                          <span>Còn trống: <span className="font-semibold">{farm.available_coops}/{farm.total_coops}</span></span>
-                                        </div>
+                                         <div className="flex items-center gap-2 text-sm">
+                                           <Users className="w-4 h-4 text-primary" />
+                                           <span>Còn trống: <span className={`font-semibold ${farm.available_coops === 0 ? 'text-red-500' : ''}`}>{farm.available_coops}/{farm.total_coops}</span></span>
+                                           {farm.available_coops === 0 && <span className="text-red-500 text-xs font-medium">Hết chỗ</span>}
+                                         </div>
 
                                         {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
                                           <div className="flex items-center gap-2 text-sm">
@@ -433,18 +466,24 @@ export default function Checkout() {
                                         Sản lượng: {chicken.egg_production_rate} trứng/2 ngày
                                       </p>
                                     </div>
-                                    {selectedChickenType === chicken.id && (
-                                      <div className="flex items-center gap-2 mt-3">
-                                        <Label>Số lượng:</Label>
-                                        <Input
-                                          type="number"
-                                          min="1"
-                                          value={selectedChickens[chicken.id] || 1}
-                                          onChange={(e) => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)}
-                                          className="w-20"
-                                        />
-                                      </div>
-                                    )}
+                                     {selectedChickenType === chicken.id && (
+                                       <div className="flex items-center gap-2 mt-3">
+                                         <Label>Số lượng:</Label>
+                                         {showFarmDesigns && selectedFarmData && (
+                                           <span className="text-xs text-muted-foreground mr-2">
+                                             ({selectedFarmData.min_chickens_per_coop || 1}-{selectedFarmData.max_chickens_per_coop || 999})
+                                           </span>
+                                         )}
+                                         <Input
+                                           type="number"
+                                           min={showFarmDesigns && selectedFarmData ? selectedFarmData.min_chickens_per_coop || 1 : 1}
+                                           max={showFarmDesigns && selectedFarmData ? selectedFarmData.max_chickens_per_coop || 999 : 999}
+                                           value={selectedChickens[chicken.id] || 1}
+                                           onChange={(e) => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)}
+                                           className="w-20"
+                                         />
+                                       </div>
+                                     )}
                                   </div>
                                 </div>
                               </CardContent>
@@ -495,8 +534,13 @@ export default function Checkout() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-6" size="lg" onClick={handlePayment} disabled={!canProceedToPayment()}>
-                      Thanh Toán
+                    <Button 
+                      className="w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed" 
+                      size="lg" 
+                      onClick={handlePayment} 
+                      disabled={!canProceedToPayment() || isProcessingPayment}
+                    >
+                      {isProcessingPayment ? 'Đang xử lý...' : 'Thanh Toán'}
                     </Button>
 
                     {!canProceedToPayment() && <p className="text-sm text-muted-foreground text-center mt-2">
