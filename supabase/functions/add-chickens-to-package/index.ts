@@ -48,14 +48,8 @@ serve(async (req) => {
 
     console.log('Adding chickens to package:', packageId, 'Additional quantity:', additionalQuantity);
 
-    // Set the session for the service role client
-    await supabaseServiceRole.auth.setSession({
-      access_token: token,
-      refresh_token: ''
-    });
-
-    // Call the database function
-    const { data, error } = await supabaseServiceRole.rpc('add_chickens_to_package', {
+    // Call the database function with the regular client using session token
+    const { data, error } = await supabaseClient.rpc('add_chickens_to_package', {
       package_id_param: packageId,
       additional_quantity: additionalQuantity
     });

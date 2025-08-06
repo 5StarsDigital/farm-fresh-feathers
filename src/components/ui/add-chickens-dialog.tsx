@@ -168,6 +168,11 @@ export const AddChickensDialog = ({
               <div className="flex items-center gap-2 text-sm">
                 <span>🏠</span>
                 <span><strong>Chuồng:</strong> {pkg.coop_name}</span>
+                {coopLimits && (
+                  <Badge variant="outline" className="text-xs">
+                    {coopLimits.min_chickens}-{coopLimits.max_chickens} con
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span>🐔</span>
