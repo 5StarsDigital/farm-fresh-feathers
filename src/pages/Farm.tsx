@@ -16,6 +16,7 @@ import { useForm } from 'react-hook-form';
 import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon } from 'lucide-react';
 import UserPackagesSection from '@/components/ui/user-packages-section';
 import AnimatedFarm from '@/components/ui/animated-farm';
+import { AddChickensDialog } from '@/components/ui/add-chickens-dialog';
 import farmBackground from '@/assets/farm-background.jpg';
 
 // Using any types temporarily until Supabase types are updated
@@ -91,6 +92,7 @@ const Farm = () => {
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [addingChickens, setAddingChickens] = useState<string | null>(null);
+  const [selectedPackageForAddChickens, setSelectedPackageForAddChickens] = useState<ServicePackage | null>(null);
   const form = useForm<ProfileFormData>({
     defaultValues: {
       full_name: '',
@@ -499,12 +501,11 @@ const Farm = () => {
                           </div>
                           
                           <div className="pt-4 border-t">
-                            <Button onClick={() => {
-                        const quantity = prompt("Nhập số lượng gà muốn mua thêm:", "1");
-                        if (quantity && parseInt(quantity) > 0) {
-                          addChickensToPackage(pkg.id, parseInt(quantity));
-                        }
-                      }} disabled={addingChickens === pkg.id} className="w-full bg-green-500 hover:bg-green-600 text-white font-bold">
+                            <Button 
+                              onClick={() => setSelectedPackageForAddChickens(pkg)} 
+                              disabled={addingChickens === pkg.id} 
+                              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold"
+                            >
                               {addingChickens === pkg.id ? "Đang xử lý..." : "🛒 Mua thêm gà"}
                             </Button>
                           </div>
@@ -774,6 +775,17 @@ const Farm = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Add Chickens Dialog */}
+        {selectedPackageForAddChickens && (
+          <AddChickensDialog
+            open={!!selectedPackageForAddChickens}
+            onOpenChange={(open) => !open && setSelectedPackageForAddChickens(null)}
+            package={selectedPackageForAddChickens}
+            onSuccess={addChickensToPackage}
+            currentBalance={farm?.account_balance || 0}
+          />
+        )}
       </div>
     </div>;
 };
