@@ -95,14 +95,19 @@ const AvailableFarmsSection = () => {
 
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-primary" />
-                      <span>Còn trống: {farm.available_coops}/{farm.total_coops}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span>{farm.rating} ({farm.review_count || 0})</span>
-                    </div>
+                     <div className="flex items-center gap-2">
+                       <Users className="w-4 h-4 text-primary" />
+                       <span>Còn trống: {farm.available_coops}/{farm.total_coops}</span>
+                     </div>
+                     {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
+                       <div className="text-sm text-muted-foreground">
+                         Số lượng gà/chuồng: {farm.min_chickens_per_coop}-{farm.max_chickens_per_coop}
+                       </div>
+                     )}
+                     <div className="flex items-center gap-1">
+                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                       <span>{farm.rating} ({farm.review_count || 0})</span>
+                     </div>
                   </div>
 
                   <div className="space-y-2">
