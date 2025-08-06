@@ -24,8 +24,17 @@ serve(async (req) => {
     );
 
     // Get the session
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header');
+      return new Response(JSON.stringify({ error: 'No authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
 
     if (authError || !user) {
       console.error('Auth error:', authError);
@@ -38,6 +47,12 @@ serve(async (req) => {
     const { packageId, additionalQuantity } = await req.json();
 
     console.log('Adding chickens to package:', packageId, 'Additional quantity:', additionalQuantity);
+
+    // Set the session for the service role client
+    await supabaseServiceRole.auth.setSession({
+      access_token: token,
+      refresh_token: ''
+    });
 
     // Call the database function
     const { data, error } = await supabaseServiceRole.rpc('add_chickens_to_package', {
