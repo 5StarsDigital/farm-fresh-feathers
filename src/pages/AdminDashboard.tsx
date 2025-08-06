@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshCw, Undo2 } from 'lucide-react';
+import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshCw, Undo2, Camera } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import CameraAdmin from './CameraAdmin';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -397,6 +398,7 @@ export default function AdminDashboard() {
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
+            <TabsTrigger value="camera">Camera</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
@@ -521,6 +523,9 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          <TabsContent value="camera" className="space-y-4">
+            <CameraAdmin />
+          </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">
             <div className="flex justify-between items-center">

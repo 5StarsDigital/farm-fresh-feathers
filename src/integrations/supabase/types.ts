@@ -404,6 +404,7 @@ export type Database = {
           package_name: string
           package_price: number
           purchased_at: string
+          rtsp_url: string | null
           selected_chicken_quantity: number | null
           selected_chicken_type_id: string | null
           selected_chicken_type_name: string | null
@@ -423,6 +424,7 @@ export type Database = {
           package_name: string
           package_price: number
           purchased_at?: string
+          rtsp_url?: string | null
           selected_chicken_quantity?: number | null
           selected_chicken_type_id?: string | null
           selected_chicken_type_name?: string | null
@@ -442,6 +444,7 @@ export type Database = {
           package_name?: string
           package_price?: number
           purchased_at?: string
+          rtsp_url?: string | null
           selected_chicken_quantity?: number | null
           selected_chicken_type_id?: string | null
           selected_chicken_type_name?: string | null
