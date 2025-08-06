@@ -24,6 +24,8 @@ interface AvailableFarm {
   available_coops: number;
   total_coops: number;
   rental_price: number;
+  min_chickens_per_coop?: number;
+  max_chickens_per_coop?: number;
 }
 interface ChickenType {
   id: string;
@@ -429,8 +431,11 @@ export default function AdminDashboard() {
                           <div className="flex gap-4 mt-2 text-sm">
                             <span>Giá thuê: {formatCurrency(farm.rental_price)}</span>
                             <span>Chi phí hàng tháng: {formatCurrency(farm.monthly_cost)}</span>
-                            <span>Chuồng: {farm.available_coops}/{farm.total_coops}</span>
-                            <span>⭐ {farm.rating} ({farm.review_count} đánh giá)</span>
+                             <span>Chuồng: {farm.available_coops}/{farm.total_coops}</span>
+                             {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
+                               <span>Số lượng gà/chuồng: {farm.min_chickens_per_coop}-{farm.max_chickens_per_coop}</span>
+                             )}
+                             <span>⭐ {farm.rating} ({farm.review_count} đánh giá)</span>
                           </div>
                         </div>
                       </div>
@@ -656,7 +661,9 @@ function FarmForm({
     rating: farm?.rating || 4.5,
     review_count: farm?.review_count || 0,
     available_coops: farm?.available_coops || 0,
-    total_coops: farm?.total_coops || 0
+    total_coops: farm?.total_coops || 0,
+    min_chickens_per_coop: farm?.min_chickens_per_coop || 0,
+    max_chickens_per_coop: farm?.max_chickens_per_coop || 0
   });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -719,6 +726,24 @@ function FarmForm({
           <Input id="total_coops" type="number" value={formData.total_coops} onChange={e => setFormData({
           ...formData,
           total_coops: Number(e.target.value)
+        })} required />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="min_chickens_per_coop">Số lượng gà tối thiểu</Label>
+          <Input id="min_chickens_per_coop" type="number" value={formData.min_chickens_per_coop} onChange={e => setFormData({
+          ...formData,
+          min_chickens_per_coop: Number(e.target.value)
+        })} required />
+        </div>
+        
+        <div>
+          <Label htmlFor="max_chickens_per_coop">Số lượng gà tối đa</Label>
+          <Input id="max_chickens_per_coop" type="number" value={formData.max_chickens_per_coop} onChange={e => setFormData({
+          ...formData,
+          max_chickens_per_coop: Number(e.target.value)
         })} required />
         </div>
       </div>

@@ -90,6 +90,8 @@ export type Database = {
           id: string
           image_url: string | null
           location: string
+          max_chickens_per_coop: number | null
+          min_chickens_per_coop: number | null
           monthly_cost: number
           name: string
           rating: number | null
@@ -104,6 +106,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           location: string
+          max_chickens_per_coop?: number | null
+          min_chickens_per_coop?: number | null
           monthly_cost: number
           name: string
           rating?: number | null
@@ -118,6 +122,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string
+          max_chickens_per_coop?: number | null
+          min_chickens_per_coop?: number | null
           monthly_cost?: number
           name?: string
           rating?: number | null
@@ -164,6 +170,7 @@ export type Database = {
           farm_id: string
           id: string
           total_eggs: number
+          uncollected_eggs: number
           updated_at: string
         }
         Insert: {
@@ -171,6 +178,7 @@ export type Database = {
           farm_id: string
           id?: string
           total_eggs?: number
+          uncollected_eggs?: number
           updated_at?: string
         }
         Update: {
@@ -178,6 +186,7 @@ export type Database = {
           farm_id?: string
           id?: string
           total_eggs?: number
+          uncollected_eggs?: number
           updated_at?: string
         }
         Relationships: [
