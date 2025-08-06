@@ -155,7 +155,7 @@ const Shop = () => {
                        
                        {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
                          <div className="text-sm text-muted-foreground">
-                           Số lượng gà/chuồng: {farm.min_chickens_per_coop}-{farm.max_chickens_per_coop}
+                           Số lượng gà: {farm.min_chickens_per_coop}-{farm.max_chickens_per_coop} con/chuồng
                          </div>
                        )}
                       
