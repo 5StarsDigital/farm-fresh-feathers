@@ -40,8 +40,6 @@ interface AvailableFarm {
   available_coops: number;
   total_coops: number;
   image_url: string;
-  min_chickens_per_coop?: number;
-  max_chickens_per_coop?: number;
 }
 const packages: Package[] = [{
   id: "basic",
@@ -331,23 +329,18 @@ export default function Checkout() {
                                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                                         📍 {farm.location}
                                       </p>
-                                       <div className="flex items-center gap-2 mt-1">
-                                         <span className="text-sm">Còn trống: {farm.available_coops}/{farm.total_coops}</span>
-                                         <span className="text-sm flex items-center gap-1">
-                                           ⭐ {farm.rating} ({farm.review_count})
-                                         </span>
-                                       </div>
-                                       {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
-                                         <div className="text-sm text-muted-foreground mt-1">
-                                           Số lượng gà/chuồng: {farm.min_chickens_per_coop}-{farm.max_chickens_per_coop}
-                                         </div>
-                                       )}
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-sm">Còn trống: {farm.available_coops}/{farm.total_coops}</span>
+                                        <span className="text-sm flex items-center gap-1">
+                                          ⭐ {farm.rating} ({farm.review_count})
+                                        </span>
+                                      </div>
                                       <div className="mt-3">
                                         <p className="text-lg font-bold text-green-600">
                                           Giá thuê: {formatCurrency(farm.rental_price)}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                          Chi phí phát sinh: {formatCurrency(farm.monthly_cost)}/tháng
+                                          <div>Chi phí phát sinh: {formatCurrency(farm.monthly_cost)}/tháng</div>
                                         </p>
                                       </div>
                                     </div>
