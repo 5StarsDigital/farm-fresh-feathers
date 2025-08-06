@@ -142,31 +142,39 @@ const Shop = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                       <div className="grid grid-cols-2 gap-4 text-sm">
-                         <div className="flex items-center gap-2">
-                           <Users className="w-4 h-4 text-muted-foreground" />
-                           <span>Còn trống: <strong>{farmData.availableCoops}/{farmData.totalCoops}</strong></span>
+                       <div className="space-y-3">
+                         <div className="flex items-center gap-2 text-sm">
+                           <Users className="w-4 h-4 text-primary" />
+                           <span>Còn trống: <span className="font-semibold">{farmData.availableCoops}/{farmData.totalCoops}</span></span>
                          </div>
-                         <div className="flex items-center gap-1">
+
+                         {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
+                           <div className="flex items-center gap-2 text-sm">
+                             <span>🐔</span>
+                             <span>Số lượng gà/chuồng: <span className="font-semibold text-primary">{farm.min_chickens_per_coop}-{farm.max_chickens_per_coop} con</span></span>
+                           </div>
+                         )}
+
+                         <div className="flex items-center gap-2 text-sm">
                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                           <span><strong>{farmData.rating}</strong> ({farmData.reviewCount})</span>
+                           <span><span className="font-semibold">{farmData.rating}</span> ({farmData.reviewCount} đánh giá)</span>
                          </div>
                        </div>
-                       
-                       {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
-                         <div className="text-sm text-muted-foreground">
-                           Số lượng gà: {farm.min_chickens_per_coop}-{farm.max_chickens_per_coop} con/chuồng
-                         </div>
-                       )}
                       
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Giá thuê:</span>
+                          <div className="flex items-center gap-2">
+                            <span>💰</span>
+                            <span className="text-sm text-muted-foreground">Giá thuê:</span>
+                          </div>
                           <span className="font-semibold text-primary">{formatCurrency(farmData.rentalPrice)}/tháng</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Chi phí phát sinh:</span>
-                          <span className="text-sm">{formatCurrency(farmData.monthlyCost)}/tháng</span>
+                          <div className="flex items-center gap-2">
+                            <span>📊</span>
+                            <span className="text-sm text-muted-foreground">Chi phí phát sinh:</span>
+                          </div>
+                          <span className="font-medium">{formatCurrency(farmData.monthlyCost)}/tháng</span>
                         </div>
                       </div>
                       

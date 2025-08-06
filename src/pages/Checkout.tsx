@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 interface Package {
@@ -40,6 +41,8 @@ interface AvailableFarm {
   available_coops: number;
   total_coops: number;
   image_url: string;
+  min_chickens_per_coop?: number;
+  max_chickens_per_coop?: number;
 }
 const packages: Package[] = [{
   id: "basic",
@@ -329,19 +332,40 @@ export default function Checkout() {
                                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                                         📍 {farm.location}
                                       </p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-sm">Còn trống: {farm.available_coops}/{farm.total_coops}</span>
-                                        <span className="text-sm flex items-center gap-1">
-                                          ⭐ {farm.rating} ({farm.review_count})
-                                        </span>
+                                      <div className="space-y-2 mt-2">
+                                        <div className="flex items-center gap-2 text-sm">
+                                          <Users className="w-4 h-4 text-primary" />
+                                          <span>Còn trống: <span className="font-semibold">{farm.available_coops}/{farm.total_coops}</span></span>
+                                        </div>
+
+                                        {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
+                                          <div className="flex items-center gap-2 text-sm">
+                                            <span>🐔</span>
+                                            <span>Số lượng gà/chuồng: <span className="font-semibold text-primary">{farm.min_chickens_per_coop}-{farm.max_chickens_per_coop} con</span></span>
+                                          </div>
+                                        )}
+
+                                        <div className="flex items-center gap-2 text-sm">
+                                          <span>⭐</span>
+                                          <span><span className="font-semibold">{farm.rating}</span> ({farm.review_count} đánh giá)</span>
+                                        </div>
                                       </div>
-                                      <div className="mt-3">
-                                        <p className="text-lg font-bold text-green-600">
-                                          Giá thuê: {formatCurrency(farm.rental_price)}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                          <div>Chi phí phát sinh: {formatCurrency(farm.monthly_cost)}/tháng</div>
-                                        </p>
+
+                                      <div className="mt-3 space-y-1">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            <span>💰</span>
+                                            <span className="text-sm text-muted-foreground">Giá thuê:</span>
+                                          </div>
+                                          <span className="text-lg font-bold text-green-600">{formatCurrency(farm.rental_price)}/tháng</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            <span>📊</span>
+                                            <span className="text-sm text-muted-foreground">Chi phí phát sinh:</span>
+                                          </div>
+                                          <span className="text-sm font-medium">{formatCurrency(farm.monthly_cost)}/tháng</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
