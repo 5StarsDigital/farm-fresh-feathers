@@ -44,9 +44,19 @@ serve(async (req) => {
       });
     }
 
-    const { packageId, additionalQuantity } = await req.json();
+    const requestBody = await req.json();
+    const { packageId, additionalQuantity } = requestBody;
 
+    console.log('Request body:', requestBody);
     console.log('Adding chickens to package:', packageId, 'Additional quantity:', additionalQuantity);
+
+    if (!packageId || !additionalQuantity) {
+      console.error('Missing required parameters:', { packageId, additionalQuantity });
+      return new Response(JSON.stringify({ error: 'Missing packageId or additionalQuantity' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Call the database function with the regular client using session token
     const { data, error } = await supabaseClient.rpc('add_chickens_to_package', {
@@ -54,16 +64,27 @@ serve(async (req) => {
       additional_quantity: additionalQuantity
     });
 
+    console.log('Database function response:', { data, error });
+
     if (error) {
       console.error('Database function error:', error);
-      return new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ error: error.message || 'Database function failed' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!data) {
+      console.error('No data returned from database function');
+      return new Response(JSON.stringify({ error: 'No data returned from database function' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (!data.success) {
-      return new Response(JSON.stringify({ error: data.error }), {
+      console.error('Database function returned failure:', data);
+      return new Response(JSON.stringify({ error: data.error || 'Operation failed' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
