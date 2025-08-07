@@ -202,24 +202,37 @@ export default function AnimatedFarm({
     return () => clearInterval(interval);
   }, []);
 
-  // Egg production system - each chicken produces 1 egg every 48 hours
+  // Egg production system - based on chicken type settings
   useEffect(() => {
+    if (!chickens?.length) return;
+    
     const interval = setInterval(() => {
-      // Random time between 32-42 hours (8 AM to 6 PM on day 2)
-      const randomDelay = Math.random() * (42 - 32) + 32;
+      // Calculate total eggs to produce based on all chicken types
+      let totalNewEggs = 0;
+      chickens.forEach(chicken => {
+        const eggsPerPeriod = chicken.chicken_types?.eggs_per_period || 1;
+        const daysPerPeriod = chicken.chicken_types?.days_per_period || 1;
+        
+        // For simulation, scale down the time significantly (1 day = 2 minutes)
+        const minutesPerPeriod = daysPerPeriod * 2;
+        const eggsPerMinute = eggsPerPeriod / minutesPerPeriod;
+        
+        // Calculate eggs for this check interval (2 minutes)
+        const eggsForThisInterval = (eggsPerMinute * 2) * chicken.quantity;
+        
+        // Add some randomness but ensure we hit the target rate over time
+        const randomizedEggs = Math.random() < (eggsForThisInterval % 1) ? Math.ceil(eggsForThisInterval) : Math.floor(eggsForThisInterval);
+        totalNewEggs += randomizedEggs;
+      });
       
-      setTimeout(() => {
-        if (totalChickens > 0) {
-          // Add eggs based on total chickens
-          const newEggs = Math.floor(Math.random() * totalChickens) + 1;
-          updateUncollectedEggs(uncollectedEggs + newEggs);
-          if (soundEnabled) playEggSound();
-        }
-      }, randomDelay * 60 * 60 * 1000); // Convert hours to milliseconds
-    }, 48 * 60 * 60 * 1000); // Every 48 hours
+      if (totalNewEggs > 0) {
+        updateUncollectedEggs(uncollectedEggs + totalNewEggs);
+        if (soundEnabled) playEggSound();
+      }
+    }, 120000); // Every 2 minutes for simulation
 
     return () => clearInterval(interval);
-  }, [totalChickens, soundEnabled]);
+  }, [chickens, uncollectedEggs, soundEnabled]);
   const handleCollectEgg = () => {
     if (uncollectedEggs > 0) {
       if (soundEnabled) playCollectSound();

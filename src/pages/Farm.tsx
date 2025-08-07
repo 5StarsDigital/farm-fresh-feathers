@@ -29,7 +29,8 @@ interface Farm {
 interface ChickenType {
   id: string;
   name: string;
-  egg_production_rate: number;
+  eggs_per_period: number;
+  days_per_period: number;
   price: number;
   description: string;
 }
@@ -597,7 +598,7 @@ const Farm = () => {
                             {chicken.quantity} con
                           </div>
                           <Badge className="bg-yellow-500 text-white border-2 border-yellow-700">
-                            {chicken.chicken_types.egg_production_rate} trứng/2 ngày
+                            {chicken.chicken_types.eggs_per_period} trứng/{chicken.chicken_types.days_per_period} ngày
                           </Badge>
                         </div>
                       </div>)}

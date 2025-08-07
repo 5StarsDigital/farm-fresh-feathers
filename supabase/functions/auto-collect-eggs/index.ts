@@ -39,7 +39,7 @@ serve(async (req) => {
           .from('user_chickens')
           .select(`
             *,
-            chicken_types (egg_production_rate)
+            chicken_types (eggs_per_period, days_per_period)
           `)
           .eq('farm_id', farm.id);
 
@@ -55,10 +55,14 @@ serve(async (req) => {
           const lastCollection = new Date(chicken.last_egg_collection);
           const hoursSinceLastCollection = (now.getTime() - lastCollection.getTime()) / (1000 * 60 * 60);
           
-          // If it's been more than 48 hours (2 days), collect eggs
-          if (hoursSinceLastCollection >= 48) {
-            const eggProductionRate = chicken.chicken_types?.egg_production_rate || 1;
-            const eggsFromThisChicken = chicken.quantity * eggProductionRate;
+          // Get egg production settings from chicken type
+          const eggsPerPeriod = chicken.chicken_types?.eggs_per_period || 1;
+          const daysPerPeriod = chicken.chicken_types?.days_per_period || 1;
+          const hoursPerPeriod = daysPerPeriod * 24;
+          
+          // If it's been more than the required period, collect eggs
+          if (hoursSinceLastCollection >= hoursPerPeriod) {
+            const eggsFromThisChicken = chicken.quantity * eggsPerPeriod;
             totalNewEggs += eggsFromThisChicken;
 
             // Update last collection time

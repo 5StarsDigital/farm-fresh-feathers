@@ -28,6 +28,8 @@ interface ChickenType {
   name: string;
   price: number;
   description: string;
+  eggs_per_period: number;
+  days_per_period: number;
 }
 
 interface CoopLimits {
