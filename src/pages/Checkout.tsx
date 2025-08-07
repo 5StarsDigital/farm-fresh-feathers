@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
 interface Package {
   id: string;
   package_id: string;
@@ -25,6 +26,7 @@ interface Package {
   is_popular: boolean;
   is_active: boolean;
 }
+
 interface ChickenType {
   id: string;
   name: string;
@@ -33,6 +35,7 @@ interface ChickenType {
   image_url: string;
   egg_production_rate: number;
 }
+
 interface AvailableFarm {
   id: string;
   name: string;
@@ -47,7 +50,47 @@ interface AvailableFarm {
   min_chickens_per_coop?: number;
   max_chickens_per_coop?: number;
 }
-const [packages, setPackages] = useState<Package[]>([]);
+
+const coopDesigns = [{
+  id: "shared",
+  name: "Chuồng Nuôi Chung",
+  description: "Chuồng tiêu chuẩn cho gói cơ bản",
+  price: 0,
+  image: "/placeholder.svg"
+}, {
+  id: "individual",
+  name: "Chuồng Riêng Biệt",
+  description: "Chuồng riêng cho từng con gà",
+  price: 100000,
+  image: "/placeholder.svg"
+}, {
+  id: "luxury",
+  name: "Chuồng Cao Cấp",
+  description: "Chuồng có hệ thống thông minh",
+  price: 200000,
+  image: "/placeholder.svg"
+}, {
+  id: "ai-designed",
+  name: "Chuồng Thiết Kế AI",
+  description: "Thiết kế tùy chỉnh bằng AI",
+  price: 300000,
+  image: "/placeholder.svg"
+}];
+
+export default function Checkout() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<string>("");
+  const [selectedCoop, setSelectedCoop] = useState<string>("");
+  const [selectedChickens, setSelectedChickens] = useState<{
+    [key: string]: number;
+  }>({});
+  const [selectedChickenType, setSelectedChickenType] = useState<string>("");
+  const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
+  const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const fetchPackages = async () => {
     try {
@@ -81,44 +124,7 @@ const [packages, setPackages] = useState<Package[]>([]);
       console.error('Error fetching packages:', error);
     }
   };
-const coopDesigns = [{
-  id: "shared",
-  name: "Chuồng Nuôi Chung",
-  description: "Chuồng tiêu chuẩn cho gói cơ bản",
-  price: 0,
-  image: "/placeholder.svg"
-}, {
-  id: "individual",
-  name: "Chuồng Riêng Biệt",
-  description: "Chuồng riêng cho từng con gà",
-  price: 100000,
-  image: "/placeholder.svg"
-}, {
-  id: "luxury",
-  name: "Chuồng Cao Cấp",
-  description: "Chuồng có hệ thống thông minh",
-  price: 200000,
-  image: "/placeholder.svg"
-}, {
-  id: "ai-designed",
-  name: "Chuồng Thiết Kế AI",
-  description: "Thiết kế tùy chỉnh bằng AI",
-  price: 300000,
-  image: "/placeholder.svg"
-}];
-export default function Checkout() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const [selectedPackage, setSelectedPackage] = useState<string>("");
-  const [selectedCoop, setSelectedCoop] = useState<string>("");
-  const [selectedChickens, setSelectedChickens] = useState<{
-    [key: string]: number;
-  }>({});
-  const [selectedChickenType, setSelectedChickenType] = useState<string>("");
-  const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
-  const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   useEffect(() => {
     fetchPackages();
     loadChickenTypes();
@@ -135,6 +141,7 @@ export default function Checkout() {
       }
     }
   }, [searchParams, packages]);
+
   const loadChickenTypes = async () => {
     try {
       const {
@@ -152,6 +159,7 @@ export default function Checkout() {
       toast.error('Có lỗi xảy ra khi tải dữ liệu');
     }
   };
+
   const loadAvailableFarms = async () => {
     try {
       const {
@@ -171,12 +179,14 @@ export default function Checkout() {
       setLoading(false);
     }
   };
+
   const selectedPackageData = packages.find(p => p.package_id === selectedPackage);
   const availableCoops = selectedPackage === "basic" ? coopDesigns.filter(c => c.id === "shared") : coopDesigns;
 
   // For advanced and VIP packages, show farms instead of coop designs
   const showFarmDesigns = selectedPackage === "advanced" || selectedPackage === "vip";
   const selectedFarmData = availableFarms.find(f => f.id === selectedCoop);
+
   const updateChickenQuantity = (chickenId: string, quantity: number) => {
     // Validate against farm/coop limits
     if (showFarmDesigns && selectedFarmData) {
@@ -189,9 +199,11 @@ export default function Checkout() {
       [chickenId]: Math.max(1, quantity)
     }));
   };
+
   const getTotalChickens = () => {
     return Object.values(selectedChickens).reduce((sum, qty) => sum + qty, 0);
   };
+
   const getTotalPrice = () => {
     let total = 0;
 
@@ -220,6 +232,7 @@ export default function Checkout() {
     const totalChickens = getTotalChickens();
     return selectedPackageData.daily_price * 30 * totalChickens;
   };
+
   const canProceedToPayment = () => {
     if (!selectedPackage || !selectedCoop || getTotalChickens() === 0) {
       return false;
@@ -242,6 +255,7 @@ export default function Checkout() {
     
     return true;
   };
+
   const handlePayment = async () => {
     if (!canProceedToPayment()) {
       toast.error('Vui lòng chọn đầy đủ các mục trước khi thanh toán');
@@ -282,18 +296,24 @@ export default function Checkout() {
       setIsProcessingPayment(false);
     }
   };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
   };
+
   if (loading) {
-    return <div className="min-h-screen bg-background">
+    return (
+      <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">Đang tải...</div>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-background">
+
+  return (
+    <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -308,7 +328,8 @@ export default function Checkout() {
               <CardContent>
                 <RadioGroup value={selectedPackage} onValueChange={setSelectedPackage}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {packages.map(pkg => <div key={pkg.id} className="relative">
+                    {packages.map(pkg => (
+                      <div key={pkg.id} className="relative">
                         <Label htmlFor={pkg.package_id} className="cursor-pointer">
                           <Card className={`transition-all hover:shadow-lg ${selectedPackage === pkg.package_id ? 'ring-2 ring-primary' : ''}`}>
                             <CardContent className="p-6">
@@ -318,9 +339,11 @@ export default function Checkout() {
                                   <div className="flex items-center gap-2 mb-2">
                                     <span className="text-xl mr-2">{pkg.emoji}</span>
                                     <h3 className="font-bold text-lg">{pkg.package_name}</h3>
-                                    {pkg.discount_percentage > 0 && <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                    {pkg.discount_percentage > 0 && (
+                                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
                                         Giảm {pkg.discount_percentage}%
-                                      </Badge>}
+                                      </Badge>
+                                    )}
                                   </div>
                                   <p className="text-sm text-muted-foreground">{pkg.subtitle}</p>
                                   <p className="text-sm mb-3">{pkg.description}</p>
@@ -328,9 +351,11 @@ export default function Checkout() {
                                     <span className="text-2xl font-bold text-green-600">
                                       {formatCurrency(pkg.daily_price * 30)}
                                     </span>
-                                    {pkg.original_daily_price > pkg.daily_price && <span className="text-sm text-muted-foreground line-through">
+                                    {pkg.original_daily_price > pkg.daily_price && (
+                                      <span className="text-sm text-muted-foreground line-through">
                                         {formatCurrency(pkg.original_daily_price * 30)}
-                                      </span>}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1 mt-1">
                                     <span className="text-xs text-muted-foreground">/tháng/gà</span>
@@ -341,7 +366,8 @@ export default function Checkout() {
                             </CardContent>
                           </Card>
                         </Label>
-                      </div>)}
+                      </div>
+                    ))}
                   </div>
                 </RadioGroup>
               </CardContent>
@@ -353,41 +379,47 @@ export default function Checkout() {
                 <CardTitle>
                   2. {showFarmDesigns ? 'Chọn Thiết Kế Trại Gà Cho Thuê' : 'Chọn Thiết Kế Chuồng Gà'}
                 </CardTitle>
-                  {selectedPackage === "basic" && <p className="text-sm text-muted-foreground">
-                      Gói cơ bản sử dụng chuồng nuôi chung mặc định
-                    </p>}
-                  {showFarmDesigns && <p className="text-sm text-muted-foreground">
-                      Thuê không gian trại gà để nuôi gà của bạn
-                    </p>}
-                </CardHeader>
-                <CardContent>
-                  {!selectedPackage ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Vui lòng chọn gói gà trước
-                    </p>
-                  ) : (
-                    <RadioGroup value={selectedCoop} onValueChange={setSelectedCoop}>
-                    {showFarmDesigns ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {availableFarms.map(farm => <div key={farm.id} className="relative">
+                {selectedPackage === "basic" && (
+                  <p className="text-sm text-muted-foreground">
+                    Gói cơ bản sử dụng chuồng nuôi chung mặc định
+                  </p>
+                )}
+                {showFarmDesigns && (
+                  <p className="text-sm text-muted-foreground">
+                    Thuê không gian trại gà để nuôi gà của bạn
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent>
+                {!selectedPackage ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Vui lòng chọn gói gà trước
+                  </p>
+                ) : (
+                  <RadioGroup value={selectedCoop} onValueChange={setSelectedCoop}>
+                    {showFarmDesigns ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {availableFarms.map(farm => (
+                          <div key={farm.id} className="relative">
                             <Label htmlFor={farm.id} className={`cursor-pointer ${farm.available_coops === 0 ? 'cursor-not-allowed' : ''}`}>
                               <Card className={`transition-all hover:shadow-lg ${selectedCoop === farm.id ? 'ring-2 ring-primary' : ''} ${farm.available_coops === 0 ? 'opacity-50' : ''}`}>
                                 <div className="aspect-video overflow-hidden rounded-t-lg">
                                   <img src={farm.image_url || "/placeholder.svg"} alt={farm.name} className="w-full h-full object-cover" />
                                 </div>
-                                 <CardContent className="p-4">
-                                   <div className="flex items-center space-x-2 mb-3">
-                                     <RadioGroupItem value={farm.id} id={farm.id} disabled={farm.available_coops === 0} />
-                                     <div className="flex-1">
+                                <CardContent className="p-4">
+                                  <div className="flex items-center space-x-2 mb-3">
+                                    <RadioGroupItem value={farm.id} id={farm.id} disabled={farm.available_coops === 0} />
+                                    <div className="flex-1">
                                       <h4 className="font-semibold text-lg">{farm.name}</h4>
                                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                                         📍 {farm.location}
                                       </p>
                                       <div className="space-y-2 mt-2">
-                                         <div className="flex items-center gap-2 text-sm">
-                                           <Users className="w-4 h-4 text-primary" />
-                                           <span>Còn trống: <span className={`font-semibold ${farm.available_coops === 0 ? 'text-red-500' : ''}`}>{farm.available_coops}/{farm.total_coops}</span></span>
-                                           {farm.available_coops === 0 && <span className="text-red-500 text-xs font-medium">Hết chỗ</span>}
-                                         </div>
+                                        <div className="flex items-center gap-2 text-sm">
+                                          <Users className="w-4 h-4 text-primary" />
+                                          <span>Còn trống: <span className={`font-semibold ${farm.available_coops === 0 ? 'text-red-500' : ''}`}>{farm.available_coops}/{farm.total_coops}</span></span>
+                                          {farm.available_coops === 0 && <span className="text-red-500 text-xs font-medium">Hết chỗ</span>}
+                                        </div>
 
                                         {farm.min_chickens_per_coop !== undefined && farm.max_chickens_per_coop !== undefined && (
                                           <div className="flex items-center gap-2 text-sm">
@@ -423,9 +455,13 @@ export default function Checkout() {
                                 </CardContent>
                               </Card>
                             </Label>
-                          </div>)}
-                      </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {availableCoops.map(coop => <div key={coop.id} className="relative">
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {availableCoops.map(coop => (
+                          <div key={coop.id} className="relative">
                             <Label htmlFor={coop.id} className="cursor-pointer">
                               <Card className={`transition-all hover:shadow-lg ${selectedCoop === coop.id ? 'ring-2 ring-primary' : ''} ${selectedPackage === "basic" && coop.id !== "shared" ? 'opacity-50' : ''}`}>
                                 <CardContent className="p-4">
@@ -442,12 +478,14 @@ export default function Checkout() {
                                 </CardContent>
                               </Card>
                             </Label>
-                          </div>)}
-                      </div>}
-                    </RadioGroup>
-                  )}
-                </CardContent>
-              </Card>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </RadioGroup>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Chicken Selection */}
             <Card>
@@ -484,24 +522,24 @@ export default function Checkout() {
                                         Sản lượng: {chicken.egg_production_rate} trứng/2 ngày
                                       </p>
                                     </div>
-                                     {selectedChickenType === chicken.id && (
-                                       <div className="flex items-center gap-2 mt-3">
-                                         <Label>Số lượng:</Label>
-                                         {showFarmDesigns && selectedFarmData && (
-                                           <span className="text-xs text-muted-foreground mr-2">
-                                             ({selectedFarmData.min_chickens_per_coop || 1}-{selectedFarmData.max_chickens_per_coop || 999})
-                                           </span>
-                                         )}
-                                         <Input
-                                           type="number"
-                                           min={showFarmDesigns && selectedFarmData ? selectedFarmData.min_chickens_per_coop || 1 : 1}
-                                           max={showFarmDesigns && selectedFarmData ? selectedFarmData.max_chickens_per_coop || 999 : 999}
-                                           value={selectedChickens[chicken.id] || 1}
-                                           onChange={(e) => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)}
-                                           className="w-20"
-                                         />
-                                       </div>
-                                     )}
+                                    {selectedChickenType === chicken.id && (
+                                      <div className="flex items-center gap-2 mt-3">
+                                        <Label>Số lượng:</Label>
+                                        {showFarmDesigns && selectedFarmData && (
+                                          <span className="text-xs text-muted-foreground mr-2">
+                                            ({selectedFarmData.min_chickens_per_coop || 1}-{selectedFarmData.max_chickens_per_coop || 999})
+                                          </span>
+                                        )}
+                                        <Input
+                                          type="number"
+                                          min={showFarmDesigns && selectedFarmData ? selectedFarmData.min_chickens_per_coop || 1 : 1}
+                                          max={showFarmDesigns && selectedFarmData ? selectedFarmData.max_chickens_per_coop || 999 : 999}
+                                          value={selectedChickens[chicken.id] || 1}
+                                          onChange={(e) => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)}
+                                          className="w-20"
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </CardContent>
@@ -516,7 +554,8 @@ export default function Checkout() {
             </Card>
 
             {/* Order Summary */}
-            {selectedPackage && <Card>
+            {selectedPackage && (
+              <Card>
                 <CardHeader>
                   <CardTitle>Tổng Kết Đơn Hàng</CardTitle>
                 </CardHeader>
@@ -527,23 +566,27 @@ export default function Checkout() {
                       <span className="text-red-500 font-medium">{formatCurrency(getMonthlyPackagePrice())} (trả sau)</span>
                     </div>
                     
-                    {selectedCoop && <div className="flex justify-between">
+                    {selectedCoop && (
+                      <div className="flex justify-between">
                         <span>
                           {showFarmDesigns ? `Trại gà cho thuê: ${selectedFarmData?.name}` : `Thiết kế chuồng: ${coopDesigns.find(c => c.id === selectedCoop)?.name}`}
                         </span>
                         <span>
                           {showFarmDesigns ? formatCurrency(selectedFarmData?.rental_price || 0) : formatCurrency(coopDesigns.find(c => c.id === selectedCoop)?.price || 0)}
                         </span>
-                      </div>}
+                      </div>
+                    )}
 
                     {Object.entries(selectedChickens).map(([chickenId, quantity]) => {
-                  const chicken = chickenTypes.find(c => c.id === chickenId);
-                  if (!chicken || quantity === 0) return null;
-                  return <div key={chickenId} className="flex justify-between">
+                      const chicken = chickenTypes.find(c => c.id === chickenId);
+                      if (!chicken || quantity === 0) return null;
+                      return (
+                        <div key={chickenId} className="flex justify-between">
                           <span>{chicken.name} x {quantity}</span>
                           <span>{formatCurrency(chicken.price * quantity)}</span>
-                        </div>;
-                })}
+                        </div>
+                      );
+                    })}
 
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-lg font-bold">
@@ -561,14 +604,18 @@ export default function Checkout() {
                       {isProcessingPayment ? 'Đang xử lý...' : 'Thanh Toán'}
                     </Button>
 
-                    {!canProceedToPayment() && <p className="text-sm text-muted-foreground text-center mt-2">
+                    {!canProceedToPayment() && (
+                      <p className="text-sm text-muted-foreground text-center mt-2">
                         Vui lòng chọn đầy đủ các mục trước khi thanh toán
-                      </p>}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
-              </Card>}
+              </Card>
+            )}
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }
