@@ -3,88 +3,87 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Camera, Egg, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
+
+interface PackagePrice {
+  id: string;
+  package_id: string;
+  package_name: string;
+  daily_price: number;
+  original_daily_price: number;
+  discount_percentage: number;
+  description: string;
+  subtitle: string;
+  emoji: string;
+  bg_gradient: string;
+  features: string[];
+  is_popular: boolean;
+  is_active: boolean;
+}
 
 const PackagesSection = () => {
   const navigate = useNavigate();
-  
-  const packages = [
-    {
-      id: 'basic',
-      name: 'Gói Cơ Bản',
-      subtitle: '"Chăm chỉ mỗi ngày"',
-      price: '200.000đ',
-      originalPrice: '280.000đ',
-      description: 'Chăm sóc tiết kiệm nhưng đầy đủ',
-      features: [
-        'Ăn 2 bữa/ngày thức ăn thô sạch',
-        'Nước uống sạch mỗi ngày',
-        'Bổ sung rau xanh tươi',
-        'Dọn chuồng 1 lần/tuần',
-        'Thả ra sân phơi nắng'
-      ],
-      popular: false,
-      discount: '29%',
-      emoji: '🐣',
-      bgGradient: 'from-blue-400 to-blue-500'
-    },
-    {
-      id: 'advanced',
-      name: 'Gói Nâng Cao',
-      subtitle: '"Gà có Gu"',
-      price: '400.000đ',
-      originalPrice: '550.000đ',
-      description: 'Chăm như thú cưng, ăn ngon hơn',
-      features: [
-        'Tất cả dịch vụ Gói Cơ Bản',
-        'Sâu gạo 1 lần/tuần',
-        'Hoa quả theo mùa',
-        'Vệ sinh chuồng 2 lần/tuần',
-        'Báo cáo tăng trưởng hàng tháng'
-      ],
-      popular: false,
-      discount: '27%',
-      emoji: '🥚',
-      bgGradient: 'from-yellow-400 to-yellow-500'
-    },
-    {
-      id: 'vip',
-      name: 'Gói VIP',
-      subtitle: '"Chủ tịch Gà"',
-      price: '800.000đ',
-      originalPrice: '1.100.000đ',
-      description: 'Trải nghiệm cá nhân hóa cao cấp',
-      features: [
-        'Bao gồm Gói Nâng Cao',
-        'Thức ăn đặc biệt: dế mèn, thịt bò',
-        'Mắc màn chống muỗi, côn trùng',
-        'Thiết kế chuồng bằng AI',
-        'Tư vấn chuyên gia riêng'
-      ],
-      popular: true,
-      discount: '27%',
-      emoji: '🐓',
-      bgGradient: 'from-purple-400 to-purple-500'
-    },
-    {
-      id: 4,
-      name: 'Gói King Chicken',
-      subtitle: '"Hoàng gia dành cho gà"',
-      price: '1.500.000đ',
-      originalPrice: '2.000.000đ',
-      description: 'Xa xỉ và sáng tạo tột đỉnh',
-      features: [
-        'Bao gồm tất cả dịch vụ VIP',
-        'Tắm nước sạch cho gà',
-        'Hoa quả nhập khẩu cao cấp',
-        'Nhạc thư giãn trong chuồng',
-        'Video vlog nuôi gà cá nhân'
-      ],
-      popular: false,
-      discount: '25%',
-      emoji: '👑',
-      bgGradient: 'from-gradient-start to-gradient-end'
+  const [packages, setPackages] = useState<PackagePrice[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPackages();
+  }, []);
+
+  const fetchPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('package_prices')
+        .select('*')
+        .eq('is_active', true)
+        .order('daily_price', { ascending: true });
+
+      if (error) throw error;
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(pkg => ({
+        id: pkg.id,
+        package_id: pkg.package_id,
+        package_name: pkg.package_name,
+        daily_price: pkg.daily_price,
+        original_daily_price: pkg.original_daily_price,
+        discount_percentage: pkg.discount_percentage || 0,
+        description: pkg.description || '',
+        subtitle: pkg.subtitle || '',
+        emoji: pkg.emoji || '🐣',
+        bg_gradient: pkg.bg_gradient || 'from-blue-400 to-blue-500',
+        features: Array.isArray(pkg.features) ? pkg.features.map(f => String(f)) : [],
+        is_popular: pkg.is_popular,
+        is_active: pkg.is_active
+      }));
+      
+      setPackages(transformedData);
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-muted/30">
@@ -103,11 +102,11 @@ const PackagesSection = () => {
             <Card 
               key={pkg.id}
               className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-strong bg-gradient-card border-0 ${
-                pkg.popular ? 'ring-2 ring-primary shadow-medium' : ''
+                pkg.is_popular ? 'ring-2 ring-primary shadow-medium' : ''
               }`}
             >
               {/* Popular Badge */}
-              {pkg.popular && (
+              {pkg.is_popular && (
                 <div className="absolute top-4 right-4 z-10">
                   <Badge className="bg-gradient-primary text-primary-foreground px-3 py-1 shadow-medium">
                     <Star className="w-3 h-3 mr-1" />
@@ -117,31 +116,36 @@ const PackagesSection = () => {
               )}
 
               {/* Discount Badge */}
-              <div className="absolute top-4 left-4 z-10">
-                <Badge variant="secondary" className="bg-accent text-accent-foreground px-2 py-1">
-                  Giảm {pkg.discount}
-                </Badge>
-              </div>
+              {pkg.discount_percentage > 0 && (
+                <div className="absolute top-4 left-4 z-10">
+                  <Badge variant="secondary" className="bg-accent text-accent-foreground px-2 py-1">
+                    Giảm {pkg.discount_percentage}%
+                  </Badge>
+                </div>
+              )}
 
               <CardHeader className="text-center pb-4">
                 {/* Icon */}
-                <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-r ${pkg.bgGradient} flex items-center justify-center text-white shadow-medium mb-4 group-hover:shadow-strong transition-all duration-300`}>
+                <div className={`w-20 h-20 mx-auto rounded-full bg-gradient-to-r ${pkg.bg_gradient} flex items-center justify-center text-white shadow-medium mb-4 group-hover:shadow-strong transition-all duration-300`}>
                   <span className="text-3xl">{pkg.emoji}</span>
                 </div>
 
                 <CardTitle className="text-xl font-bold text-foreground mb-1">
-                  {pkg.name}
+                  {pkg.package_name}
                 </CardTitle>
                 <p className="text-sm font-medium text-primary mb-2">{pkg.subtitle}</p>
                 
                 <p className="text-sm text-muted-foreground mb-4">{pkg.description}</p>
 
-                {/* Price */}
+                {/* Price per day */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-center space-x-2">
-                    <span className="text-3xl font-bold text-primary">{pkg.price}</span>
-                    <span className="text-lg text-muted-foreground line-through">{pkg.originalPrice}</span>
+                    <span className="text-3xl font-bold text-primary">{formatCurrency(pkg.daily_price)}</span>
+                    {pkg.original_daily_price > pkg.daily_price && (
+                      <span className="text-lg text-muted-foreground line-through">{formatCurrency(pkg.original_daily_price)}</span>
+                    )}
                   </div>
+                  <p className="text-xs text-muted-foreground">/ ngày</p>
                 </div>
               </CardHeader>
 
@@ -161,19 +165,16 @@ const PackagesSection = () => {
                 {/* CTA Button */}
                 <Button 
                   className={`w-full ${
-                    pkg.popular 
+                    pkg.is_popular 
                       ? 'bg-gradient-primary hover:shadow-medium' 
                       : 'bg-secondary hover:bg-secondary/80'
                   } transition-all duration-300`}
                   size="lg"
                   onClick={() => {
-                    if (pkg.id === 'basic' || pkg.id === 'advanced' || pkg.id === 'vip') {
-                      navigate(`/checkout?package=${pkg.id}`);
-                    }
+                    navigate(`/checkout?package=${pkg.package_id}`);
                   }}
-                  disabled={pkg.id !== 'basic' && pkg.id !== 'advanced' && pkg.id !== 'vip'}
                 >
-                  {pkg.id === 'basic' || pkg.id === 'advanced' || pkg.id === 'vip' ? 'Thuê ngay' : 'Sắp ra mắt'}
+                  Thuê ngay
                 </Button>
               </CardContent>
             </Card>

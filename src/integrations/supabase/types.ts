@@ -270,6 +270,60 @@ export type Database = {
         }
         Relationships: []
       }
+      package_prices: {
+        Row: {
+          bg_gradient: string | null
+          created_at: string
+          daily_price: number
+          description: string | null
+          discount_percentage: number | null
+          emoji: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          original_daily_price: number
+          package_id: string
+          package_name: string
+          subtitle: string | null
+          updated_at: string
+        }
+        Insert: {
+          bg_gradient?: string | null
+          created_at?: string
+          daily_price?: number
+          description?: string | null
+          discount_percentage?: number | null
+          emoji?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          original_daily_price?: number
+          package_id: string
+          package_name: string
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bg_gradient?: string | null
+          created_at?: string
+          daily_price?: number
+          description?: string | null
+          discount_percentage?: number | null
+          emoji?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          original_daily_price?: number
+          package_id?: string
+          package_name?: string
+          subtitle?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount: number

@@ -14,6 +14,7 @@ import { Users, Store, ShoppingCart, AlertTriangle, Plus, Edit, Trash2, RefreshC
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import CameraAdmin from './CameraAdmin';
+import { PackageManagement } from '@/components/ui/package-management';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -398,6 +399,7 @@ export default function AdminDashboard() {
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
+            <TabsTrigger value="packages">Gói gà</TabsTrigger>
             <TabsTrigger value="camera">Camera</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
@@ -521,6 +523,10 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>)}
             </div>
+          </TabsContent>
+
+          <TabsContent value="packages" className="space-y-4">
+            <PackageManagement />
           </TabsContent>
 
           <TabsContent value="camera" className="space-y-4">
