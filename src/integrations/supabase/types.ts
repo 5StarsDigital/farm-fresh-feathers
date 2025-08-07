@@ -158,8 +158,9 @@ export type Database = {
       chicken_types: {
         Row: {
           created_at: string
+          days_per_period: number
           description: string | null
-          egg_production_rate: number | null
+          eggs_per_period: number
           id: string
           image_url: string | null
           name: string
@@ -167,8 +168,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          days_per_period?: number
           description?: string | null
-          egg_production_rate?: number | null
+          eggs_per_period?: number
           id?: string
           image_url?: string | null
           name: string
@@ -176,8 +178,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          days_per_period?: number
           description?: string | null
-          egg_production_rate?: number | null
+          eggs_per_period?: number
           id?: string
           image_url?: string | null
           name?: string

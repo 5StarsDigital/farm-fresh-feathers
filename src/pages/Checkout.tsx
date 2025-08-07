@@ -33,7 +33,8 @@ interface ChickenType {
   price: number;
   description: string;
   image_url: string;
-  egg_production_rate: number;
+  eggs_per_period: number;
+  days_per_period: number;
 }
 
 interface AvailableFarm {
@@ -518,9 +519,9 @@ export default function Checkout() {
                                     <p className="text-sm text-muted-foreground mb-2">{chicken.description}</p>
                                     <div className="mb-3">
                                       <p className="text-lg font-bold text-green-600">{formatCurrency(chicken.price)}/con</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Sản lượng: {chicken.egg_production_rate} trứng/2 ngày
-                                      </p>
+                                       <p className="text-xs text-muted-foreground">
+                                         Sản lượng: {chicken.eggs_per_period} trứng/{chicken.days_per_period} ngày
+                                       </p>
                                     </div>
                                     {selectedChickenType === chicken.id && (
                                       <div className="flex items-center gap-2 mt-3">
