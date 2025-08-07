@@ -137,15 +137,18 @@ const PackagesSection = () => {
                 
                 <p className="text-sm text-muted-foreground mb-4">{pkg.description}</p>
 
-                {/* Price per day */}
+                {/* Monthly price calculation */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-center space-x-2">
-                    <span className="text-3xl font-bold text-primary">{formatCurrency(pkg.daily_price)}</span>
+                    <span className="text-3xl font-bold text-primary">{formatCurrency(pkg.daily_price * 30)}</span>
                     {pkg.original_daily_price > pkg.daily_price && (
-                      <span className="text-lg text-muted-foreground line-through">{formatCurrency(pkg.original_daily_price)}</span>
+                      <span className="text-lg text-muted-foreground line-through">{formatCurrency(pkg.original_daily_price * 30)}</span>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">/ ngày</p>
+                  <div className="flex items-center justify-center space-x-1">
+                    <p className="text-xs text-muted-foreground">/ tháng</p>
+                    <span className="text-xs font-medium text-red-500">(trả sau)</span>
+                  </div>
                 </div>
               </CardHeader>
 

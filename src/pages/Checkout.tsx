@@ -12,15 +12,18 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 interface Package {
   id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  discount?: string;
+  package_id: string;
+  package_name: string;
+  daily_price: number;
+  original_daily_price: number;
+  discount_percentage: number;
   description: string;
   subtitle: string;
+  emoji: string;
+  bg_gradient: string;
   features: string[];
-  color: string;
-  bgGradient: string;
+  is_popular: boolean;
+  is_active: boolean;
 }
 interface ChickenType {
   id: string;
@@ -44,40 +47,40 @@ interface AvailableFarm {
   min_chickens_per_coop?: number;
   max_chickens_per_coop?: number;
 }
-const packages: Package[] = [{
-  id: "basic",
-  name: "Gói Cơ Bản",
-  price: 200000,
-  originalPrice: 280000,
-  discount: "Giảm 29%",
-  description: "Chăm sóc tiết kiệm nhưng đầy đủ",
-  subtitle: "Chăm chỉ mỗi ngày",
-  features: ["Ăn 2 bữa/ngày thức ăn thô sạch", "Nước uống sạch mỗi ngày", "Bổ sung rau xanh tươi", "Dọn chuồng 1 lần/tuần", "Thả ra sân phơi nắng"],
-  color: "from-blue-400 to-blue-600",
-  bgGradient: "bg-gradient-to-br from-blue-50 to-blue-100"
-}, {
-  id: "advanced",
-  name: "Gói Nâng Cao",
-  price: 400000,
-  originalPrice: 550000,
-  discount: "Giảm 27%",
-  description: "Chăm như thú cưng, ăn ngon hơn",
-  subtitle: "Gà có Gú",
-  features: ["Tất cả dịch vụ Gói Cơ Bản", "Sau gạo 1 lần/tuần", "Hoa quả theo mùa", "Vệ sinh chuồng 2 lần/tuần", "Báo cáo tăng trưởng hàng tháng"],
-  color: "from-yellow-400 to-orange-500",
-  bgGradient: "bg-gradient-to-br from-yellow-50 to-orange-100"
-}, {
-  id: "vip",
-  name: "Gói VIP",
-  price: 800000,
-  originalPrice: 1100000,
-  discount: "Giảm 27%",
-  description: "Trải nghiệm có nhãn hóa cao cấp",
-  subtitle: "Chủ tịch Gà",
-  features: ["Bao gồm Gói Nâng Cao", "Thức ăn đặc biệt: đế men, thịt bò", "Mác môn chống muỗi, côn trùng", "Thiết kế chuồng bằng AI", "Tư vấn chuyên gia riêng"],
-  color: "from-purple-400 to-purple-600",
-  bgGradient: "bg-gradient-to-br from-purple-50 to-purple-100"
-}];
+const [packages, setPackages] = useState<Package[]>([]);
+
+  const fetchPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('package_prices')
+        .select('*')
+        .eq('is_active', true)
+        .order('daily_price', { ascending: true });
+
+      if (error) throw error;
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(pkg => ({
+        id: pkg.id,
+        package_id: pkg.package_id,
+        package_name: pkg.package_name,
+        daily_price: pkg.daily_price,
+        original_daily_price: pkg.original_daily_price,
+        discount_percentage: pkg.discount_percentage || 0,
+        description: pkg.description || '',
+        subtitle: pkg.subtitle || '',
+        emoji: pkg.emoji || '🐣',
+        bg_gradient: pkg.bg_gradient || 'from-blue-400 to-blue-500',
+        features: Array.isArray(pkg.features) ? pkg.features.map(f => String(f)) : [],
+        is_popular: pkg.is_popular,
+        is_active: pkg.is_active
+      }));
+      
+      setPackages(transformedData);
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+    }
+  };
 const coopDesigns = [{
   id: "shared",
   name: "Chuồng Nuôi Chung",
@@ -117,17 +120,21 @@ export default function Checkout() {
   const [loading, setLoading] = useState(true);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   useEffect(() => {
+    fetchPackages();
+    loadChickenTypes();
+    loadAvailableFarms();
+  }, []);
+
+  useEffect(() => {
     const packageId = searchParams.get("package");
-    if (packageId && packages.find(p => p.id === packageId)) {
+    if (packageId && packages.find(p => p.package_id === packageId)) {
       setSelectedPackage(packageId);
       // Auto-select shared coop for basic package
       if (packageId === "basic") {
         setSelectedCoop("shared");
       }
     }
-    loadChickenTypes();
-    loadAvailableFarms();
-  }, [searchParams]);
+  }, [searchParams, packages]);
   const loadChickenTypes = async () => {
     try {
       const {
@@ -164,7 +171,7 @@ export default function Checkout() {
       setLoading(false);
     }
   };
-  const selectedPackageData = packages.find(p => p.id === selectedPackage);
+  const selectedPackageData = packages.find(p => p.package_id === selectedPackage);
   const availableCoops = selectedPackage === "basic" ? coopDesigns.filter(c => c.id === "shared") : coopDesigns;
 
   // For advanced and VIP packages, show farms instead of coop designs
@@ -186,9 +193,9 @@ export default function Checkout() {
     return Object.values(selectedChickens).reduce((sum, qty) => sum + qty, 0);
   };
   const getTotalPrice = () => {
-    let total = selectedPackageData?.price || 0;
+    let total = 0;
 
-    // Add coop price or farm rental price
+    // Add coop price or farm rental price (no package price for monthly payment)
     if (showFarmDesigns && selectedFarmData) {
       total += selectedFarmData.rental_price;
     } else {
@@ -206,6 +213,12 @@ export default function Checkout() {
       }
     });
     return total;
+  };
+
+  const getMonthlyPackagePrice = () => {
+    if (!selectedPackageData) return 0;
+    const totalChickens = getTotalChickens();
+    return selectedPackageData.daily_price * 30 * totalChickens;
   };
   const canProceedToPayment = () => {
     if (!selectedPackage || !selectedCoop || getTotalChickens() === 0) {
@@ -296,27 +309,32 @@ export default function Checkout() {
                 <RadioGroup value={selectedPackage} onValueChange={setSelectedPackage}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {packages.map(pkg => <div key={pkg.id} className="relative">
-                        <Label htmlFor={pkg.id} className="cursor-pointer">
-                          <Card className={`transition-all hover:shadow-lg ${selectedPackage === pkg.id ? 'ring-2 ring-primary' : ''}`}>
+                        <Label htmlFor={pkg.package_id} className="cursor-pointer">
+                          <Card className={`transition-all hover:shadow-lg ${selectedPackage === pkg.package_id ? 'ring-2 ring-primary' : ''}`}>
                             <CardContent className="p-6">
                               <div className="flex items-center space-x-2 mb-4">
-                                <RadioGroupItem value={pkg.id} id={pkg.id} />
+                                <RadioGroupItem value={pkg.package_id} id={pkg.package_id} />
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="font-bold text-lg">{pkg.name}</h3>
-                                    {pkg.discount && <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                                        {pkg.discount}
+                                    <span className="text-xl mr-2">{pkg.emoji}</span>
+                                    <h3 className="font-bold text-lg">{pkg.package_name}</h3>
+                                    {pkg.discount_percentage > 0 && <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                                        Giảm {pkg.discount_percentage}%
                                       </Badge>}
                                   </div>
                                   <p className="text-sm text-muted-foreground">{pkg.subtitle}</p>
                                   <p className="text-sm mb-3">{pkg.description}</p>
                                   <div className="flex items-center gap-2">
                                     <span className="text-2xl font-bold text-green-600">
-                                      {formatCurrency(pkg.price)}
+                                      {formatCurrency(pkg.daily_price * 30)}
                                     </span>
-                                    {pkg.originalPrice && <span className="text-sm text-muted-foreground line-through">
-                                        {formatCurrency(pkg.originalPrice)}
+                                    {pkg.original_daily_price > pkg.daily_price && <span className="text-sm text-muted-foreground line-through">
+                                        {formatCurrency(pkg.original_daily_price * 30)}
                                       </span>}
+                                  </div>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <span className="text-xs text-muted-foreground">/tháng/gà</span>
+                                    <span className="text-xs font-medium text-red-500">(trả sau)</span>
                                   </div>
                                 </div>
                               </div>
@@ -505,8 +523,8 @@ export default function Checkout() {
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span>Gói dịch vụ: {selectedPackageData?.name}</span>
-                      <span>{formatCurrency(selectedPackageData?.price || 0)}</span>
+                      <span>Gói dịch vụ: {selectedPackageData?.package_name}</span>
+                      <span className="text-red-500 font-medium">{formatCurrency(getMonthlyPackagePrice())} (trả sau)</span>
                     </div>
                     
                     {selectedCoop && <div className="flex justify-between">

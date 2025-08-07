@@ -134,6 +134,27 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_settings: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_billing_date: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_billing_date?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_billing_date?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chicken_types: {
         Row: {
           created_at: string
@@ -267,6 +288,54 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      monthly_bills: {
+        Row: {
+          billing_period_end: string
+          billing_period_start: string
+          chicken_quantity: number
+          created_at: string
+          daily_price: number
+          days_in_period: number
+          farm_id: string
+          id: string
+          package_id: string
+          package_name: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          billing_period_end: string
+          billing_period_start: string
+          chicken_quantity?: number
+          created_at?: string
+          daily_price?: number
+          days_in_period?: number
+          farm_id: string
+          id?: string
+          package_id: string
+          package_name: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_period_end?: string
+          billing_period_start?: string
+          chicken_quantity?: number
+          created_at?: string
+          daily_price?: number
+          days_in_period?: number
+          farm_id?: string
+          id?: string
+          package_id?: string
+          package_name?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -454,6 +523,7 @@ export type Database = {
           created_at: string
           farm_id: string
           id: string
+          last_billing_date: string | null
           package_id: string
           package_name: string
           package_price: number
@@ -462,6 +532,7 @@ export type Database = {
           selected_chicken_quantity: number | null
           selected_chicken_type_id: string | null
           selected_chicken_type_name: string | null
+          service_start_date: string | null
           status: string | null
           total_amount: number
           updated_at: string
@@ -474,6 +545,7 @@ export type Database = {
           created_at?: string
           farm_id: string
           id?: string
+          last_billing_date?: string | null
           package_id: string
           package_name: string
           package_price: number
@@ -482,6 +554,7 @@ export type Database = {
           selected_chicken_quantity?: number | null
           selected_chicken_type_id?: string | null
           selected_chicken_type_name?: string | null
+          service_start_date?: string | null
           status?: string | null
           total_amount: number
           updated_at?: string
@@ -494,6 +567,7 @@ export type Database = {
           created_at?: string
           farm_id?: string
           id?: string
+          last_billing_date?: string | null
           package_id?: string
           package_name?: string
           package_price?: number
@@ -502,6 +576,7 @@ export type Database = {
           selected_chicken_quantity?: number | null
           selected_chicken_type_id?: string | null
           selected_chicken_type_name?: string | null
+          service_start_date?: string | null
           status?: string | null
           total_amount?: number
           updated_at?: string

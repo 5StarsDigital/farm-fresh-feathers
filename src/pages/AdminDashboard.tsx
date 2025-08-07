@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import CameraAdmin from './CameraAdmin';
 import { PackageManagement } from '@/components/ui/package-management';
+import { BillingSettings } from '@/components/ui/billing-settings';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -400,6 +401,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>
             <TabsTrigger value="packages">Gói gà</TabsTrigger>
+            <TabsTrigger value="billing">Cài đặt Thanh toán</TabsTrigger>
             <TabsTrigger value="camera">Camera</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
@@ -527,6 +529,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="packages" className="space-y-4">
             <PackageManagement />
+          </TabsContent>
+
+          <TabsContent value="billing" className="space-y-4">
+            <BillingSettings />
           </TabsContent>
 
           <TabsContent value="camera" className="space-y-4">
