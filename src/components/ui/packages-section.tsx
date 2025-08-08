@@ -140,7 +140,7 @@ const PackagesSection = () => {
                 {/* Monthly price calculation */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-center space-x-2">
-                    <span className="text-3xl font-bold text-primary">{formatCurrency(pkg.daily_price * 30)}</span>
+                    <span className="text-3xl font-bold text-primary">{formatCurrency(pkg.daily_price)}</span>
                     {pkg.original_daily_price > pkg.daily_price && (
                       <span className="text-lg text-muted-foreground line-through">{formatCurrency(pkg.original_daily_price * 30)}</span>
                     )}
