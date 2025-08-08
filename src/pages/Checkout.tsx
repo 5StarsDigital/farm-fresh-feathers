@@ -350,11 +350,11 @@ export default function Checkout() {
                                   <p className="text-sm mb-3">{pkg.description}</p>
                                   <div className="flex items-center gap-2">
                                     <span className="text-2xl font-bold text-green-600">
-                                      {formatCurrency(pkg.daily_price * 30)}
+                                      {formatCurrency(pkg.daily_price)}
                                     </span>
                                     {pkg.original_daily_price > pkg.daily_price && (
                                       <span className="text-sm text-muted-foreground line-through">
-                                        {formatCurrency(pkg.original_daily_price * 30)}
+                                        {formatCurrency(pkg.original_daily_price)}
                                       </span>
                                     )}
                                   </div>
