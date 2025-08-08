@@ -217,17 +217,9 @@ export default function AnimatedFarm({
         
         if (data.success && data.totalNewEggs > 0) {
           console.log(`Server calculated ${data.totalNewEggs} new eggs`);
-          // Reload uncollected eggs from database
-          const { data: eggData, error: eggError } = await supabase
-            .from('eggs_inventory')
-            .select('uncollected_eggs')
-            .eq('farm_id', farmId)
-            .single();
-          
-          if (!eggError && eggData) {
-            setUncollectedEggs(eggData.uncollected_eggs);
-            if (soundEnabled && data.totalNewEggs > 0) playEggSound();
-          }
+          // Use callback form to add new eggs to current value
+          setUncollectedEggs(prev => prev + data.totalNewEggs);
+          if (soundEnabled && data.totalNewEggs > 0) playEggSound();
         }
       } catch (error) {
         console.error('Error calling egg production function:', error);
@@ -250,7 +242,10 @@ export default function AnimatedFarm({
       const eggsToAdd = uncollectedEggs;
       onCollectEgg(eggsToAdd);
       
-      // Reset uncollected eggs in database immediately
+      // Reset local state immediately for UI responsiveness
+      setUncollectedEggs(0);
+      
+      // Sync with database (don't wait for response)
       updateUncollectedEggs(0);
     }
   };
