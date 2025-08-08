@@ -17,6 +17,7 @@ import CameraAdmin from './CameraAdmin';
 import { PackageManagement } from '@/components/ui/package-management';
 import { BillingSettings } from '@/components/ui/billing-settings';
 import { ProductionSettings } from '@/components/ui/production-settings';
+import AdminNotificationsManager from '@/components/ui/admin-notifications-manager';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -406,6 +407,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="billing">Cài đặt Thanh toán</TabsTrigger>
             <TabsTrigger value="production">Cài đặt Sản xuất</TabsTrigger>
             <TabsTrigger value="camera">Camera</TabsTrigger>
+            <TabsTrigger value="notifications">Thông báo</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
@@ -544,6 +546,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="camera" className="space-y-4">
             <CameraAdmin />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-4">
+            <AdminNotificationsManager />
           </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">

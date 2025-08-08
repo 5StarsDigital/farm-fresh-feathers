@@ -144,10 +144,6 @@ const Navigation = () => {
                         <Shield className="w-4 h-4 mr-2" />
                         Khu vực Admin
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin-notifications')}>
-                        <Shield className="w-4 h-4 mr-2" />
-                        Quản lý Thông báo
-                      </DropdownMenuItem>
                     </>
                   )}
                   {userRole === 'super_admin' && (
@@ -216,10 +212,6 @@ const Navigation = () => {
                       <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                         <Shield className="w-5 h-5" />
                         <span>Khu vực Admin</span>
-                      </a>
-                      <a href="/admin-notifications" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                        <Shield className="w-5 h-5" />
-                        <span>Quản lý Thông báo</span>
                       </a>
                     </>
                   )}

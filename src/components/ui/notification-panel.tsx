@@ -31,6 +31,7 @@ export default function NotificationPanel() {
         .from("notifications")
         .select("id,title,content,type,is_read,created_at")
         .eq("user_id", user.id)
+        .neq("status", "revoked")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -51,6 +52,25 @@ export default function NotificationPanel() {
     // Periodic refresh
     const id = setInterval(fetchNotifications, 30000);
     return () => clearInterval(id);
+  }, [user?.id]);
+
+  // Realtime updates for instant reflection of edits/revokes
+  useEffect(() => {
+    if (!user) return;
+    const channel = (supabase as any)
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      (supabase as any).removeChannel(channel);
+    };
   }, [user?.id]);
 
   const markAsRead = async (id: string) => {

@@ -25,7 +25,7 @@ serve(async (req) => {
     // Get all farms
     const { data: farms, error: farmsError } = await supabaseService
       .from('farms')
-      .select('id');
+      .select('id, user_id');
 
     if (farmsError) throw farmsError;
 
@@ -107,6 +107,19 @@ serve(async (req) => {
               transaction_type: 'egg_collection',
               quantity: totalNewEggs,
               description: `Thu hoạch tự động ${totalNewEggs} quả trứng`
+            });
+
+          // Notify user about egg collection
+          await supabaseService
+            .from('notifications')
+            .insert({
+              user_id: (farm as any).user_id,
+              title: 'Gà đẻ trứng',
+              content: `Trang trại của bạn vừa thu ${totalNewEggs} quả trứng`,
+              type: 'general',
+              send_email: false,
+              status: 'sent',
+              metadata: { farm_id: farm.id, collected: totalNewEggs }
             });
 
           totalEggsCollected += totalNewEggs;
