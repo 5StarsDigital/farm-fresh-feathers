@@ -5,7 +5,6 @@ import { Star, Camera, Egg, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-
 interface PackagePrice {
   id: string;
   package_id: string;
@@ -21,26 +20,23 @@ interface PackagePrice {
   is_popular: boolean;
   is_active: boolean;
 }
-
 const PackagesSection = () => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<PackagePrice[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchPackages();
   }, []);
-
   const fetchPackages = async () => {
     try {
-      const { data, error } = await supabase
-        .from('package_prices')
-        .select('*')
-        .eq('is_active', true)
-        .order('daily_price', { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from('package_prices').select('*').eq('is_active', true).order('daily_price', {
+        ascending: true
+      });
       if (error) throw error;
-      
+
       // Transform the data to match our interface
       const transformedData = (data || []).map(pkg => ({
         id: pkg.id,
@@ -57,7 +53,6 @@ const PackagesSection = () => {
         is_popular: pkg.is_popular,
         is_active: pkg.is_active
       }));
-      
       setPackages(transformedData);
     } catch (error) {
       console.error('Error fetching packages:', error);
@@ -65,28 +60,22 @@ const PackagesSection = () => {
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
-
   if (loading) {
-    return (
-      <section className="py-20 bg-muted/30">
+    return <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           </div>
         </div>
-      </section>
-    );
+      </section>;
   }
-
-  return (
-    <section className="py-20 bg-muted/30">
+  return <section className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -98,31 +87,21 @@ const PackagesSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {packages.map((pkg) => (
-            <Card 
-              key={pkg.id}
-              className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-strong bg-gradient-card border-0 ${
-                pkg.is_popular ? 'ring-2 ring-primary shadow-medium' : ''
-              }`}
-            >
+          {packages.map(pkg => <Card key={pkg.id} className={`group relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-strong bg-gradient-card border-0 ${pkg.is_popular ? 'ring-2 ring-primary shadow-medium' : ''}`}>
               {/* Popular Badge */}
-              {pkg.is_popular && (
-                <div className="absolute top-4 right-4 z-10">
+              {pkg.is_popular && <div className="absolute top-4 right-4 z-10">
                   <Badge className="bg-gradient-primary text-primary-foreground px-3 py-1 shadow-medium">
                     <Star className="w-3 h-3 mr-1" />
                     Phổ biến nhất
                   </Badge>
-                </div>
-              )}
+                </div>}
 
               {/* Discount Badge */}
-              {pkg.discount_percentage > 0 && (
-                <div className="absolute top-4 left-4 z-10">
+              {pkg.discount_percentage > 0 && <div className="absolute top-4 left-4 z-10">
                   <Badge variant="secondary" className="bg-accent text-accent-foreground px-2 py-1">
                     Giảm {pkg.discount_percentage}%
                   </Badge>
-                </div>
-              )}
+                </div>}
 
               <CardHeader className="text-center pb-4">
                 {/* Icon */}
@@ -141,12 +120,10 @@ const PackagesSection = () => {
                 <div className="space-y-1">
                   <div className="flex items-center justify-center space-x-2">
                     <span className="text-3xl font-bold text-primary">{formatCurrency(pkg.daily_price)}</span>
-                    {pkg.original_daily_price > pkg.daily_price && (
-                      <span className="text-lg text-muted-foreground line-through">{formatCurrency(pkg.original_daily_price)}</span>
-                    )}
+                    {pkg.original_daily_price > pkg.daily_price && <span className="text-lg text-muted-foreground line-through">{formatCurrency(pkg.original_daily_price)}</span>}
                   </div>
                   <div className="flex items-center justify-center space-x-1">
-                    <p className="text-xs text-muted-foreground">/ tháng</p>
+                    <p className="text-xs text-muted-foreground">/ ngày</p>
                     <span className="text-xs font-medium text-red-500">(trả sau)</span>
                   </div>
                 </div>
@@ -155,33 +132,22 @@ const PackagesSection = () => {
               <CardContent className="pt-0">
                 {/* Features */}
                 <ul className="space-y-3 mb-6">
-                  {pkg.features.map((feature, index) => (
-                    <li key={index} className="flex items-center space-x-3">
+                  {pkg.features.map((feature, index) => <li key={index} className="flex items-center space-x-3">
                       <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
                         <div className="w-2 h-2 rounded-full bg-primary"></div>
                       </div>
                       <span className="text-sm text-foreground">{feature}</span>
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
 
                 {/* CTA Button */}
-                <Button 
-                  className={`w-full ${
-                    pkg.is_popular 
-                      ? 'bg-gradient-primary hover:shadow-medium' 
-                      : 'bg-secondary hover:bg-secondary/80'
-                  } transition-all duration-300`}
-                  size="lg"
-                  onClick={() => {
-                    navigate(`/checkout?package=${pkg.package_id}`);
-                  }}
-                >
+                <Button className={`w-full ${pkg.is_popular ? 'bg-gradient-primary hover:shadow-medium' : 'bg-secondary hover:bg-secondary/80'} transition-all duration-300`} size="lg" onClick={() => {
+              navigate(`/checkout?package=${pkg.package_id}`);
+            }}>
                   Thuê ngay
                 </Button>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
 
         {/* CTA */}
@@ -194,8 +160,6 @@ const PackagesSection = () => {
           </Button>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default PackagesSection;
