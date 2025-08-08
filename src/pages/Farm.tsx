@@ -333,16 +333,14 @@ const Farm = () => {
       console.error('Error loading coop limits:', error);
     }
   };
-  const collectEggs = async () => {
-    if (!farm) return;
+  const collectEggs = async (quantity: number) => {
+    if (!farm || quantity <= 0) return;
     try {
-      const totalChickens = chickens.reduce((sum, chicken) => sum + chicken.quantity, 0);
-      const newEggs = Math.floor(totalChickens * 0.8); // 80% chance each chicken lays an egg
-
+      // Update egg inventory with the specified quantity
       const {
         error: updateError
       } = await (supabase as any).from('eggs_inventory').update({
-        total_eggs: eggInventory.total_eggs + newEggs
+        total_eggs: eggInventory.total_eggs + quantity
       }).eq('farm_id', farm.id);
       if (updateError) throw updateError;
 
@@ -350,15 +348,18 @@ const Farm = () => {
       await (supabase as any).from('transactions').insert({
         farm_id: farm.id,
         transaction_type: 'egg_collection',
-        quantity: newEggs,
-        description: `Thu hoạch ${newEggs} quả trứng`
+        quantity: quantity,
+        description: `Thu hoạch ${quantity} quả trứng`
       });
+      
+      // Update local state using callback form to avoid async issues
       setEggInventory(prev => ({
-        total_eggs: prev.total_eggs + newEggs
+        total_eggs: prev.total_eggs + quantity
       }));
+      
       toast({
         title: "Thu hoạch thành công!",
-        description: `Bạn đã thu được ${newEggs} quả trứng`
+        description: `Bạn đã thu được ${quantity} quả trứng`
       });
       await loadFarmData(user!.id);
     } catch (error) {

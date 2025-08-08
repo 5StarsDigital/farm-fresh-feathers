@@ -22,7 +22,7 @@ interface AnimatedFarmProps {
   totalChickens: number;
   chickens: any[];
   farmId: string;
-  onCollectEgg: () => void;
+  onCollectEgg: (quantity: number) => void;
   onSellEggs: (quantity: number) => void;
 }
 
@@ -246,12 +246,11 @@ export default function AnimatedFarm({
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 1000);
       
-      // Add uncollected eggs to total eggs by calling multiple times
-      for (let i = 0; i < uncollectedEggs; i++) {
-        onCollectEgg();
-      }
+      // Add all uncollected eggs to total eggs in one operation
+      const eggsToAdd = uncollectedEggs;
+      onCollectEgg(eggsToAdd);
       
-      // Reset uncollected eggs in database
+      // Reset uncollected eggs in database immediately
       updateUncollectedEggs(0);
     }
   };
