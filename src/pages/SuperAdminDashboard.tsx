@@ -2,15 +2,22 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import Navigation from '@/components/ui/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Database, Settings, Activity, DollarSign, Users, TrendingUp, Search } from 'lucide-react';
+import { Shield, Database, Settings, Activity, DollarSign, Users, TrendingUp, Search, Calendar as CalendarIcon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+
 
 interface Transaction {
   id: string;
@@ -99,6 +106,11 @@ function SuperAdminContent() {
   const [yearlyRevenue, setYearlyRevenue] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  // Bộ lọc ngày cho Hoạt động Admin
+  const [activityFilterMode, setActivityFilterMode] = useState<'single' | 'range'>('single');
+  const [activityDate, setActivityDate] = useState<Date | undefined>();
+  const [activityRange, setActivityRange] = useState<{ from?: Date; to?: Date }>({});
+
 
   useEffect(() => {
     if (user && userRole === 'super_admin') {
@@ -368,6 +380,69 @@ function SuperAdminContent() {
     );
   });
 
+  // Lọc hoạt động admin theo tìm kiếm và theo ngày
+  const adminActivitiesFilteredBySearch = useMemo(() => {
+    const searchLower = searchQuery.toLowerCase();
+    return adminActivities.filter((activity) => {
+      const adminUser = users.find((u) => u.id === activity.admin_id);
+      return (
+        activity.action_type.toLowerCase().includes(searchLower) ||
+        activity.description.toLowerCase().includes(searchLower) ||
+        adminUser?.email?.toLowerCase().includes(searchLower) ||
+        adminUser?.full_name?.toLowerCase().includes(searchLower) ||
+        (activity.target_table && activity.target_table.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [adminActivities, users, searchQuery]);
+
+  const adminActivitiesForDisplay = useMemo(() => {
+    return adminActivitiesFilteredBySearch.filter((a) => {
+      const created = new Date(a.created_at);
+      if (activityFilterMode === 'single') {
+        if (!activityDate) return true;
+        return (
+          created.getFullYear() === activityDate.getFullYear() &&
+          created.getMonth() === activityDate.getMonth() &&
+          created.getDate() === activityDate.getDate()
+        );
+      }
+      // range
+      if (!activityRange.from || !activityRange.to) return true;
+      const start = new Date(activityRange.from);
+      start.setHours(0,0,0,0);
+      const end = new Date(activityRange.to);
+      end.setHours(23,59,59,999);
+      return created >= start && created <= end;
+    });
+  }, [adminActivitiesFilteredBySearch, activityFilterMode, activityDate, activityRange]);
+
+  const rangeChartData = useMemo(() => {
+    if (activityFilterMode !== 'range' || !activityRange.from || !activityRange.to) return [] as { date: string; count: number }[];
+    const start = new Date(activityRange.from);
+    const end = new Date(activityRange.to);
+    start.setHours(0,0,0,0);
+    end.setHours(0,0,0,0);
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    const days: { [key: string]: number } = {};
+    for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
+      const d = new Date(t);
+      const key = d.toISOString().slice(0,10);
+      days[key] = 0;
+    }
+
+    adminActivitiesFilteredBySearch.forEach((a) => {
+      const d = new Date(a.created_at);
+      const key = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10);
+      if (days[key] !== undefined) days[key] += 1;
+    });
+
+    return Object.entries(days).map(([k, v]) => ({
+      date: k,
+      count: v,
+    }));
+  }, [adminActivitiesFilteredBySearch, activityFilterMode, activityRange]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -569,18 +644,77 @@ function SuperAdminContent() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Search Bar */}
-                    <div className="flex items-center space-x-2">
-                      <Search className="w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Tìm kiếm theo admin, hoạt động..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="max-w-md"
-                      />
+                    {/* Thanh tìm kiếm + Bộ lọc ngày */}
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-2">
+                        <Search className="w-4 h-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Tìm kiếm theo admin, hoạt động..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="max-w-md"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Select value={activityFilterMode} onValueChange={(v: 'single' | 'range') => setActivityFilterMode(v)}>
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Chế độ lọc" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="single">Một ngày</SelectItem>
+                            <SelectItem value="range">Khoảng ngày</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {activityFilterMode === 'single' ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-[220px] justify-start">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {activityDate ? format(activityDate, 'dd/MM/yyyy') : 'Chọn ngày'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={activityDate}
+                                onSelect={setActivityDate}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="w-[260px] justify-start">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {activityRange.from && activityRange.to
+                                  ? `${format(activityRange.from, 'dd/MM/yyyy')} - ${format(activityRange.to, 'dd/MM/yyyy')}`
+                                  : 'Chọn khoảng ngày'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="range"
+                                selected={activityRange as any}
+                                onSelect={(v: any) => setActivityRange(v || {})}
+                                numberOfMonths={2}
+                                initialFocus
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        )}
+
+                        <Button variant="ghost" onClick={() => { setActivityDate(undefined); setActivityRange({}); }}>
+                          Xóa lọc
+                        </Button>
+                      </div>
                     </div>
 
-                    {/* Statistics */}
+                    {/* Thống kê tổng quan */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <Card>
                         <CardContent className="p-4">
@@ -590,98 +724,95 @@ function SuperAdminContent() {
                       </Card>
                       <Card>
                         <CardContent className="p-4">
-                          <div className="text-2xl font-bold">{adminActivities.length}</div>
-                          <p className="text-sm text-muted-foreground">Hoạt động ghi nhận</p>
+                          <div className="text-2xl font-bold">{adminActivitiesForDisplay.length}</div>
+                          <p className="text-sm text-muted-foreground">Hoạt động tìm thấy</p>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4">
-                          <div className="text-2xl font-bold">
-                            {adminActivities.filter(a => 
-                              new Date(a.created_at) >= new Date(Date.now() - 24 * 60 * 60 * 1000)
-                            ).length}
-                          </div>
-                          <p className="text-sm text-muted-foreground">Hoạt động hôm nay</p>
+                          <div className="text-2xl font-bold">{new Set(adminActivitiesForDisplay.map(a => a.action_type)).size}</div>
+                          <p className="text-sm text-muted-foreground">Số loại hoạt động</p>
                         </CardContent>
                       </Card>
                     </div>
 
-                    {/* Admin Activities Table */}
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Admin</TableHead>
-                          <TableHead>Loại hoạt động</TableHead>
-                          <TableHead>Mô tả</TableHead>
-                          <TableHead>Bảng liên quan</TableHead>
-                          <TableHead>Thời gian</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {adminActivities
-                          .filter(activity => {
-                            const searchLower = searchQuery.toLowerCase();
-                            const adminUser = users.find(u => u.id === activity.admin_id);
-                            return (
-                              activity.action_type.toLowerCase().includes(searchLower) ||
-                              activity.description.toLowerCase().includes(searchLower) ||
-                              adminUser?.email?.toLowerCase().includes(searchLower) ||
-                              adminUser?.full_name?.toLowerCase().includes(searchLower) ||
-                              (activity.target_table && activity.target_table.toLowerCase().includes(searchLower))
-                            );
-                          })
-                          .slice(0, 50) // Limit to 50 most recent activities
-                          .map((activity) => {
-                            const adminUser = users.find(u => u.id === activity.admin_id);
-                            return (
-                              <TableRow key={activity.id}>
-                                <TableCell>
-                                  <div>
-                                    <div className="font-medium">
-                                      {adminUser?.email || 'Admin không xác định'}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {adminUser?.full_name || 'N/A'}
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant="outline">
-                                    {activity.action_type}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="max-w-xs truncate">
-                                    {activity.description}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  {activity.target_table ? (
-                                    <Badge variant="secondary">
-                                      {activity.target_table}
-                                    </Badge>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm">
-                                    {new Date(activity.created_at).toLocaleDateString('vi-VN')}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {new Date(activity.created_at).toLocaleTimeString('vi-VN')}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                      </TableBody>
-                    </Table>
-
-                    {adminActivities.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        Chưa có hoạt động admin nào được ghi nhận
+                    {activityFilterMode === 'range' && activityRange.from && activityRange.to ? (
+                      <div className="space-y-4">
+                        <div className="text-sm text-muted-foreground">
+                          Biểu đồ số hoạt động theo ngày trong khoảng đã chọn
+                        </div>
+                        <ChartContainer
+                          config={{ count: { label: 'Số hoạt động', color: 'hsl(var(--primary))' } }}
+                          className="w-full"
+                        >
+                          <BarChart data={rangeChartData}>
+                            <CartesianGrid vertical={false} strokeOpacity={0.3} />
+                            <XAxis dataKey="date" tickFormatter={(v) => v.slice(8,10) + '/' + v.slice(5,7)} tickLine={false} axisLine={false} />
+                            <YAxis allowDecimals={false} tickLine={false} axisLine={false} />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Bar dataKey="count" fill="var(--color-count, hsl(var(--primary)))" radius={[4,4,0,0]} />
+                          </BarChart>
+                        </ChartContainer>
                       </div>
+                    ) : (
+                      <>
+                        {/* Bảng hoạt động admin (một ngày hoặc không chọn ngày) */}
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Admin</TableHead>
+                              <TableHead>Loại hoạt động</TableHead>
+                              <TableHead>Mô tả</TableHead>
+                              <TableHead>Bảng liên quan</TableHead>
+                              <TableHead>Thời gian</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {adminActivitiesForDisplay
+                              .slice(0, 50)
+                              .map((activity) => {
+                                const adminUser = users.find(u => u.id === activity.admin_id);
+                                return (
+                                  <TableRow key={activity.id}>
+                                    <TableCell>
+                                      <div>
+                                        <div className="font-medium">
+                                          {adminUser?.email || 'Admin không xác định'}
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                          {adminUser?.full_name || 'N/A'}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline">{activity.action_type}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="max-w-xs truncate">{activity.description}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {activity.target_table ? (
+                                        <Badge variant="secondary">{activity.target_table}</Badge>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="text-sm">{new Date(activity.created_at).toLocaleDateString('vi-VN')}</div>
+                                      <div className="text-xs text-muted-foreground">{new Date(activity.created_at).toLocaleTimeString('vi-VN')}</div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                          </TableBody>
+                        </Table>
+
+                        {adminActivitiesForDisplay.length === 0 && (
+                          <div className="text-center py-8 text-muted-foreground">
+                            Không có hoạt động nào trong khoảng thời gian đã chọn
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
