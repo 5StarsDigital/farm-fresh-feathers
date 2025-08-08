@@ -101,22 +101,42 @@ export default function AnimatedFarm({
   }, [farmId]);
 
   // Update database when uncollected eggs change
-  const updateUncollectedEggs = async (newCount: number) => {
-    if (!farmId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('eggs_inventory')
-        .upsert({
-          farm_id: farmId,
-          uncollected_eggs: newCount
-        });
-      
-      if (error) throw error;
-      setUncollectedEggs(newCount);
-    } catch (error) {
-      console.error('Error updating uncollected eggs:', error);
+  const updateUncollectedEggs = async (
+    newCount: number,
+    options?: { newTotalEggs?: number; retry?: number }
+  ): Promise<boolean> => {
+    if (!farmId) return false;
+
+    const retries = options?.retry ?? 1;
+    const payload: { farm_id: string; uncollected_eggs: number; total_eggs?: number } = {
+      farm_id: farmId,
+      uncollected_eggs: newCount,
+    };
+    if (typeof options?.newTotalEggs === 'number') {
+      payload.total_eggs = options.newTotalEggs;
     }
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const { error } = await supabase
+          .from('eggs_inventory')
+          .upsert(payload, { onConflict: 'farm_id' });
+
+        if (error) throw error;
+
+        // Keep local state in sync if needed (UI was already optimistically updated)
+        setUncollectedEggs(newCount);
+        return true;
+      } catch (err) {
+        console.error(`Error updating uncollected eggs (attempt ${attempt + 1}/${retries + 1}):`, err);
+        if (attempt === retries) {
+          return false;
+        }
+        await new Promise((res) => setTimeout(res, 500 * (attempt + 1)));
+      }
+    }
+
+    return false;
   };
 
   // Initialize animated chickens
@@ -232,7 +252,7 @@ export default function AnimatedFarm({
     const interval = setInterval(calculateEggProduction, 300000);
     return () => clearInterval(interval);
   }, [farmId, soundEnabled]);
-  const handleCollectEgg = () => {
+  const handleCollectEgg = async () => {
     if (uncollectedEggs > 0) {
       if (soundEnabled) playCollectSound();
       setShowCelebration(true);
@@ -240,13 +260,19 @@ export default function AnimatedFarm({
       
       // Add all uncollected eggs to total eggs in one operation
       const eggsToAdd = uncollectedEggs;
+      const newTotalEggs = totalEggs + eggsToAdd;
       onCollectEgg(eggsToAdd);
       
-      // Reset local state immediately for UI responsiveness
+      // Optimistic UI: reset local state immediately for responsiveness
       setUncollectedEggs(0);
       
-      // Sync with database (don't wait for response)
-      updateUncollectedEggs(0);
+      // Persist to DB with retry and include new totalEggs to keep data consistent
+      const ok = await updateUncollectedEggs(0, { newTotalEggs, retry: 1 });
+      if (!ok) {
+        console.warn('Cập nhật cơ sở dữ liệu thất bại. Thực hiện rollback UI.');
+        setUncollectedEggs(eggsToAdd);
+        // Optionally rollback parent total eggs if supported: onCollectEgg(-eggsToAdd)
+      }
     }
   };
   const handleSellEggs = () => {
