@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Egg, Wallet, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import heroFarm from '@/assets/hero-farm.jpg';
+import heatLamp from '@/assets/heat-lamp.jpg';
 import cardBackground from '@/assets/card-background.png';
 interface Chicken {
   id: string;
@@ -347,7 +349,10 @@ export default function AnimatedFarm({
           <div className="grid grid-cols-1 lg:grid-cols-2 h-96">
             {/* Left Side - Chicken Coop Animation */}
             <div ref={farmRef} className="relative overflow-hidden border-4 border-amber-700 rounded-l-lg" style={{
-            background: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%)'
+            backgroundImage: `url(/lovable-uploads/97da841b-e496-4773-a12a-5abd337176cc.png)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
           }}>
             
             {/* Wooden Fence */}
