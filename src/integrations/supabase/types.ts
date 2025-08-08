@@ -476,6 +476,33 @@ export type Database = {
         }
         Relationships: []
       }
+      production_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_name: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_name: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_name?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -677,6 +704,7 @@ export type Database = {
           farm_id: string
           id: string
           last_egg_collection: string | null
+          leftover_time_minutes: number | null
           quantity: number
           updated_at: string
         }
@@ -686,6 +714,7 @@ export type Database = {
           farm_id: string
           id?: string
           last_egg_collection?: string | null
+          leftover_time_minutes?: number | null
           quantity?: number
           updated_at?: string
         }
@@ -695,6 +724,7 @@ export type Database = {
           farm_id?: string
           id?: string
           last_egg_collection?: string | null
+          leftover_time_minutes?: number | null
           quantity?: number
           updated_at?: string
         }

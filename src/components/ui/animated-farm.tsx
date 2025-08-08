@@ -202,37 +202,44 @@ export default function AnimatedFarm({
     return () => clearInterval(interval);
   }, []);
 
-  // Egg production system - based on chicken type settings
+  // Call server to calculate egg production when component loads
   useEffect(() => {
-    if (!chickens?.length) return;
-    
-    const interval = setInterval(() => {
-      // Calculate total eggs to produce based on all chicken types
-      let totalNewEggs = 0;
-      chickens.forEach(chicken => {
-        const eggsPerPeriod = chicken.chicken_types?.eggs_per_period || 1;
-        const daysPerPeriod = chicken.chicken_types?.days_per_period || 1;
-        
-        // For simulation, scale down the time significantly (1 day = 2 minutes)
-        const minutesPerPeriod = daysPerPeriod * 2;
-        const eggsPerMinute = eggsPerPeriod / minutesPerPeriod;
-        
-        // Calculate eggs for this check interval (2 minutes)
-        const eggsForThisInterval = (eggsPerMinute * 2) * chicken.quantity;
-        
-        // Add some randomness but ensure we hit the target rate over time
-        const randomizedEggs = Math.random() < (eggsForThisInterval % 1) ? Math.ceil(eggsForThisInterval) : Math.floor(eggsForThisInterval);
-        totalNewEggs += randomizedEggs;
-      });
+    const calculateEggProduction = async () => {
+      if (!farmId) return;
       
-      if (totalNewEggs > 0) {
-        updateUncollectedEggs(uncollectedEggs + totalNewEggs);
-        if (soundEnabled) playEggSound();
+      try {
+        const { data, error } = await supabase.functions.invoke('calculate-egg-production');
+        
+        if (error) {
+          console.error('Error calculating egg production:', error);
+          return;
+        }
+        
+        if (data.success && data.totalNewEggs > 0) {
+          console.log(`Server calculated ${data.totalNewEggs} new eggs`);
+          // Reload uncollected eggs from database
+          const { data: eggData, error: eggError } = await supabase
+            .from('eggs_inventory')
+            .select('uncollected_eggs')
+            .eq('farm_id', farmId)
+            .single();
+          
+          if (!eggError && eggData) {
+            setUncollectedEggs(eggData.uncollected_eggs);
+            if (soundEnabled && data.totalNewEggs > 0) playEggSound();
+          }
+        }
+      } catch (error) {
+        console.error('Error calling egg production function:', error);
       }
-    }, 120000); // Every 2 minutes for simulation
+    };
 
+    calculateEggProduction();
+    
+    // Set up periodic calculation (every 5 minutes)
+    const interval = setInterval(calculateEggProduction, 300000);
     return () => clearInterval(interval);
-  }, [chickens, uncollectedEggs, soundEnabled]);
+  }, [farmId, soundEnabled]);
   const handleCollectEgg = () => {
     if (uncollectedEggs > 0) {
       if (soundEnabled) playCollectSound();
