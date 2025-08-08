@@ -820,13 +820,33 @@ export type Database = {
         Args: { package_id_param: string; additional_quantity: number }
         Returns: Json
       }
+      disable_process_monthly_billing: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      enable_process_monthly_billing: {
+        Args: { cron_expr?: string }
+        Returns: boolean
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_process_monthly_billing_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          jobname: string
+          schedule: string
+          active: boolean
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       is_current_user_super_admin: {
         Args: Record<PropertyKey, never>
