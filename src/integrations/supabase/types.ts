@@ -342,6 +342,51 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          metadata: Json
+          read_at: string | null
+          send_email: boolean
+          sent_at: string | null
+          status: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json
+          read_at?: string | null
+          send_email?: boolean
+          sent_at?: string | null
+          status?: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json
+          read_at?: string | null
+          send_email?: boolean
+          sent_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       package_prices: {
         Row: {
           bg_gradient: string | null

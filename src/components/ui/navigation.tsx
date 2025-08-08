@@ -6,6 +6,7 @@ import { Menu, X, User, ShoppingCart, MapPin, CreditCard, BookOpen, LogOut, Shie
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
+import NotificationPanel from '@/components/ui/notification-panel';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
@@ -100,14 +101,15 @@ const Navigation = () => {
             <span className="text-xl font-bold text-primary">Nuôi Gà 5.0</span>
           </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
-            {menuItems.map(item => <a key={item.name} href={item.href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
-                {item.icon && <item.icon className="w-4 h-4" />}
-                <span>{item.name}</span>
-              </a>)}
+            {/* Desktop Menu */}
+           <div className="hidden md:flex items-center space-x-4">
+             {menuItems.map(item => <a key={item.name} href={item.href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+                 {item.icon && <item.icon className="w-4 h-4" />}
+                 <span>{item.name}</span>
+               </a>)}
             
-            {/* User Account or Login */}
+             <NotificationPanel />
+             {/* User Account or Login */}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -137,10 +139,16 @@ const Navigation = () => {
                   
                   {/* Admin workspace buttons */}
                   {(userRole === 'admin' || userRole === 'super_admin') && (
-                    <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Khu vực Admin
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Khu vực Admin
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin-notifications')}>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Quản lý Thông báo
+                      </DropdownMenuItem>
+                    </>
                   )}
                   {userRole === 'super_admin' && (
                     <DropdownMenuItem onClick={() => navigate('/super-admin')}>
@@ -207,6 +215,10 @@ const Navigation = () => {
                     <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
                       <span>Khu vực Admin</span>
+                    </a>
+                    <a href="/admin-notifications" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                      <Shield className="w-5 h-5" />
+                      <span>Quản lý Thông báo</span>
                     </a>
                   )}
                   {userRole === 'super_admin' && (

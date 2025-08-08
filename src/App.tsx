@@ -20,6 +20,7 @@ import Checkout from "./pages/Checkout";
 import SellerDashboard from "./pages/SellerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import AdminNotifications from "./pages/AdminNotifications";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/checkout" element={<Checkout />} />
             
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/admin-notifications" element={<AdminNotifications />} />
             <Route path="/super-admin" element={<SuperAdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
