@@ -77,20 +77,24 @@ serve(async (req) => {
           // Get current egg inventory
           const { data: eggInventory, error: eggError } = await supabaseService
             .from('eggs_inventory')
-            .select('total_eggs')
+            .select('total_eggs, uncollected_eggs')
             .eq('farm_id', farm.id)
             .single();
 
           if (eggError && eggError.code !== 'PGRST116') throw eggError;
 
-          const currentEggs = eggInventory?.total_eggs || 0;
+          const currentTotalEggs = eggInventory?.total_eggs || 0;
+          const currentUncollectedEggs = eggInventory?.uncollected_eggs || 0;
 
-          // Update or create egg inventory
+          // Update or create egg inventory using ON CONFLICT to prevent duplicates
           const { error: updateEggError } = await supabaseService
             .from('eggs_inventory')
             .upsert({
               farm_id: farm.id,
-              total_eggs: currentEggs + totalNewEggs
+              total_eggs: currentTotalEggs + totalNewEggs,
+              uncollected_eggs: currentUncollectedEggs + totalNewEggs
+            }, {
+              onConflict: 'farm_id'
             });
 
           if (updateEggError) throw updateEggError;
