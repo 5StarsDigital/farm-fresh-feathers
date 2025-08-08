@@ -231,7 +231,7 @@ export default function Checkout() {
   const getMonthlyPackagePrice = () => {
     if (!selectedPackageData) return 0;
     const totalChickens = getTotalChickens();
-    return selectedPackageData.daily_price * 30 * totalChickens;
+    return selectedPackageData.daily_price * totalChickens;
   };
 
   const canProceedToPayment = () => {
