@@ -5,8 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Egg, Wallet, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import heroFarm from '@/assets/hero-farm.jpg';
-import heatLamp from '@/assets/heat-lamp.jpg';
 import cardBackground from '@/assets/card-background.png';
 interface Chicken {
   id: string;
@@ -76,14 +74,11 @@ export default function AnimatedFarm({
   useEffect(() => {
     const loadUncollectedEggs = async () => {
       if (!farmId) return;
-      
       try {
-        const { data, error } = await supabase
-          .from('eggs_inventory')
-          .select('uncollected_eggs')
-          .eq('farm_id', farmId)
-          .single();
-        
+        const {
+          data,
+          error
+        } = await supabase.from('eggs_inventory').select('uncollected_eggs').eq('farm_id', farmId).single();
         if (error && error.code !== 'PGRST116') {
           // Column might not exist yet, ignore the error
           if (error.message?.includes('uncollected_eggs')) {
@@ -92,38 +87,39 @@ export default function AnimatedFarm({
           }
           throw error;
         }
-        
         setUncollectedEggs((data as any)?.uncollected_eggs || 0);
       } catch (error) {
         console.error('Error loading uncollected eggs:', error);
       }
     };
-
     loadUncollectedEggs();
   }, [farmId]);
 
   // Update database when uncollected eggs change
-  const updateUncollectedEggs = async (
-    newCount: number,
-    options?: { newTotalEggs?: number; retry?: number }
-  ): Promise<boolean> => {
+  const updateUncollectedEggs = async (newCount: number, options?: {
+    newTotalEggs?: number;
+    retry?: number;
+  }): Promise<boolean> => {
     if (!farmId) return false;
-
     const retries = options?.retry ?? 1;
-    const payload: { farm_id: string; uncollected_eggs: number; total_eggs?: number } = {
+    const payload: {
+      farm_id: string;
+      uncollected_eggs: number;
+      total_eggs?: number;
+    } = {
       farm_id: farmId,
-      uncollected_eggs: newCount,
+      uncollected_eggs: newCount
     };
     if (typeof options?.newTotalEggs === 'number') {
       payload.total_eggs = options.newTotalEggs;
     }
-
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const { error } = await supabase
-          .from('eggs_inventory')
-          .upsert(payload, { onConflict: 'farm_id' });
-
+        const {
+          error
+        } = await supabase.from('eggs_inventory').upsert(payload, {
+          onConflict: 'farm_id'
+        });
         if (error) throw error;
 
         // Keep local state in sync if needed (UI was already optimistically updated)
@@ -134,10 +130,9 @@ export default function AnimatedFarm({
         if (attempt === retries) {
           return false;
         }
-        await new Promise((res) => setTimeout(res, 500 * (attempt + 1)));
+        await new Promise(res => setTimeout(res, 500 * (attempt + 1)));
       }
     }
-
     return false;
   };
 
@@ -228,15 +223,15 @@ export default function AnimatedFarm({
   useEffect(() => {
     const calculateEggProduction = async () => {
       if (!farmId) return;
-      
       try {
-        const { data, error } = await supabase.functions.invoke('calculate-egg-production');
-        
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('calculate-egg-production');
         if (error) {
           console.error('Error calculating egg production:', error);
           return;
         }
-        
         if (data.success && data.totalNewEggs > 0) {
           console.log(`Server calculated ${data.totalNewEggs} new eggs`);
           // Use callback form to add new eggs to current value
@@ -247,9 +242,8 @@ export default function AnimatedFarm({
         console.error('Error calling egg production function:', error);
       }
     };
-
     calculateEggProduction();
-    
+
     // Set up periodic calculation (every 5 minutes)
     const interval = setInterval(calculateEggProduction, 300000);
     return () => clearInterval(interval);
@@ -259,17 +253,20 @@ export default function AnimatedFarm({
       if (soundEnabled) playCollectSound();
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 1000);
-      
+
       // Add all uncollected eggs to total eggs in one operation
       const eggsToAdd = uncollectedEggs;
       const newTotalEggs = totalEggs + eggsToAdd;
       onCollectEgg(eggsToAdd);
-      
+
       // Optimistic UI: reset local state immediately for responsiveness
       setUncollectedEggs(0);
-      
+
       // Persist to DB with retry and include new totalEggs to keep data consistent
-      const ok = await updateUncollectedEggs(0, { newTotalEggs, retry: 1 });
+      const ok = await updateUncollectedEggs(0, {
+        newTotalEggs,
+        retry: 1
+      });
       if (!ok) {
         console.warn('Cập nhật cơ sở dữ liệu thất bại. Thực hiện rollback UI.');
         setUncollectedEggs(eggsToAdd);
@@ -349,10 +346,7 @@ export default function AnimatedFarm({
           <div className="grid grid-cols-1 lg:grid-cols-2 h-96">
             {/* Left Side - Chicken Coop Animation */}
             <div ref={farmRef} className="relative overflow-hidden border-4 border-amber-700 rounded-l-lg" style={{
-            backgroundImage: `url(/lovable-uploads/97da841b-e496-4773-a12a-5abd337176cc.png)`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
+            background: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%)'
           }}>
             
             {/* Wooden Fence */}
@@ -363,15 +357,15 @@ export default function AnimatedFarm({
               
               {/* Bottom fence */}
               <div className="absolute bottom-0 left-0 right-0 h-4 bg-amber-700 border-2 border-amber-900 rounded-b-lg shadow-lg"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-2 bg-amber-600"></div>
+              
               
               {/* Left fence */}
               <div className="absolute top-0 bottom-0 left-0 w-4 bg-amber-700 border-2 border-amber-900 rounded-l-lg shadow-lg"></div>
-              <div className="absolute top-0 bottom-0 left-0 w-2 bg-amber-600"></div>
+              
               
               {/* Right fence */}
               <div className="absolute top-0 bottom-0 right-0 w-4 bg-amber-700 border-2 border-amber-900 rounded-r-lg shadow-lg"></div>
-              <div className="absolute top-0 bottom-0 right-0 w-2 bg-amber-600"></div>
+              
               
               {/* Vertical fence posts */}
               
@@ -436,14 +430,14 @@ export default function AnimatedFarm({
                   🧺 Giỏ trứng
                 </div>
                 <div className="flex items-center justify-center h-full flex-wrap gap-1 pt-3">
-                  {Array.from({ length: Math.min(uncollectedEggs, 3) }, (_, i) => (
-                    <span key={i} className="text-sm animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>
+                  {Array.from({
+                    length: Math.min(uncollectedEggs, 3)
+                  }, (_, i) => <span key={i} className="text-sm animate-bounce" style={{
+                    animationDelay: `${i * 0.1}s`
+                  }}>
                       🥚
-                    </span>
-                  ))}
-                  {uncollectedEggs > 3 && (
-                    <span className="text-xs text-amber-800 font-bold">+{uncollectedEggs - 3}</span>
-                  )}
+                    </span>)}
+                  {uncollectedEggs > 3 && <span className="text-xs text-amber-800 font-bold">+{uncollectedEggs - 3}</span>}
                 </div>
               </div>
             </div>
