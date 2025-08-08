@@ -245,7 +245,7 @@ export default function AnimatedFarm({
       }
       
       // Reset uncollected eggs in database
-      updateUncollectedEggs(0);
+      updateuncollected_eggs(0);
     }
   };
   const handleSellEggs = () => {
