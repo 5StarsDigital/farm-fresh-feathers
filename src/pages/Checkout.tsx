@@ -564,7 +564,7 @@ export default function Checkout() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span>Gói dịch vụ: {selectedPackageData?.package_name}</span>
-                      <span className="text-red-500 font-medium">{formatCurrency(getMonthlyPackagePrice())} (trả sau)</span>
+                      <span className="text-red-500 font-medium">{formatCurrency(getMonthlyPackagePrice())}/ngày (trả sau)</span>
                     </div>
                     
                     {selectedCoop && (
