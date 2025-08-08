@@ -212,14 +212,16 @@ const Navigation = () => {
                     <span>Thông tin tài khoản</span>
                   </a>
                   {(userRole === 'admin' || userRole === 'super_admin') && (
-                    <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                      <Shield className="w-5 h-5" />
-                      <span>Khu vực Admin</span>
-                    </a>
-                    <a href="/admin-notifications" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
-                      <Shield className="w-5 h-5" />
-                      <span>Quản lý Thông báo</span>
-                    </a>
+                    <>
+                      <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                        <Shield className="w-5 h-5" />
+                        <span>Khu vực Admin</span>
+                      </a>
+                      <a href="/admin-notifications" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                        <Shield className="w-5 h-5" />
+                        <span>Quản lý Thông báo</span>
+                      </a>
+                    </>
                   )}
                   {userRole === 'super_admin' && (
                     <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
