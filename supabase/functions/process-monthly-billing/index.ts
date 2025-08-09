@@ -227,37 +227,101 @@ Deno.serve(async (req) => {
       if (insertErr) throw insertErr;
     }
 
-    // 6) Trừ tổng vào số dư theo từng farm và ghi transactions
+    // 6) Trừ/đánh dấu theo từng farm, gửi thông báo và cập nhật trạng thái bill
+    const paidPkgIds = new Set<string>();
+    const failedPkgIds = new Set<string>();
+
     for (const [farm_id, total] of perFarmTotals.entries()) {
+      try {
+        // Lấy thông tin farm và user
+        const { data: farmRow, error: farmErr } = await service
+          .from("farms")
+          .select("account_balance, user_id")
+          .eq("id", farm_id)
+          .single();
+        if (farmErr) throw farmErr;
 
-      const { data: farmRow, error: farmErr } = await service
-        .from("farms")
-        .select("account_balance")
-        .eq("id", farm_id)
-        .single();
-      if (farmErr) throw farmErr;
+        const currentBalance = Number(farmRow?.account_balance ?? 0);
+        const enough = currentBalance >= Number(total);
+        const farmPkgIds = bills.filter(b => b.farm_id === farm_id).map(b => b.service_package_id);
 
-      const currentBalance = Number(farmRow?.account_balance ?? 0);
-      const newBalance = currentBalance - Number(total);
+        if (enough) {
+          const newBalance = currentBalance - Number(total);
 
-      const { error: setErr } = await service
-        .from("farms")
-        .update({ account_balance: newBalance })
-        .eq("id", farm_id);
-      if (setErr) throw setErr;
+          // Trừ tiền
+          const { error: setErr } = await service
+            .from("farms")
+            .update({ account_balance: newBalance })
+            .eq("id", farm_id);
+          if (setErr) throw setErr;
 
-      // Ghi transaction tổng hợp
-      const { error: txErr } = await service.from("transactions").insert({
-        farm_id,
-        transaction_type: "monthly_billing",
-        amount: -Number(total),
-        description: `Thanh toán gói dịch vụ đến ${today.toISOString().slice(0, 10)} (tổng hợp)`,
-      });
-      if (txErr) throw txErr;
+          // Ghi transaction tổng hợp
+          const { error: txErr } = await service.from("transactions").insert({
+            farm_id,
+            transaction_type: "monthly_billing",
+            amount: -Number(total),
+            description: `Thanh toán gói dịch vụ đến ${today.toISOString().slice(0, 10)} (tổng hợp)`
+          });
+          if (txErr) throw txErr;
+
+          // Đánh dấu bill đã trả thành công
+          const { error: updBillsErr } = await service
+            .from("monthly_bills")
+            .update({ status: "paid" })
+            .eq("farm_id", farm_id)
+            .eq("billing_period_end", today.toISOString().slice(0, 10));
+          if (updBillsErr) throw updBillsErr;
+
+          // Thu thập package id đã trả
+          farmPkgIds.forEach(id => paidPkgIds.add(id));
+
+          // Thông báo thành công
+          await service.from("notifications").insert({
+            user_id: farmRow?.user_id,
+            title: "Thanh toán gói dịch vụ thành công",
+            content: `Đã trừ ${Number(total)} khỏi số dư cho kỳ ${today.toISOString().slice(0, 10)}. Cảm ơn bạn!`,
+            type: "general",
+            send_email: false,
+            status: "sent",
+            metadata: { success: true, total: Number(total), date: today.toISOString().slice(0,10) }
+          });
+        } else {
+          // Không đủ tiền: đánh dấu bill failed
+          const { error: failBillsErr } = await service
+            .from("monthly_bills")
+            .update({ status: "failed" })
+            .eq("farm_id", farm_id)
+            .eq("billing_period_end", today.toISOString().slice(0, 10));
+          if (failBillsErr) throw failBillsErr;
+
+          // Vô hiệu hóa các gói của farm này cho đến khi thanh toán thành công
+          if (farmPkgIds.length > 0) {
+            const { error: deactivateErr } = await service
+              .from("service_packages")
+              .update({ status: "inactive" })
+              .in("id", farmPkgIds);
+            if (deactivateErr) throw deactivateErr;
+          }
+          farmPkgIds.forEach(id => failedPkgIds.add(id));
+
+          // Gửi thông báo hết số dư
+          await service.from("notifications").insert({
+            user_id: farmRow?.user_id,
+            title: "Số dư không đủ để thanh toán",
+            content: `Số dư hiện tại (${currentBalance}) không đủ để thanh toán tổng ${Number(total)} cho kỳ ${today.toISOString().slice(0, 10)}. Các gói dịch vụ đã tạm dừng.`,
+            type: "general",
+            send_email: false,
+            status: "sent",
+            metadata: { success: false, required: Number(total), current: currentBalance, date: today.toISOString().slice(0,10) }
+          });
+        }
+      } catch (e) {
+        console.error(`Billing farm ${farm_id} error`, e);
+      }
     }
 
-    // 7) Cập nhật last_billing_date cho các gói đã tính
-    const pkgIdsToUpdate = Array.from(new Set(bills.map((b) => b.service_package_id)));
+    // 7) Cập nhật last_billing_date chỉ cho các gói đã thanh toán thành công
+    const pkgIdsToUpdate = Array.from(paidPkgIds);
     for (let i = 0; i < pkgIdsToUpdate.length; i += 100) {
       const chunk = pkgIdsToUpdate.slice(i, i + 100);
       const { error: updPkgErr } = await service
