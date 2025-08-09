@@ -500,8 +500,8 @@ export default function AdminEggsManager() {
                   <TableCell>{new Date(r.created_at).toLocaleString("vi-VN")}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <code className="text-xs">{r.user_id}</code>
-                      <Button variant="outline" size="icon" onClick={()=>copy(r.user_id)}><Copy className="w-4 h-4"/></Button>
+                      <code className="text-xs">{r.email}</code>
+                      <Button variant="outline" size="icon" onClick={()=>copy(r.email)}><Copy className="w-4 h-4"/></Button>
                     </div>
                   </TableCell>
                   <TableCell>
