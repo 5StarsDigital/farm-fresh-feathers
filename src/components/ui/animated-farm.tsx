@@ -347,7 +347,7 @@ export default function AnimatedFarm({
             {/* Left Side - Chicken Coop Animation */}
             <div ref={farmRef} className="relative overflow-hidden border-4 border-amber-700 rounded-l-lg" style={{
             backgroundColor: '#87CEEB',
-            backgroundImage: `url('https://ibb.co/sd2W9Cfd')`,
+            backgroundImage: `url('https://proxy5stars.vn/wp-content/uploads/2025/08/ChatGPT-Image-09_39_50-9-thg-8-2025.png')`,
             backgroundSize: 'cover, contain',
             backgroundPosition: 'center top, center bottom',
             backgroundRepeat: 'no-repeat, no-repeat'
