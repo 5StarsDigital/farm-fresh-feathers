@@ -347,7 +347,7 @@ export default function AnimatedFarm({
             {/* Left Side - Chicken Coop Animation */}
             <div ref={farmRef} className="relative overflow-hidden border-4 border-amber-700 rounded-l-lg" style={{
             backgroundColor: '#87CEEB',
-            backgroundImage: `linear-gradient(to bottom, rgba(135,206,235,1) 0%, rgba(135,206,235,0.85) 30%, rgba(135,206,235,0.5) 55%, rgba(135,206,235,0) 70%), url('/lovable-uploads/1716f21c-78c8-44e9-91c0-4767ae9b1e6c.png')`,
+            backgroundImage: `url('/lovable-uploads/1716f21c-78c8-44e9-91c0-4767ae9b1e6c.png')`,
             backgroundSize: 'cover, contain',
             backgroundPosition: 'center top, center bottom',
             backgroundRepeat: 'no-repeat, no-repeat'
