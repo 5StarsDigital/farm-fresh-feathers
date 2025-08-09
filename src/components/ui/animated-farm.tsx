@@ -346,7 +346,11 @@ export default function AnimatedFarm({
           <div className="grid grid-cols-1 lg:grid-cols-2 h-96">
             {/* Left Side - Chicken Coop Animation */}
             <div ref={farmRef} className="relative overflow-hidden border-4 border-amber-700 rounded-l-lg" style={{
-            background: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 40%, #32CD32 100%)'
+            backgroundColor: '#87CEEB',
+            backgroundImage: `linear-gradient(to bottom, rgba(135,206,235,1) 0%, rgba(135,206,235,0.85) 30%, rgba(135,206,235,0.5) 55%, rgba(135,206,235,0) 70%), url('/lovable-uploads/1716f21c-78c8-44e9-91c0-4767ae9b1e6c.png')`,
+            backgroundSize: 'cover, contain',
+            backgroundPosition: 'center top, center bottom',
+            backgroundRepeat: 'no-repeat, no-repeat'
           }}>
             
             {/* Wooden Fence */}
