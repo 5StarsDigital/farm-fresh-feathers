@@ -447,13 +447,13 @@ export default function AnimatedFarm({
             }} onClick={() => soundEnabled && playChickenSound()}>
                 <div className="relative">
                   <span className="text-4xl drop-shadow-lg">
-                    {chicken.animationState === 'crowing' ? '🐓' : '🐔'}
+                    {chicken.animationState === 'crowing' ? '🐔' : '🐔'}
                   </span>
                   {chicken.isLayingEgg && <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 animate-bounce">
                       <span className="text-xl">🥚</span>
                     </div>}
                   {chicken.animationState === 'crowing' && <div className="absolute -top-2 -right-2 animate-ping">
-                      <span className="text-sm">♪</span>
+                      <span className="text-sm">🎶</span>
                     </div>}
                 </div>
               </div>)}
