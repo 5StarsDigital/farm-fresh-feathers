@@ -356,8 +356,8 @@ export default function AnimatedFarm({
             {/* Wooden Fence */}
             <div className="absolute inset-4">
               {/* Top fence */}
-              <div className="absolute top-0 left-0 right-0 h-4 bg-amber-700 border-2 border-amber-900 rounded-t-lg shadow-lg"></div>
-              <div className="absolute top-0 left-0 right-0 h-2 bg-amber-600"></div>
+              
+              
               
               {/* Bottom fence */}
               <div className="absolute bottom-0 left-0 right-0 h-4 bg-amber-700 border-2 border-amber-900 rounded-b-lg shadow-lg"></div>
