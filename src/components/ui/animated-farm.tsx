@@ -368,7 +368,7 @@ export default function AnimatedFarm({
               
               
               {/* Right fence */}
-              <div className="absolute top-0 bottom-0 right-0 w-4 bg-amber-700 border-2 border-amber-900 rounded-r-lg shadow-lg"></div>
+              
               
               
               {/* Vertical fence posts */}
