@@ -390,7 +390,7 @@ export default function AnimatedFarm({
                   }}></div>
                 </div>
                 {/* Door */}
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-8 bg-amber-800 rounded-t border border-amber-900"></div>
+                
                 {/* Nest area */}
                 <div className="absolute -bottom-1 -right-3 w-6 h-3 bg-yellow-400 rounded-full border border-yellow-600">
                   <div className="absolute top-0.5 left-0.5 w-1.5 h-2 bg-white rounded-full"></div>
