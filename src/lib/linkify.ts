@@ -4,10 +4,10 @@ import React from "react";
 // - Supports http/https, www., and bare domain.tld/path
 // - Skips emails
 // - Adds https:// when protocol is missing
-export function linkifyText(text: string): (string | JSX.Element)[] {
+export function linkifyText(text: string): React.ReactNode[] {
   if (!text) return [""];
 
-  const nodes: (string | JSX.Element)[] = [];
+  const nodes: React.ReactNode[] = [];
 
   // Regex to find potential URLs but not emails
   const urlRegex = /((?:https?:\/\/)?(?:www\.)?(?![\w.+-]+@)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:[\/?#][^\s]*)?)/g;
@@ -39,18 +39,22 @@ export function linkifyText(text: string): (string | JSX.Element)[] {
       continue;
     }
 
-    const href = /^(?:https?:)?\/\//i.test(matched) ? (matched.startsWith("http") ? matched : `https:${matched}`) : `https://${matched}`;
+    const href = /^(?:https?:)?\/\//i.test(matched)
+      ? (matched.startsWith("http") ? matched : `https:${matched}`)
+      : `https://${matched}`;
 
     nodes.push(
-      <a
-        key={`lnk-${start}`}
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary underline"
-      >
-        {matched}
-      </a>
+      React.createElement(
+        "a",
+        {
+          key: `lnk-${start}`,
+          href,
+          target: "_blank",
+          rel: "noopener noreferrer",
+          className: "text-primary underline",
+        },
+        matched
+      )
     );
 
     // Append any punctuation that we trimmed
