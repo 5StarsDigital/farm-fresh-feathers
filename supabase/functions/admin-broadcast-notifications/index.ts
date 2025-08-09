@@ -75,7 +75,7 @@ serve(async (req) => {
       user_id: p.id,
       title,
       content,
-      type: 'general',
+      type: 'custom',
       send_email: !!send_email,
       status: send_email ? 'pending' : 'sent',
       sent_at: send_email ? null : new Date().toISOString(),
