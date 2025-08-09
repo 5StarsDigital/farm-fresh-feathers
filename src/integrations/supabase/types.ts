@@ -188,6 +188,54 @@ export type Database = {
         }
         Relationships: []
       }
+      egg_adjustments: {
+        Row: {
+          admin_id: string
+          after_value: number
+          before_value: number
+          change_amount: number
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id: string
+          after_value?: number
+          before_value?: number
+          change_amount?: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string
+          after_value?: number
+          before_value?: number
+          change_amount?: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_adjustments_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "egg_adjustments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eggs_inventory: {
         Row: {
           created_at: string
@@ -560,7 +608,9 @@ export type Database = {
           numeric_id: number
           phone: string | null
           shop_name: string | null
+          uncollected_egg: number
           updated_at: string
+          username: string | null
         }
         Insert: {
           address?: string | null
@@ -573,7 +623,9 @@ export type Database = {
           numeric_id?: number
           phone?: string | null
           shop_name?: string | null
+          uncollected_egg?: number
           updated_at?: string
+          username?: string | null
         }
         Update: {
           address?: string | null
@@ -586,7 +638,9 @@ export type Database = {
           numeric_id?: number
           phone?: string | null
           shop_name?: string | null
+          uncollected_egg?: number
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -818,6 +872,16 @@ export type Database = {
     Functions: {
       add_chickens_to_package: {
         Args: { package_id_param: string; additional_quantity: number }
+        Returns: Json
+      }
+      adjust_uncollected_egg: {
+        Args: {
+          p_user_id: string
+          p_mode: string
+          p_amount?: number
+          p_set_value?: number
+          p_reason?: string
+        }
         Returns: Json
       }
       disable_process_monthly_billing: {

@@ -18,6 +18,7 @@ import { PackageManagement } from '@/components/ui/package-management';
 import { BillingSettings } from '@/components/ui/billing-settings';
 import { ProductionSettings } from '@/components/ui/production-settings';
 import AdminNotificationsManager from '@/components/ui/admin-notifications-manager';
+import AdminEggsManager from '@/components/ui/admin-eggs';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -408,6 +409,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="production">Cài đặt Sản xuất</TabsTrigger>
             <TabsTrigger value="camera">Camera</TabsTrigger>
             <TabsTrigger value="notifications">Thông báo</TabsTrigger>
+            <TabsTrigger value="eggs">Trứng tồn</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
@@ -550,6 +552,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="notifications" className="space-y-4">
             <AdminNotificationsManager />
+          </TabsContent>
+
+          <TabsContent value="eggs" className="space-y-4">
+            <AdminEggsManager />
           </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">
