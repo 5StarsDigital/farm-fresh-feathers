@@ -542,22 +542,24 @@ export default function AdminEggsManager() {
           {current && (
             <div className="space-y-3">
               <div className="text-sm text-muted-foreground">User: {current.username || current.full_name || current.id}</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-3">
                 <div className="space-y-1">
                   <Label>Chế độ</Label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button variant={mode==='set'?'default':'outline'} onClick={()=>setMode('set')}>Đặt</Button>
                     <Button variant={mode==='add'?'default':'outline'} onClick={()=>setMode('add')}>Cộng</Button>
                     <Button variant={mode==='subtract'?'default':'outline'} onClick={()=>setMode('subtract')}>Trừ</Button>
                   </div>
                 </div>
-                <div>
-                  <Label>Giá trị</Label>
-                  <Input value={amount} onChange={e=>setAmount(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Hiệu lực sau điều chỉnh</Label>
-                  <Input value={String(calculateAfter())} readOnly />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Giá trị</Label>
+                    <Input value={amount} onChange={e=>setAmount(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Hiệu lực sau điều chỉnh</Label>
+                    <Input value={String(calculateAfter())} readOnly />
+                  </div>
                 </div>
               </div>
               <div>
