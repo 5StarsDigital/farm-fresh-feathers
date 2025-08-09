@@ -360,7 +360,7 @@ export default function AnimatedFarm({
               
               
               {/* Bottom fence */}
-              <div className="absolute bottom-0 left-0 right-0 h-4 bg-amber-700 border-2 border-amber-900 rounded-b-lg shadow-lg"></div>
+              
               
               
               {/* Left fence */}
