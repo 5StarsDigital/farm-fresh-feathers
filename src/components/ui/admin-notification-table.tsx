@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { linkifyText } from '@/lib/linkify';
 
 interface Profile { id: string; full_name: string | null; email: string | null }
 interface NotificationRow { id: string; title: string; content: string; user_id: string; created_at: string; status: string; send_email: boolean; type: string }
@@ -134,7 +133,7 @@ export default function AdminNotificationTable() {
             list.map(row => (
               <div key={row.id} className="grid grid-cols-12 gap-3 items-center px-3 py-2 rounded border border-border bg-background/50">
                 <div className="col-span-3 text-sm font-medium truncate">{row.title}</div>
-                <div className="col-span-4 text-sm truncate break-words" title={row.content}>{linkifyText(row.content)}</div>
+                <div className="col-span-4 text-sm truncate" title={row.content}>{row.content}</div>
                 <div className="col-span-2 text-xs text-muted-foreground">{new Date(row.created_at).toLocaleString('vi-VN')}</div>
                 <div className="col-span-1 text-xs">{row.send_email ? 'Email' : 'Web'}</div>
                 <div className="col-span-2">

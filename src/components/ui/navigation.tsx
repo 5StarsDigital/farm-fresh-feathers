@@ -101,15 +101,13 @@ const Navigation = () => {
             <span className="text-xl font-bold text-primary">Nuôi Gà 5.0</span>
           </div>
 
-           {/* Desktop Menu */}
+            {/* Desktop Menu */}
            <div className="hidden md:flex items-center space-x-4">
-             {menuItems.map(item => (
-               <Link key={item.name} to={item.href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+             {menuItems.map(item => <a key={item.name} href={item.href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
                  {item.icon && <item.icon className="w-4 h-4" />}
                  <span>{item.name}</span>
-               </Link>
-             ))}
-             
+               </a>)}
+            
              <NotificationPanel />
              {/* User Account or Login */}
             {user ? (
@@ -161,13 +159,13 @@ const Navigation = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-) : (
-               <Link to="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
-                 <User className="w-4 h-4" />
-                 <span>Đăng nhập</span>
-               </Link>
-             )}
-           </div>
+            ) : (
+              <a href="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+                <User className="w-4 h-4" />
+                <span>Đăng nhập</span>
+              </a>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
@@ -178,21 +176,14 @@ const Navigation = () => {
         </div>
 
         {/* Mobile Menu */}
-            {isMenuOpen && <div className="md:hidden bg-card border-t border-border">
-             <div className="px-4 py-2 space-y-1">
-               {menuItems.map(item => (
-                 <Link
-                   key={item.name}
-                   to={item.href}
-                   className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200"
-                   onClick={() => setIsMenuOpen(false)}
-                 >
-                   {item.icon && <item.icon className="w-5 h-5" />}
-                   <span>{item.name}</span>
-                 </Link>
-               ))}
-               
-               {/* Mobile User Account or Login */}
+        {isMenuOpen && <div className="md:hidden bg-card border-t border-border">
+            <div className="px-4 py-2 space-y-1">
+              {menuItems.map(item => <a key={item.name} href={item.href} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                  {item.icon && <item.icon className="w-5 h-5" />}
+                  <span>{item.name}</span>
+                </a>)}
+              
+              {/* Mobile User Account or Login */}
               {user ? (
                 <>
                   <div className="px-3 py-2 border-t border-border mt-2 pt-2">
@@ -212,23 +203,23 @@ const Navigation = () => {
                       </div>
                     )}
                   </div>
-                  <Link to="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                  <a href="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
-                  </Link>
+                  </a>
                   {(userRole === 'admin' || userRole === 'super_admin') && (
                     <>
-                      <Link to="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                      <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                         <Shield className="w-5 h-5" />
                         <span>Khu vực Admin</span>
-                      </Link>
+                      </a>
                     </>
                   )}
                   {userRole === 'super_admin' && (
-                    <Link to="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                    <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
                       <span>Khu vực Super Admin</span>
-                    </Link>
+                    </a>
                   )}
                   <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />
@@ -236,10 +227,10 @@ const Navigation = () => {
                   </button>
                 </>
               ) : (
-                <Link to="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                <a href="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                   <User className="w-5 h-5" />
                   <span>Đăng nhập</span>
-                </Link>
+                </a>
               )}
             </div>
           </div>}

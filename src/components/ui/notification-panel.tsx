@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { linkifyText } from "@/lib/linkify";
 interface NotificationRow {
   id: string;
   title: string;
@@ -136,7 +135,7 @@ export default function NotificationPanel() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-foreground">{n.title}</div>
-          <div className="text-sm text-muted-foreground line-clamp-2 break-words">{linkifyText(stripAppended(n.content))}</div>
+          <div className="text-sm text-muted-foreground line-clamp-2">{stripAppended(n.content)}</div>
         </div>
         {!n.is_read && <span className="mt-0.5 inline-flex h-2 w-2 rounded-full bg-primary" aria-hidden />}
       </div>
@@ -176,7 +175,7 @@ export default function NotificationPanel() {
             </DialogDescription>
           </DialogHeader>
         <div className="whitespace-pre-line text-sm leading-relaxed text-foreground space-y-3">
-  <div>{selected ? linkifyText(stripAppended(selected.content)) : ""}</div>
+  <div>{selected ? stripAppended(selected.content) : ""}</div>
   {selected?.metadata?.attachments?.length ? <div className="space-y-2">
       
       <div className="grid grid-cols-2 gap-2">

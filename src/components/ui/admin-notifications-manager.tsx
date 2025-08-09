@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { linkifyText } from '@/lib/linkify';
 
 
 interface NotificationRow {
@@ -44,7 +43,6 @@ export default function AdminNotificationsManager() {
   const [files, setFiles] = useState<File[]>([]);
   const [links, setLinks] = useState<string[]>([]);
   const [linkInput, setLinkInput] = useState('');
-  const [linkPreview, setLinkPreview] = useState<{ url: string; image?: string; title?: string; description?: string } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -88,19 +86,6 @@ export default function AdminNotificationsManager() {
     return Array.from(map.values()).sort((a, b) => b._created_at_num - a._created_at_num).map(({ _created_at_num, ...rest }) => rest);
   }, [rows]);
 
-  const normalizeUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
-  const fetchPreview = async (raw: string) => {
-    try {
-      const href = normalizeUrl(raw);
-      const { data, error } = await (supabase as any).functions.invoke('link-preview', { body: { url: href } });
-      if (error) throw error;
-      setLinkPreview({ url: href, image: data?.image, title: data?.title, description: data?.description });
-    } catch (e) {
-      console.warn('Link preview fetch failed', e);
-      setLinkPreview(null);
-    }
-  };
-
 const sendAll = async () => {
   if (!title || !content) return;
   try {
@@ -126,14 +111,6 @@ const sendAll = async () => {
         })
       );
       uploaded = uploads;
-    }
-
-    // Auto-attach link preview thumbnail when exactly 1 link is provided
-    if (links.length === 1 && linkPreview?.image) {
-      uploaded = [
-        ...uploaded,
-        { url: linkPreview.image, type: 'image', name: 'link-preview', size: 0, mime: 'image/*' } as AttachmentInfo,
-      ];
     }
 
     // 2) Build email-safe appended content (keep function unchanged)
@@ -165,7 +142,6 @@ const sendAll = async () => {
     setFiles([]);
     setLinks([]);
     setLinkInput('');
-    setLinkPreview(null);
 
     await load();
   } catch (e) {
@@ -268,14 +244,8 @@ const sendAll = async () => {
       <Button type="button" variant="secondary" onClick={() => {
         const v = linkInput.trim();
         if (!v) return;
-        const next = [...links, v];
-        setLinks(next);
+        setLinks((prev) => [...prev, v]);
         setLinkInput('');
-        if (next.length === 1) {
-          fetchPreview(v);
-        } else {
-          setLinkPreview(null);
-        }
       }}>Thêm</Button>
     </div>
     {links.length > 0 && (
@@ -288,15 +258,6 @@ const sendAll = async () => {
         ))}
       </ul>
     )}
-    {links.length === 1 && linkPreview?.image ? (
-      <div className="mt-3 flex items-center gap-3 border border-border rounded p-2">
-        <img src={linkPreview.image} alt="Link preview" className="w-24 h-16 object-cover rounded border border-border" />
-        <div className="min-w-0">
-          <div className="text-sm font-medium truncate">{linkPreview.title || linkPreview.url}</div>
-          {linkPreview.description && <div className="text-xs text-muted-foreground truncate">{linkPreview.description}</div>}
-        </div>
-      </div>
-    ) : null}
   </div>
 </div>
 <div className="flex items-center gap-2">
@@ -327,7 +288,7 @@ const sendAll = async () => {
             batches.map(b => (
               <div key={b.batch_id} className="grid grid-cols-12 gap-3 items-center px-3 py-2 rounded border border-border bg-background/50">
                 <div className="col-span-3 text-sm font-medium truncate" title={b.title}>{b.title}</div>
-                <div className="col-span-4 text-sm truncate break-words" title={b.content}>{linkifyText(b.content)}</div>
+                <div className="col-span-4 text-sm truncate" title={b.content}>{b.content}</div>
                 <div className="col-span-2 text-xs text-muted-foreground">{new Date(b.created_at).toLocaleString('vi-VN')}</div>
                 <div className="col-span-1 text-xs">{b.count}</div>
                 <div className="col-span-2 flex items-center gap-2 justify-end">
