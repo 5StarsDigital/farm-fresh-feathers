@@ -14,6 +14,7 @@ interface NotificationRow {
   type: "balance_change" | "monthly_billing" | "package_expiry" | "custom" | string;
   is_read: boolean;
   created_at: string;
+  metadata?: any;
 }
 
 export default function NotificationPanel() {
@@ -32,7 +33,7 @@ export default function NotificationPanel() {
     try {
       const { data, error } = await (supabase as any)
         .from("notifications")
-        .select("id,title,content,type,is_read,created_at")
+        .select("id,title,content,type,is_read,created_at,metadata")
         .eq("user_id", user.id)
         .neq("status", "revoked")
         .order("created_at", { ascending: false })
@@ -182,12 +183,36 @@ export default function NotificationPanel() {
               {selected ? new Date(selected.created_at).toLocaleString("vi-VN") : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="whitespace-pre-line text-sm leading-relaxed text-foreground">
-            {selected?.content}
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setDetailOpen(false)}>Đóng</Button>
-          </DialogFooter>
+<div className="whitespace-pre-line text-sm leading-relaxed text-foreground space-y-3">
+  <div>{selected?.content}</div>
+  {selected?.metadata?.attachments?.length ? (
+    <div className="space-y-2">
+      <div className="text-sm font-medium">Tệp đính kèm</div>
+      <div className="grid grid-cols-2 gap-2">
+        {selected.metadata.attachments.map((a: any, i: number) => (
+          a.type === 'image' ? (
+            <img key={i} src={a.url} alt={`Ảnh đính kèm ${i+1}`} loading="lazy" className="w-full h-32 object-cover rounded border border-border" />
+          ) : (
+            <video key={i} src={a.url} controls className="w-full h-32 rounded border border-border" />
+          )
+        ))}
+      </div>
+    </div>
+  ) : null}
+  {selected?.metadata?.links?.length ? (
+    <div className="space-y-1">
+      <div className="text-sm font-medium">Liên kết</div>
+      <ul className="list-disc pl-5 text-sm">
+        {selected.metadata.links.map((l: string, i: number) => (
+          <li key={i}><a href={l} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">{l}</a></li>
+        ))}
+      </ul>
+    </div>
+  ) : null}
+</div>
+<DialogFooter>
+  <Button onClick={() => setDetailOpen(false)}>Đóng</Button>
+</DialogFooter>
         </DialogContent>
       </Dialog>
     </>
