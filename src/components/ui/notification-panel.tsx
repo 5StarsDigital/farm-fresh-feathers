@@ -31,9 +31,12 @@ export default function NotificationPanel() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState<NotificationRow[]>([]);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [selected, setSelected] = useState<NotificationRow | null>(null);
+const [items, setItems] = useState<NotificationRow[]>([]);
+const [detailOpen, setDetailOpen] = useState(false);
+const [selected, setSelected] = useState<NotificationRow | null>(null);
+// Viewer for attachments
+const [mediaOpen, setMediaOpen] = useState(false);
+const [media, setMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
 
   const unreadCount = useMemo(() => items.filter((n) => !n.is_read).length, [items]);
 
@@ -199,13 +202,29 @@ export default function NotificationPanel() {
     <div className="space-y-2">
       <div className="text-sm font-medium">Tệp đính kèm</div>
       <div className="grid grid-cols-2 gap-2">
-        {selected.metadata.attachments.map((a: any, i: number) => (
-          a.type === 'image' ? (
-            <img key={i} src={a.url} alt={`Ảnh đính kèm ${i+1}`} loading="lazy" className="w-full h-32 object-cover rounded border border-border" />
-          ) : (
-            <video key={i} src={a.url} controls className="w-full h-32 rounded border border-border" />
-          )
-        ))}
+{selected.metadata.attachments.map((a: any, i: number) => (
+  a.type === 'image' ? (
+    <button
+      key={i}
+      type="button"
+      onClick={() => { setMedia({ url: a.url, type: 'image' }); setMediaOpen(true); }}
+      className="block focus:outline-none"
+      title="Nhấn để mở lớn"
+    >
+      <img src={a.url} alt={`Ảnh đính kèm ${i+1}`} loading="lazy" className="w-full h-32 object-cover rounded border border-border cursor-zoom-in" />
+    </button>
+  ) : (
+    <button
+      key={i}
+      type="button"
+      onClick={() => { setMedia({ url: a.url, type: 'video' }); setMediaOpen(true); }}
+      className="block focus:outline-none"
+      title="Nhấn để mở lớn"
+    >
+      <video src={a.url} className="w-full h-32 rounded border border-border object-cover cursor-zoom-in" />
+    </button>
+  )
+))}
       </div>
     </div>
   ) : null}
@@ -223,6 +242,19 @@ export default function NotificationPanel() {
 <DialogFooter>
   <Button onClick={() => setDetailOpen(false)}>Đóng</Button>
 </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mediaOpen} onOpenChange={setMediaOpen}>
+        <DialogContent className="sm:max-w-[90vw]">
+          <DialogHeader>
+            <DialogTitle>Xem tệp đính kèm</DialogTitle>
+          </DialogHeader>
+          {media?.type === 'image' ? (
+            <img src={media.url} alt="Xem tệp đính kèm" className="max-h-[80vh] w-auto mx-auto rounded border border-border" loading="eager" />
+          ) : media?.type === 'video' ? (
+            <video src={media.url} controls className="w-full max-h-[80vh] rounded border border-border" />
+          ) : null}
         </DialogContent>
       </Dialog>
     </>
