@@ -22,33 +22,37 @@ import AdminDashboard from "./pages/AdminDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 
+import ErrorBoundary from "@/components/ui/error-boundary";
+
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/farm" element={<Farm />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/shop/chickens" element={<ChickenRental />} />
-            <Route path="/topup" element={<TopUp />} />
-            <Route path="/checkout" element={<Checkout />} />
-            
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            
-            <Route path="/super-admin" element={<SuperAdminDashboard />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ErrorBoundary>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/farm" element={<Farm />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/shop/chickens" element={<ChickenRental />} />
+              <Route path="/topup" element={<TopUp />} />
+              <Route path="/checkout" element={<Checkout />} />
+              
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              
+              <Route path="/super-admin" element={<SuperAdminDashboard />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ErrorBoundary>
     </AuthProvider>
   </QueryClientProvider>
 );
