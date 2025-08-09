@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,8 @@ export default function NotificationPanel() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<NotificationRow[]>([]);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selected, setSelected] = useState<NotificationRow | null>(null);
 
   const unreadCount = useMemo(() => items.filter((n) => !n.is_read).length, [items]);
 
@@ -110,7 +113,12 @@ export default function NotificationPanel() {
   const renderItem = (n: NotificationRow) => (
     <button
       key={n.id}
-      onClick={() => markAsRead(n.id)}
+      onClick={() => {
+        setSelected(n);
+        setDetailOpen(true);
+        setOpen(false);
+        if (!n.is_read) markAsRead(n.id);
+      }}
       className={cn(
         "w-full text-left rounded-md px-3 py-2 border border-border/60 hover:bg-muted transition",
         !n.is_read ? "bg-accent/20" : "bg-card"
@@ -132,37 +140,56 @@ export default function NotificationPanel() {
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="w-5 h-5" />
-          {unreadCount > 0 && (
-            <span
-              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-[5px] rounded-full bg-primary text-primary-foreground text-[10px] leading-[18px] text-center"
-              aria-label={`${unreadCount} thông báo chưa đọc`}
-            >
-              {unreadCount}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-96 p-0 bg-popover text-popover-foreground border border-border shadow-lg" align="end">
-        <div className="p-3 border-b border-border flex items-center justify-between">
-          <div className="font-semibold">Thông báo</div>
-          <Button variant="secondary" size="sm" onClick={markAllAsRead} disabled={unreadCount === 0}>
-            Đánh dấu đã đọc
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="sm" className="relative">
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-[5px] rounded-full bg-primary text-primary-foreground text-[10px] leading-[18px] text-center"
+                aria-label={`${unreadCount} thông báo chưa đọc`}
+              >
+                {unreadCount}
+              </span>
+            )}
           </Button>
-        </div>
-        <div className="max-h-96 overflow-auto p-3 space-y-2">
-          {loading ? (
-            <div className="text-sm text-muted-foreground">Đang tải...</div>
-          ) : items.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Chưa có thông báo</div>
-          ) : (
-            items.map(renderItem)
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+        <PopoverContent className="w-96 p-0 bg-popover text-popover-foreground border border-border shadow-lg" align="end">
+          <div className="p-3 border-b border-border flex items-center justify-between">
+            <div className="font-semibold">Thông báo</div>
+            <Button variant="secondary" size="sm" onClick={markAllAsRead} disabled={unreadCount === 0}>
+              Đánh dấu đã đọc
+            </Button>
+          </div>
+          <div className="max-h-96 overflow-auto p-3 space-y-2">
+            {loading ? (
+              <div className="text-sm text-muted-foreground">Đang tải...</div>
+            ) : items.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Chưa có thông báo</div>
+            ) : (
+              items.map(renderItem)
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selected?.title}</DialogTitle>
+            <DialogDescription>
+              {selected ? new Date(selected.created_at).toLocaleString("vi-VN") : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="whitespace-pre-line text-sm leading-relaxed text-foreground">
+            {selected?.content}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setDetailOpen(false)}>Đóng</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
