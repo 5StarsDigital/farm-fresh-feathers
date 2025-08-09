@@ -17,6 +17,16 @@ interface NotificationRow {
   metadata?: any;
 }
 
+// Ẩn nội dung text URL đính kèm đã được chèn thêm vào cuối content (phục vụ email)
+function stripAppended(text: string) {
+  if (!text) return text;
+  // Xóa phần bắt đầu từ "Tệp đính kèm:" hoặc "Liên kết:" đến hết chuỗi
+  return text
+    .replace(/\n?\s*Tệp đính kèm:\s*[\s\S]*$/i, "")
+    .replace(/\n?\s*Liên kết:\s*[\s\S]*$/i, "")
+    .trim();
+}
+
 export default function NotificationPanel() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -128,7 +138,7 @@ export default function NotificationPanel() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-foreground">{n.title}</div>
-          <div className="text-sm text-muted-foreground line-clamp-2">{n.content}</div>
+          <div className="text-sm text-muted-foreground line-clamp-2">{stripAppended(n.content)}</div>
         </div>
         {!n.is_read && (
           <span className="mt-0.5 inline-flex h-2 w-2 rounded-full bg-primary" aria-hidden />
@@ -184,7 +194,7 @@ export default function NotificationPanel() {
             </DialogDescription>
           </DialogHeader>
 <div className="whitespace-pre-line text-sm leading-relaxed text-foreground space-y-3">
-  <div>{selected?.content}</div>
+  <div>{selected ? stripAppended(selected.content) : ""}</div>
   {selected?.metadata?.attachments?.length ? (
     <div className="space-y-2">
       <div className="text-sm font-medium">Tệp đính kèm</div>
