@@ -384,18 +384,11 @@ export default function AnimatedFarm({
                 {/* House base */}
                 
                 {/* Roof */}
-                <div className="w-24 h-6 bg-amber-700 -mt-1 -ml-2 border-2 border-amber-900 relative rounded shadow-lg">
-                  <div className="absolute inset-0 bg-amber-700 rounded" style={{
-                    clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)'
-                  }}></div>
-                </div>
+                
                 {/* Door */}
                 
                 {/* Nest area */}
-                <div className="absolute -bottom-1 -right-3 w-6 h-3 bg-yellow-400 rounded-full border border-yellow-600">
-                  <div className="absolute top-0.5 left-0.5 w-1.5 h-2 bg-white rounded-full"></div>
-                  <div className="absolute top-0.5 right-0.5 w-1.5 h-2 bg-white rounded-full"></div>
-                </div>
+                
               </div>
             </div>
             
