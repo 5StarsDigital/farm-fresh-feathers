@@ -382,7 +382,7 @@ export default function AnimatedFarm({
             <div className="absolute bottom-6 right-6">
               <div className="relative">
                 {/* House base */}
-                <div className="w-20 h-12 bg-amber-600 rounded-t-lg border-2 border-amber-800 shadow-lg"></div>
+                
                 {/* Roof */}
                 <div className="w-24 h-6 bg-amber-700 -mt-1 -ml-2 border-2 border-amber-900 relative rounded shadow-lg">
                   <div className="absolute inset-0 bg-amber-700 rounded" style={{
