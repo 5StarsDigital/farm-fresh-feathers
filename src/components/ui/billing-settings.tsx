@@ -334,65 +334,75 @@ if (loading) {
           Cài Đặt Thanh Toán Hàng Tháng
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="billing_date">Ngày thanh toán hàng tháng</Label>
-          <Input
-            id="billing_date"
-            type="number"
-            min="1"
-            max="28"
-            value={newBillingDate}
-            onChange={(e) => setNewBillingDate(Number(e.target.value))}
-          />
-          <p className="text-sm text-muted-foreground">
-            Chọn ngày trong tháng (từ 1-28) để tự động tính tiền gói gà cho khách hàng
-          </p>
-        </div>
-
-        {/* Auto Billing Switches */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <Label htmlFor="auto_monthly">Tự động thanh toán hàng tháng</Label>
-              <p className="text-sm text-muted-foreground">Bật/tắt thanh toán tự động theo lịch</p>
+      <CardContent className="space-y-6">
+        {/* Auto Billing Switches - Đặt ở đầu, tách biệt */}
+        <div className="space-y-4">
+          <h4 className="font-medium text-lg">Cài đặt tổng quan</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <Label htmlFor="auto_monthly">Tự động thanh toán hàng tháng</Label>
+                <p className="text-sm text-muted-foreground">Bật/tắt tính năng thanh toán tự động theo lịch</p>
+              </div>
+              <Switch
+                id="auto_monthly"
+                checked={autoMonthlyBilling}
+                onCheckedChange={setAutoMonthlyBilling}
+              />
             </div>
-            <Switch
-              id="auto_monthly"
-              checked={autoMonthlyBilling}
-              onCheckedChange={setAutoMonthlyBilling}
-            />
+            
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <Label htmlFor="auto_cron">Tự động chạy CRON</Label>
+                <p className="text-sm text-muted-foreground">Bật/tắt job CRON tự động</p>
+              </div>
+              <Switch
+                id="auto_cron"
+                checked={autoCronBilling}
+                onCheckedChange={setAutoCronBilling}
+              />
+            </div>
           </div>
           
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <Label htmlFor="auto_cron">Tự động chạy CRON</Label>
-              <p className="text-sm text-muted-foreground">Bật/tắt job CRON tự động</p>
+          <Button 
+            onClick={handleSave} 
+            disabled={saving}
+            className="w-full"
+          >
+            {saving ? 'Đang lưu...' : 'Cập nhật cài đặt'}
+          </Button>
+        </div>
+
+        {/* Billing Date Settings - Chỉ hiển thị khi auto monthly billing được bật */}
+        {autoMonthlyBilling && (
+          <>
+            <div className="h-px bg-border" />
+            <div className="space-y-4">
+              <h4 className="font-medium text-lg">Cài đặt ngày thanh toán</h4>
+              <div className="space-y-2">
+                <Label htmlFor="billing_date">Ngày thanh toán hàng tháng</Label>
+                <Input
+                  id="billing_date"
+                  type="number"
+                  min="1"
+                  max="28"
+                  value={newBillingDate}
+                  onChange={(e) => setNewBillingDate(Number(e.target.value))}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Chọn ngày trong tháng (từ 1-28) để tự động tính tiền gói gà cho khách hàng
+                </p>
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Ngày thanh toán hiện tại:</h4>
+                <p className="text-lg font-bold text-primary">
+                  Ngày {billingSettings?.monthly_billing_date || newBillingDate} hàng tháng
+                </p>
+              </div>
             </div>
-            <Switch
-              id="auto_cron"
-              checked={autoCronBilling}
-              onCheckedChange={setAutoCronBilling}
-            />
-          </div>
-        </div>
-
-        <div className="bg-muted/50 p-4 rounded-lg">
-          <h4 className="font-medium mb-2">Ngày thanh toán hiện tại:</h4>
-          <p className="text-lg font-bold text-primary">
-            Ngày {billingSettings?.monthly_billing_date || newBillingDate} hàng tháng
-          </p>
-        </div>
-
-        <Button 
-          onClick={handleSave} 
-          disabled={saving}
-          className="w-full"
-        >
-          {saving ? 'Đang lưu...' : 'Cập nhật cài đặt'}
-        </Button>
-
-        <div className="h-px bg-border my-4" />
+          </>
+        )}
 
         {/* Manual Billing Section - Chỉ hiển thị khi auto monthly billing được bật */}
         {autoMonthlyBilling && (
