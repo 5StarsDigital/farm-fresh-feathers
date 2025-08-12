@@ -134,20 +134,59 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_runs: {
+        Row: {
+          dry_run: boolean
+          finished_at: string | null
+          id: string
+          initiated_by: string | null
+          started_at: string
+          status: string
+          summary_json: Json
+          type: string
+        }
+        Insert: {
+          dry_run?: boolean
+          finished_at?: string | null
+          id?: string
+          initiated_by?: string | null
+          started_at?: string
+          status?: string
+          summary_json?: Json
+          type?: string
+        }
+        Update: {
+          dry_run?: boolean
+          finished_at?: string | null
+          id?: string
+          initiated_by?: string | null
+          started_at?: string
+          status?: string
+          summary_json?: Json
+          type?: string
+        }
+        Relationships: []
+      }
       billing_settings: {
         Row: {
+          auto_cron_billing_enabled: boolean
+          auto_monthly_billing_enabled: boolean
           created_at: string
           id: string
           monthly_billing_date: number
           updated_at: string
         }
         Insert: {
+          auto_cron_billing_enabled?: boolean
+          auto_monthly_billing_enabled?: boolean
           created_at?: string
           id?: string
           monthly_billing_date?: number
           updated_at?: string
         }
         Update: {
+          auto_cron_billing_enabled?: boolean
+          auto_monthly_billing_enabled?: boolean
           created_at?: string
           id?: string
           monthly_billing_date?: number
@@ -190,34 +229,46 @@ export type Database = {
       }
       egg_adjustments: {
         Row: {
+          admin_email: string | null
           admin_id: string
+          admin_name: string | null
           after_value: number
           before_value: number
           change_amount: number
           created_at: string
           id: string
           reason: string | null
+          user_email: string | null
           user_id: string
+          user_name: string | null
         }
         Insert: {
+          admin_email?: string | null
           admin_id: string
+          admin_name?: string | null
           after_value?: number
           before_value?: number
           change_amount?: number
           created_at?: string
           id?: string
           reason?: string | null
+          user_email?: string | null
           user_id: string
+          user_name?: string | null
         }
         Update: {
+          admin_email?: string | null
           admin_id?: string
+          admin_name?: string | null
           after_value?: number
           before_value?: number
           change_amount?: number
           created_at?: string
           id?: string
           reason?: string | null
+          user_email?: string | null
           user_id?: string
+          user_name?: string | null
         }
         Relationships: [
           {
@@ -341,6 +392,100 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          amount: number
+          created_at: string
+          daily_price: number
+          days_elapsed: number
+          id: string
+          invoice_id: string
+          package_id: string | null
+          package_name: string | null
+          quantity: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          daily_price?: number
+          days_elapsed?: number
+          id?: string
+          invoice_id: string
+          package_id?: string | null
+          package_name?: string | null
+          quantity?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          daily_price?: number
+          days_elapsed?: number
+          id?: string
+          invoice_id?: string
+          package_id?: string | null
+          package_name?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          balance_after: number | null
+          balance_before: number | null
+          created_at: string
+          farm_id: string | null
+          id: string
+          metadata: Json
+          run_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string
+          farm_id?: string | null
+          id?: string
+          metadata?: Json
+          run_id: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string
+          farm_id?: string | null
+          id?: string
+          metadata?: Json
+          run_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "billing_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       monthly_bills: {
         Row: {
@@ -652,6 +797,7 @@ export type Database = {
           created_at: string
           farm_id: string
           id: string
+          last_billed_at: string | null
           last_billing_date: string | null
           package_id: string
           package_name: string
@@ -674,6 +820,7 @@ export type Database = {
           created_at?: string
           farm_id: string
           id?: string
+          last_billed_at?: string | null
           last_billing_date?: string | null
           package_id: string
           package_name: string
@@ -696,6 +843,7 @@ export type Database = {
           created_at?: string
           farm_id?: string
           id?: string
+          last_billed_at?: string | null
           last_billing_date?: string | null
           package_id?: string
           package_name?: string
