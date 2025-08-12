@@ -106,7 +106,7 @@ serve(async (req: Request): Promise<Response> => {
           last_billed_at,
           service_start_date,
           status,
-          farms(account_balance)
+          farms!inner(account_balance)
         `)
         .in('status', ['active', 'suspended']);
 
@@ -169,7 +169,7 @@ serve(async (req: Request): Promise<Response> => {
 
       // Calculate billing for each package
       const customerBilling: Record<string, any> = {};
-      const invoiceItems: any[] = [];
+      const allInvoiceItems: any[] = [];
       const packageUpdates: any[] = [];
 
       for (const pkg of packages) {
@@ -209,25 +209,24 @@ serve(async (req: Request): Promise<Response> => {
         
         const customerId = pkg.user_id;
         if (!customerBilling[customerId]) {
-          // Access farms data correctly - it's an array from the join
-          const farmBalance = Array.isArray(pkg.farms) && pkg.farms.length > 0 
-            ? pkg.farms[0]?.account_balance || 0 
-            : pkg.farms?.account_balance || 0;
+          // Access farms data correctly
+          const farmBalance = pkg.farms?.account_balance || 0;
             
           customerBilling[customerId] = {
             user_id: customerId,
             farm_id: pkg.farm_id,
             balance_before: farmBalance,
             total_amount: 0,
-            packages: []
+            packages: [],
+            invoiceItems: []
           };
         }
         
         customerBilling[customerId].total_amount += amount;
         customerBilling[customerId].packages.push(pkg.id);
         
-        // Add to invoice items
-        invoiceItems.push({
+        // Create invoice item for this package
+        const invoiceItem = {
           invoice_id: null, // Will be filled later
           package_id: pkg.id,
           package_name: pkg.package_name || 'Unknown Package',
@@ -235,7 +234,10 @@ serve(async (req: Request): Promise<Response> => {
           quantity: selectedQuantity,
           days_elapsed: daysElapsed,
           amount: amount
-        });
+        };
+        
+        customerBilling[customerId].invoiceItems.push(invoiceItem);
+        allInvoiceItems.push(invoiceItem);
 
         // Add to package updates
         packageUpdates.push({
@@ -249,10 +251,10 @@ serve(async (req: Request): Promise<Response> => {
       let totalSuccess = 0;
       let totalFailed = 0;
 
-      for (const [customerId, billing] of Object.entries(customerBilling)) {
+      for (const [customerId, customerData] of Object.entries(customerBilling)) {
         totalProcessed++;
         
-        const balanceAfter = (billing.balance_before || 0) - (billing.total_amount || 0);
+        const balanceAfter = (customerData.balance_before || 0) - (customerData.total_amount || 0);
         const newStatus = balanceAfter >= 0 ? 'active' : 'suspended';
 
         try {
@@ -261,15 +263,15 @@ serve(async (req: Request): Promise<Response> => {
             .from('invoices')
             .insert({
               run_id: runId,
-              farm_id: billing.farm_id,
+              farm_id: customerData.farm_id,
               user_id: customerId,
-              total_amount: billing.total_amount,
-              balance_before: billing.balance_before,
+              total_amount: customerData.total_amount,
+              balance_before: customerData.balance_before,
               balance_after: balanceAfter,
               status: balanceAfter >= 0 ? 'paid' : 'failed',
               metadata: {
                 manual_billing: true,
-                package_count: billing.packages.length,
+                package_count: customerData.packages.length,
                 action: balanceAfter >= 0 ? 'normal' : 'suspend'
               }
             })
@@ -278,12 +280,13 @@ serve(async (req: Request): Promise<Response> => {
 
           if (invoiceError) throw invoiceError;
 
-          // Insert invoice items
-          const customerInvoiceItems = invoiceItems
-            .filter(item => billing.packages.includes(item.package_id))
-            .map(item => ({ ...item, invoice_id: invoice.id }));
+          // Insert invoice items for this customer
+          if (customerData.invoiceItems.length > 0) {
+            const customerInvoiceItems = customerData.invoiceItems.map((item: any) => ({
+              ...item,
+              invoice_id: invoice.id
+            }));
 
-          if (customerInvoiceItems.length > 0) {
             const { error: itemsError } = await supabase
               .from('invoice_items')
               .insert(customerInvoiceItems);
@@ -295,13 +298,13 @@ serve(async (req: Request): Promise<Response> => {
           const { error: balanceError } = await supabase
             .from('farms')
             .update({ account_balance: balanceAfter })
-            .eq('id', billing.farm_id);
+            .eq('id', customerData.farm_id);
 
           if (balanceError) throw balanceError;
 
           // Update package statuses and last_billed_at
           const customerPackageUpdates = packageUpdates.filter(update => 
-            billing.packages.includes(update.id)
+            customerData.packages.includes(update.id)
           );
 
           for (const update of customerPackageUpdates) {
@@ -320,10 +323,10 @@ serve(async (req: Request): Promise<Response> => {
           const { error: transactionError } = await supabase
             .from('transactions')
             .insert({
-              farm_id: billing.farm_id,
+              farm_id: customerData.farm_id,
               transaction_type: 'monthly_billing',
-              amount: -billing.total_amount,
-              description: `Thanh toán thủ công - ${billing.packages.length} gói dịch vụ`
+              amount: -customerData.total_amount,
+              description: `Thanh toán thủ công - ${customerData.packages.length} gói dịch vụ`
             });
 
           if (transactionError) throw transactionError;
@@ -334,8 +337,8 @@ serve(async (req: Request): Promise<Response> => {
             : 'Số dư không đủ - Dịch vụ tạm dừng';
           
           const notificationContent = balanceAfter >= 0
-            ? `Đã thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND cho ${billing.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
-            : `Số dư không đủ để thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
+            ? `Đã thanh toán ${(customerData.total_amount || 0).toLocaleString('vi-VN')} VND cho ${customerData.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
+            : `Số dư không đủ để thanh toán ${(customerData.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
 
           const { error: notificationError } = await supabase
             .from('notifications')
@@ -373,7 +376,7 @@ serve(async (req: Request): Promise<Response> => {
           finished_at: new Date().toISOString(),
           summary_json: {
             total_customers: totalProcessed,
-            total_packages: invoiceItems.length,
+            total_packages: allInvoiceItems.length,
             total_amount: totalAmount,
             success_count: totalSuccess,
             failed_count: totalFailed
@@ -388,7 +391,7 @@ serve(async (req: Request): Promise<Response> => {
         run_id: runId,
         summary: {
           total_customers: totalProcessed,
-          total_packages: invoiceItems.length,
+          total_packages: allInvoiceItems.length,
           success_count: totalSuccess,
           failed_count: totalFailed,
           total_amount: totalAmount
