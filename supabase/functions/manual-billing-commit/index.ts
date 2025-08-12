@@ -14,6 +14,8 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
     // Check if user is admin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -24,9 +26,6 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Set auth header for user context
     const { data: { user } } = await supabase.auth.getUser(token);
     
     if (!user) {
@@ -36,7 +35,7 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create authenticated client for user context
+    // Use service role client with user context for admin check
     const userSupabase = createClient(supabaseUrl, supabaseServiceKey, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -49,15 +48,18 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Check billing settings
+    // Check billing settings - use maybeSingle() to avoid 400 error when no records
     const { data: billingSettings, error: settingsError } = await supabase
       .from('billing_settings')
       .select('auto_monthly_billing_enabled')
-      .single();
+      .maybeSingle();
 
-    if (settingsError && settingsError.code !== 'PGRST116') {
+    if (settingsError) {
       console.error('Error fetching billing settings:', settingsError);
-      // Continue anyway if settings table doesn't exist or is empty
+      return new Response(JSON.stringify({ error: 'Failed to fetch billing settings' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     if (billingSettings && billingSettings.auto_monthly_billing_enabled === false) {
@@ -91,7 +93,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     try {
-      // Get all active and suspended packages with better error handling
+      // Get all active and suspended packages with correct farms join
       const { data: packages, error: packagesError } = await supabase
         .from('service_packages')
         .select(`
@@ -104,7 +106,7 @@ serve(async (req: Request): Promise<Response> => {
           last_billed_at,
           service_start_date,
           status,
-          farms!inner(id, user_id, account_balance)
+          farms(account_balance)
         `)
         .in('status', ['active', 'suspended']);
 
@@ -113,7 +115,7 @@ serve(async (req: Request): Promise<Response> => {
         throw new Error(`Failed to fetch packages: ${packagesError.message}`);
       }
 
-      // Get package prices with better error handling
+      // Get package prices
       const { data: packagePrices, error: pricesError } = await supabase
         .from('package_prices')
         .select('package_id, daily_price');
@@ -125,7 +127,6 @@ serve(async (req: Request): Promise<Response> => {
 
       // Handle case when no packages found
       if (!packages || packages.length === 0) {
-        // Update billing run as completed with no work
         await supabase
           .from('billing_runs')
           .update({
@@ -171,7 +172,7 @@ serve(async (req: Request): Promise<Response> => {
       const invoiceItems: any[] = [];
       const packageUpdates: any[] = [];
 
-      for (const pkg of packages || []) {
+      for (const pkg of packages) {
         // Validate required package data
         if (!pkg.user_id || !pkg.farm_id || !pkg.package_id) {
           console.warn('Skipping package with missing required data:', pkg.id);
@@ -208,10 +209,15 @@ serve(async (req: Request): Promise<Response> => {
         
         const customerId = pkg.user_id;
         if (!customerBilling[customerId]) {
+          // Access farms data correctly - it's an array from the join
+          const farmBalance = Array.isArray(pkg.farms) && pkg.farms.length > 0 
+            ? pkg.farms[0]?.account_balance || 0 
+            : pkg.farms?.account_balance || 0;
+            
           customerBilling[customerId] = {
             user_id: customerId,
             farm_id: pkg.farm_id,
-            balance_before: (pkg.farms && pkg.farms.account_balance) || 0,
+            balance_before: farmBalance,
             total_amount: 0,
             packages: []
           };
@@ -243,8 +249,7 @@ serve(async (req: Request): Promise<Response> => {
       let totalSuccess = 0;
       let totalFailed = 0;
 
-      for (const [customerId, customerBillingData] of Object.entries(customerBilling)) {
-        const billing = customerBillingData as any;
+      for (const [customerId, billing] of Object.entries(customerBilling)) {
         totalProcessed++;
         
         const balanceAfter = (billing.balance_before || 0) - (billing.total_amount || 0);
@@ -278,11 +283,13 @@ serve(async (req: Request): Promise<Response> => {
             .filter(item => billing.packages.includes(item.package_id))
             .map(item => ({ ...item, invoice_id: invoice.id }));
 
-          const { error: itemsError } = await supabase
-            .from('invoice_items')
-            .insert(customerInvoiceItems);
+          if (customerInvoiceItems.length > 0) {
+            const { error: itemsError } = await supabase
+              .from('invoice_items')
+              .insert(customerInvoiceItems);
 
-          if (itemsError) throw itemsError;
+            if (itemsError) throw itemsError;
+          }
 
           // Update farm balance
           const { error: balanceError } = await supabase
@@ -357,6 +364,8 @@ serve(async (req: Request): Promise<Response> => {
       }
 
       // Update billing run as completed
+      const totalAmount = Object.values(customerBilling).reduce((sum: number, c: any) => sum + (c.total_amount || 0), 0);
+      
       const { error: updateRunError } = await supabase
         .from('billing_runs')
         .update({
@@ -365,7 +374,7 @@ serve(async (req: Request): Promise<Response> => {
           summary_json: {
             total_customers: totalProcessed,
             total_packages: invoiceItems.length,
-            total_amount: Object.values(customerBilling).reduce((sum: number, c: any) => sum + c.total_amount, 0),
+            total_amount: totalAmount,
             success_count: totalSuccess,
             failed_count: totalFailed
           }
@@ -382,7 +391,7 @@ serve(async (req: Request): Promise<Response> => {
           total_packages: invoiceItems.length,
           success_count: totalSuccess,
           failed_count: totalFailed,
-          total_amount: Object.values(customerBilling).reduce((sum: number, c: any) => sum + c.total_amount, 0)
+          total_amount: totalAmount
         }
       }), {
         status: 200,
