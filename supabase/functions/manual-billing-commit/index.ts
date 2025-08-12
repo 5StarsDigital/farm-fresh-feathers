@@ -166,6 +166,18 @@ serve(async (req: Request): Promise<Response> => {
       const packageUpdates: any[] = [];
 
       for (const pkg of packages || []) {
+        // Validate required package data
+        if (!pkg.user_id || !pkg.farm_id || !pkg.package_id) {
+          console.warn('Skipping package with missing required data:', pkg.id);
+          continue;
+        }
+
+        // Ensure service_start_date exists
+        if (!pkg.service_start_date) {
+          console.warn('Skipping package without service_start_date:', pkg.id);
+          continue;
+        }
+
         const baseDate = pkg.last_billed_at ? new Date(pkg.last_billed_at) : new Date(pkg.service_start_date);
         const runDay = new Date(runTime.getFullYear(), runTime.getMonth(), runTime.getDate());
         const baseDay = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
@@ -175,14 +187,25 @@ serve(async (req: Request): Promise<Response> => {
         if (daysElapsed === 0) continue; // Skip if no days elapsed
         
         const dailyPrice = priceMap.get(pkg.package_id) || 0;
-        const amount = Math.round(dailyPrice * pkg.selected_chicken_quantity * daysElapsed);
+        if (dailyPrice === 0) {
+          console.warn('No price found for package:', pkg.package_id);
+          continue;
+        }
+
+        const selectedQuantity = pkg.selected_chicken_quantity || 0;
+        if (selectedQuantity === 0) {
+          console.warn('Package has zero chicken quantity:', pkg.id);
+          continue;
+        }
+
+        const amount = Math.round(dailyPrice * selectedQuantity * daysElapsed);
         
         const customerId = pkg.user_id;
         if (!customerBilling[customerId]) {
           customerBilling[customerId] = {
             user_id: customerId,
             farm_id: pkg.farm_id,
-            balance_before: pkg.farms.account_balance || 0,
+            balance_before: (pkg.farms?.account_balance) || 0,
             total_amount: 0,
             packages: []
           };
@@ -195,9 +218,9 @@ serve(async (req: Request): Promise<Response> => {
         invoiceItems.push({
           invoice_id: null, // Will be filled later
           package_id: pkg.id,
-          package_name: pkg.package_name,
+          package_name: pkg.package_name || 'Unknown Package',
           daily_price: dailyPrice,
-          quantity: pkg.selected_chicken_quantity,
+          quantity: selectedQuantity,
           days_elapsed: daysElapsed,
           amount: amount
         });
@@ -217,7 +240,7 @@ serve(async (req: Request): Promise<Response> => {
       for (const [customerId, billing] of Object.entries(customerBilling)) {
         totalProcessed++;
         
-        const balanceAfter = billing.balance_before - billing.total_amount;
+        const balanceAfter = (billing.balance_before || 0) - (billing.total_amount || 0);
         const newStatus = balanceAfter >= 0 ? 'active' : 'suspended';
 
         try {
@@ -297,8 +320,8 @@ serve(async (req: Request): Promise<Response> => {
             : 'Số dư không đủ - Dịch vụ tạm dừng';
           
           const notificationContent = balanceAfter >= 0
-            ? `Đã thanh toán ${billing.total_amount.toLocaleString('vi-VN')} VND cho ${billing.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
-            : `Số dư không đủ để thanh toán ${billing.total_amount.toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
+            ? `Đã thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND cho ${billing.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
+            : `Số dư không đủ để thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
 
           const { error: notificationError } = await supabase
             .from('notifications')
