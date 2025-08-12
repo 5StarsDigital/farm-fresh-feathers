@@ -10,7 +10,11 @@ import NotificationPanel from '@/components/ui/notification-panel';
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
-  const { user, userRole, signOut } = useAuth();
+  const {
+    user,
+    userRole,
+    signOut
+  } = useAuth();
   const navigate = useNavigate();
 
   // Load account balance
@@ -27,19 +31,15 @@ const Navigation = () => {
         loadAccountBalance();
       }
     };
-
     window.addEventListener('balanceUpdate', handleBalanceUpdate);
     return () => window.removeEventListener('balanceUpdate', handleBalanceUpdate);
   }, [user]);
-
   const loadAccountBalance = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('farms')
-        .select('account_balance')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await (supabase as any).from('farms').select('account_balance').eq('user_id', user?.id).maybeSingle();
       if (data && !error) {
         setAccountBalance(Number(data.account_balance) || 0);
       }
@@ -47,19 +47,16 @@ const Navigation = () => {
       console.error('Error loading account balance:', error);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
   };
-
   const handleLogout = async () => {
     setAccountBalance(null);
     await signOut();
   };
-
   const menuItems = [{
     name: 'Trang chủ',
     href: '/',
@@ -81,12 +78,10 @@ const Navigation = () => {
     href: '/guide',
     icon: BookOpen
   }];
-
   const getUserDisplayName = () => {
     if (!user) return '';
     return user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Người dùng';
   };
-
   const getUserAvatar = () => {
     return user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   };
@@ -110,8 +105,7 @@ const Navigation = () => {
             
              <NotificationPanel />
              {/* User Account or Login */}
-            {user ? (
-              <DropdownMenu>
+            {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex flex-col items-start space-y-0 h-auto p-2">
                     <div className="flex items-center space-x-2">
@@ -123,12 +117,10 @@ const Navigation = () => {
                       </Avatar>
                       <span className="text-sm font-medium">{getUserDisplayName()}</span>
                     </div>
-                    {accountBalance !== null && (
-                      <div className="flex items-center space-x-1 text-xs text-muted-foreground ml-10">
+                    {accountBalance !== null && <div className="flex items-center space-x-1 text-xs text-muted-foreground ml-10">
                         <Wallet className="w-3 h-3" />
                         <span>{formatCurrency(accountBalance)}</span>
-                      </div>
-                    )}
+                      </div>}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-background border border-border shadow-lg z-50">
@@ -138,37 +130,27 @@ const Navigation = () => {
                   </DropdownMenuItem>
                   
                   {/* Admin workspace buttons */}
-                  {(userRole === 'admin' || userRole === 'super_admin') && (
-                    <>
+                  {(userRole === 'admin' || userRole === 'super_admin') && <>
                       <DropdownMenuItem onClick={() => navigate('/admin-dashboard')}>
                         <Shield className="w-4 h-4 mr-2" />
                         Khu vực Admin
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin-dashboard?tab=billing')}>
-                        <Shield className="w-4 h-4 mr-2" />
-                        Cài đặt Thanh toán
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {userRole === 'super_admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/super-admin')}>
+                      
+                    </>}
+                  {userRole === 'super_admin' && <DropdownMenuItem onClick={() => navigate('/super-admin')}>
                       <Shield className="w-4 h-4 mr-2" />
                       Khu vực Super Admin
-                    </DropdownMenuItem>
-                  )}
+                    </DropdownMenuItem>}
                   
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Đăng xuất
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <a href="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
+              </DropdownMenu> : <a href="/auth" className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors duration-200 font-medium">
                 <User className="w-4 h-4" />
                 <span>Đăng nhập</span>
-              </a>
-            )}
+              </a>}
           </div>
 
           {/* Mobile Menu Button */}
@@ -188,8 +170,7 @@ const Navigation = () => {
                 </a>)}
               
               {/* Mobile User Account or Login */}
-              {user ? (
-                <>
+              {user ? <>
                   <div className="px-3 py-2 border-t border-border mt-2 pt-2">
                     <div className="flex items-center space-x-2">
                       <Avatar className="w-8 h-8">
@@ -200,19 +181,16 @@ const Navigation = () => {
                       </Avatar>
                       <span className="text-sm font-medium">{getUserDisplayName()}</span>
                     </div>
-                    {accountBalance !== null && (
-                      <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-1 ml-10">
+                    {accountBalance !== null && <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-1 ml-10">
                         <Wallet className="w-3 h-3" />
                         <span>{formatCurrency(accountBalance)}</span>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                   <a href="/profile" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                     <User className="w-5 h-5" />
                     <span>Thông tin tài khoản</span>
                   </a>
-                  {(userRole === 'admin' || userRole === 'super_admin') && (
-                    <>
+                  {(userRole === 'admin' || userRole === 'super_admin') && <>
                       <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                         <Shield className="w-5 h-5" />
                         <span>Khu vực Admin</span>
@@ -221,25 +199,22 @@ const Navigation = () => {
                         <Shield className="w-5 h-5" />
                         <span>Cài đặt Thanh toán</span>
                       </a>
-                    </>
-                  )}
-                  {userRole === 'super_admin' && (
-                    <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                    </>}
+                  {userRole === 'super_admin' && <a href="/super-admin" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                       <Shield className="w-5 h-5" />
                       <span>Khu vực Super Admin</span>
-                    </a>
-                  )}
-                  <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
+                    </a>}
+                  <button onClick={() => {
+              handleLogout();
+              setIsMenuOpen(false);
+            }} className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200 w-full text-left">
                     <LogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>
                   </button>
-                </>
-              ) : (
-                <a href="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                </> : <a href="/auth" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                   <User className="w-5 h-5" />
                   <span>Đăng nhập</span>
-                </a>
-              )}
+                </a>}
             </div>
           </div>}
       </div>
