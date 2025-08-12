@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/ui/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,6 +80,10 @@ export default function AdminDashboard() {
   const [isAddingFarm, setIsAddingFarm] = useState(false);
   const [editingChicken, setEditingChicken] = useState<ChickenType | null>(null);
   const [isAddingChicken, setIsAddingChicken] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'farms';
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
   useEffect(() => {
     if (user && (userRole === 'admin' || userRole === 'super_admin')) {
       fetchAllData();
@@ -91,6 +95,11 @@ export default function AdminDashboard() {
       });
     }
   }, [user, userRole]);
+
+  useEffect(() => {
+    const current = searchParams.get('tab');
+    if (current && current !== activeTab) setActiveTab(current);
+  }, [searchParams]);
   const fetchAllData = async () => {
     try {
       // Fetch farms
@@ -400,7 +409,7 @@ export default function AdminDashboard() {
 
         </div>
 
-        <Tabs defaultValue="farms" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchParams({ tab: v }); }} className="space-y-4">
           <TabsList>
             <TabsTrigger value="farms">Quản lý Trại</TabsTrigger>
             <TabsTrigger value="chickens">Giống gà</TabsTrigger>

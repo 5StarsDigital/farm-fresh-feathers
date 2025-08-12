@@ -144,6 +144,10 @@ const Navigation = () => {
                         <Shield className="w-4 h-4 mr-2" />
                         Khu vực Admin
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin-dashboard?tab=billing')}>
+                        <Shield className="w-4 h-4 mr-2" />
+                        Cài đặt Thanh toán
+                      </DropdownMenuItem>
                     </>
                   )}
                   {userRole === 'super_admin' && (
@@ -212,6 +216,10 @@ const Navigation = () => {
                       <a href="/admin-dashboard" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
                         <Shield className="w-5 h-5" />
                         <span>Khu vực Admin</span>
+                      </a>
+                      <a href="/admin-dashboard?tab=billing" className="flex items-center space-x-2 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors duration-200" onClick={() => setIsMenuOpen(false)}>
+                        <Shield className="w-5 h-5" />
+                        <span>Cài đặt Thanh toán</span>
                       </a>
                     </>
                   )}
