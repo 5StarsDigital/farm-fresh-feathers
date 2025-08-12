@@ -45,7 +45,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const runTime = new Date();
     
-    // Get all active and suspended packages
+    // Get all active and suspended packages with better error handling
     const { data: packages, error: packagesError } = await supabase
       .from('service_packages')
       .select(`
@@ -65,21 +65,55 @@ serve(async (req: Request): Promise<Response> => {
 
     if (packagesError) {
       console.error('Error fetching packages:', packagesError);
-      return new Response(JSON.stringify({ error: 'Failed to fetch packages' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Failed to fetch packages', 
+        details: packagesError.message 
+      }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Get package prices
+    // Get package prices with better error handling
     const { data: packagePrices, error: pricesError } = await supabase
       .from('package_prices')
       .select('package_id, daily_price');
 
     if (pricesError) {
       console.error('Error fetching package prices:', pricesError);
-      return new Response(JSON.stringify({ error: 'Failed to fetch prices' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Failed to fetch prices', 
+        details: pricesError.message 
+      }), {
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Handle case when no packages or prices found
+    if (!packages || packages.length === 0) {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        customers: [],
+        run_time: runTime.toISOString(),
+        summary: {
+          total_customers: 0,
+          total_packages: 0,
+          total_amount: 0
+        },
+        message: 'No active or suspended packages found'
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!packagePrices || packagePrices.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'No package prices configured', 
+        details: 'Please configure package prices first' 
+      }), {
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }

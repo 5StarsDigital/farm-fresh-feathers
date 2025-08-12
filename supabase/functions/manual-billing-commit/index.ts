@@ -44,12 +44,17 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Check billing settings
-    const { data: billingSettings } = await supabase
+    const { data: billingSettings, error: settingsError } = await supabase
       .from('billing_settings')
       .select('auto_monthly_billing_enabled')
       .single();
 
-    if (billingSettings && !billingSettings.auto_monthly_billing_enabled) {
+    if (settingsError && settingsError.code !== 'PGRST116') {
+      console.error('Error fetching billing settings:', settingsError);
+      // Continue anyway if settings table doesn't exist or is empty
+    }
+
+    if (billingSettings && billingSettings.auto_monthly_billing_enabled === false) {
       return new Response(JSON.stringify({ error: 'Auto monthly billing is disabled' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -80,7 +85,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     try {
-      // Get all active and suspended packages
+      // Get all active and suspended packages with better error handling
       const { data: packages, error: packagesError } = await supabase
         .from('service_packages')
         .select(`
@@ -97,14 +102,61 @@ serve(async (req: Request): Promise<Response> => {
         `)
         .in('status', ['active', 'suspended']);
 
-      if (packagesError) throw packagesError;
+      if (packagesError) {
+        console.error('Error fetching packages:', packagesError);
+        throw new Error(`Failed to fetch packages: ${packagesError.message}`);
+      }
 
-      // Get package prices
+      // Get package prices with better error handling
       const { data: packagePrices, error: pricesError } = await supabase
         .from('package_prices')
         .select('package_id, daily_price');
 
-      if (pricesError) throw pricesError;
+      if (pricesError) {
+        console.error('Error fetching package prices:', pricesError);
+        throw new Error(`Failed to fetch prices: ${pricesError.message}`);
+      }
+
+      // Handle case when no packages found
+      if (!packages || packages.length === 0) {
+        // Update billing run as completed with no work
+        await supabase
+          .from('billing_runs')
+          .update({
+            status: 'completed',
+            finished_at: new Date().toISOString(),
+            summary_json: {
+              total_customers: 0,
+              total_packages: 0,
+              total_amount: 0,
+              success_count: 0,
+              failed_count: 0,
+              message: 'No active or suspended packages found'
+            }
+          })
+          .eq('id', runId);
+
+        return new Response(JSON.stringify({ 
+          success: true,
+          run_id: runId,
+          summary: {
+            total_customers: 0,
+            total_packages: 0,
+            success_count: 0,
+            failed_count: 0,
+            total_amount: 0,
+            message: 'No active or suspended packages found'
+          }
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Handle case when no package prices configured
+      if (!packagePrices || packagePrices.length === 0) {
+        throw new Error('No package prices configured. Please configure package prices first.');
+      }
 
       const priceMap = new Map(packagePrices.map(p => [p.package_id, p.daily_price]));
 
