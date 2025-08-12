@@ -21,9 +21,11 @@ export const BillingSettings = () => {
   const [scheduleStatus, setScheduleStatus] = useState<{ jobname: string; schedule: string; active: boolean } | null>(null);
   const [cronExpr, setCronExpr] = useState('0 1 * * *');
   const [running, setRunning] = useState(false);
-useEffect(() => {
-  Promise.all([fetchBillingSettings(), fetchScheduleStatus()]);
-}, []);
+
+  useEffect(() => {
+    fetchBillingSettings();
+    fetchScheduleStatus();
+  }, []);
 
   const fetchBillingSettings = async () => {
     try {
@@ -136,9 +138,22 @@ const handleDisableSchedule = async () => {
 const handleRunNow = async () => {
   try {
     setRunning(true);
-    const { error } = await supabase.functions.invoke('process-monthly-billing', { body: { force: true, dryRun: false } });
-    if (error) throw error as any;
-    toast.success('Đã chạy tính phí ngay');
+    const { data, error } = await supabase.functions.invoke('process-monthly-billing', { 
+      body: { force: true, dryRun: false } 
+    });
+    
+    if (error) {
+      console.error('Edge function error:', error);
+      toast.error(`Lỗi khi chạy tính phí: ${error.message || 'Unknown error'}`);
+      return;
+    }
+    
+    if (data) {
+      console.log('Billing result:', data);
+      toast.success('Đã chạy tính phí thành công');
+    } else {
+      toast.success('Đã khởi chạy quá trình tính phí');
+    }
   } catch (error) {
     console.error('Run now error:', error);
     toast.error('Lỗi khi chạy tính phí');
@@ -150,10 +165,22 @@ const handleRunNow = async () => {
 const handleDryRun = async () => {
   try {
     setRunning(true);
-    const { data, error } = await supabase.functions.invoke('process-monthly-billing', { body: { force: false, dryRun: true } });
-    if (error) throw error as any;
-    toast.success('Chạy thử thành công');
-    console.log('Dry run result:', data);
+    const { data, error } = await supabase.functions.invoke('process-monthly-billing', { 
+      body: { force: false, dryRun: true } 
+    });
+    
+    if (error) {
+      console.error('Edge function error:', error);
+      toast.error(`Lỗi khi chạy thử: ${error.message || 'Unknown error'}`);
+      return;
+    }
+    
+    if (data) {
+      console.log('Dry run result:', data);
+      toast.success(`Chạy thử thành công. Xem console để biết chi tiết.`);
+    } else {
+      toast.success('Chạy thử hoàn tất');
+    }
   } catch (error) {
     console.error('Dry run error:', error);
     toast.error('Lỗi khi chạy thử');
@@ -234,17 +261,25 @@ if (loading) {
   </div>
 
   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-    <Button variant="secondary" onClick={handleEnableSchedule} disabled={scheduleLoading}>
-      Bật lịch
+    <Button 
+      variant={scheduleStatus?.active ? "outline" : "default"} 
+      onClick={handleEnableSchedule} 
+      disabled={scheduleLoading || scheduleStatus?.active}
+    >
+      {scheduleLoading ? 'Đang xử lý...' : 'Bật lịch'}
     </Button>
-    <Button variant="outline" onClick={handleDisableSchedule} disabled={scheduleLoading}>
-      Tắt lịch
+    <Button 
+      variant={!scheduleStatus?.active ? "outline" : "default"} 
+      onClick={handleDisableSchedule} 
+      disabled={scheduleLoading || !scheduleStatus?.active}
+    >
+      {scheduleLoading ? 'Đang xử lý...' : 'Tắt lịch'}
     </Button>
     <Button variant="outline" onClick={handleDryRun} disabled={running}>
-      Chạy thử
+      {running ? 'Đang chạy...' : 'Chạy thử'}
     </Button>
     <Button onClick={handleRunNow} disabled={running}>
-      Chạy ngay
+      {running ? 'Đang chạy...' : 'Chạy ngay'}
     </Button>
   </div>
 </div>
