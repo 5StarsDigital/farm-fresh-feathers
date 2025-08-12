@@ -25,6 +25,8 @@ serve(async (req: Request): Promise<Response> => {
 
     const token = authHeader.replace('Bearer ', '');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Set auth header for user context
     const { data: { user } } = await supabase.auth.getUser(token);
     
     if (!user) {
@@ -34,7 +36,12 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const { data: isAdmin } = await supabase.rpc('is_admin');
+    // Create authenticated client for user context
+    const userSupabase = createClient(supabaseUrl, supabaseServiceKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    const { data: isAdmin } = await userSupabase.rpc('is_admin');
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
@@ -97,7 +104,7 @@ serve(async (req: Request): Promise<Response> => {
           last_billed_at,
           service_start_date,
           status,
-          farms!inner(user_id, account_balance)
+          farms!inner(id, user_id, account_balance)
         `)
         .in('status', ['active', 'suspended']);
 
@@ -236,11 +243,11 @@ serve(async (req: Request): Promise<Response> => {
       let totalSuccess = 0;
       let totalFailed = 0;
 
-      for (const [customerId, billing] of Object.entries(customerBilling)) {
-        const customerBillingData = billing as any;
+      for (const [customerId, customerBillingData] of Object.entries(customerBilling)) {
+        const billing = customerBillingData as any;
         totalProcessed++;
         
-        const balanceAfter = (customerBillingData.balance_before || 0) - (customerBillingData.total_amount || 0);
+        const balanceAfter = (billing.balance_before || 0) - (billing.total_amount || 0);
         const newStatus = balanceAfter >= 0 ? 'active' : 'suspended';
 
         try {
@@ -249,15 +256,15 @@ serve(async (req: Request): Promise<Response> => {
             .from('invoices')
             .insert({
               run_id: runId,
-              farm_id: customerBillingData.farm_id,
+              farm_id: billing.farm_id,
               user_id: customerId,
-              total_amount: customerBillingData.total_amount,
-              balance_before: customerBillingData.balance_before,
+              total_amount: billing.total_amount,
+              balance_before: billing.balance_before,
               balance_after: balanceAfter,
               status: balanceAfter >= 0 ? 'paid' : 'failed',
               metadata: {
                 manual_billing: true,
-                package_count: customerBillingData.packages.length,
+                package_count: billing.packages.length,
                 action: balanceAfter >= 0 ? 'normal' : 'suspend'
               }
             })
@@ -268,7 +275,7 @@ serve(async (req: Request): Promise<Response> => {
 
           // Insert invoice items
           const customerInvoiceItems = invoiceItems
-            .filter(item => customerBillingData.packages.includes(item.package_id))
+            .filter(item => billing.packages.includes(item.package_id))
             .map(item => ({ ...item, invoice_id: invoice.id }));
 
           const { error: itemsError } = await supabase
@@ -281,13 +288,13 @@ serve(async (req: Request): Promise<Response> => {
           const { error: balanceError } = await supabase
             .from('farms')
             .update({ account_balance: balanceAfter })
-            .eq('id', customerBillingData.farm_id);
+            .eq('id', billing.farm_id);
 
           if (balanceError) throw balanceError;
 
           // Update package statuses and last_billed_at
           const customerPackageUpdates = packageUpdates.filter(update => 
-            customerBillingData.packages.includes(update.id)
+            billing.packages.includes(update.id)
           );
 
           for (const update of customerPackageUpdates) {
@@ -306,10 +313,10 @@ serve(async (req: Request): Promise<Response> => {
           const { error: transactionError } = await supabase
             .from('transactions')
             .insert({
-              farm_id: customerBillingData.farm_id,
+              farm_id: billing.farm_id,
               transaction_type: 'monthly_billing',
-              amount: -customerBillingData.total_amount,
-              description: `Thanh toán thủ công - ${customerBillingData.packages.length} gói dịch vụ`
+              amount: -billing.total_amount,
+              description: `Thanh toán thủ công - ${billing.packages.length} gói dịch vụ`
             });
 
           if (transactionError) throw transactionError;
@@ -320,8 +327,8 @@ serve(async (req: Request): Promise<Response> => {
             : 'Số dư không đủ - Dịch vụ tạm dừng';
           
           const notificationContent = balanceAfter >= 0
-            ? `Đã thanh toán ${(customerBillingData.total_amount || 0).toLocaleString('vi-VN')} VND cho ${customerBillingData.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
-            : `Số dư không đủ để thanh toán ${(customerBillingData.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
+            ? `Đã thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND cho ${billing.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
+            : `Số dư không đủ để thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
 
           const { error: notificationError } = await supabase
             .from('notifications')
