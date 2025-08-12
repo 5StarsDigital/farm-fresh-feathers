@@ -68,6 +68,24 @@ export const BillingSettings = () => {
         setNewBillingDate(data.monthly_billing_date);
         setAutoMonthlyBilling(data.auto_monthly_billing_enabled ?? true);
         setAutoCronBilling(data.auto_cron_billing_enabled ?? true);
+      } else {
+        // Nếu không có data, tạo record mới với giá trị mặc định
+        const { data: newSettings, error: insertError } = await supabase
+          .from('billing_settings')
+          .insert({
+            monthly_billing_date: 1,
+            auto_monthly_billing_enabled: true,
+            auto_cron_billing_enabled: true
+          })
+          .select()
+          .single();
+
+        if (!insertError && newSettings) {
+          setBillingSettings(newSettings);
+          setNewBillingDate(newSettings.monthly_billing_date);
+          setAutoMonthlyBilling(newSettings.auto_monthly_billing_enabled);
+          setAutoCronBilling(newSettings.auto_cron_billing_enabled);
+        }
       }
     } catch (error) {
       console.error('Error fetching billing settings:', error);
@@ -141,6 +159,12 @@ const fetchScheduleStatus = async () => {
 };
 
 const handleEnableSchedule = async () => {
+  // Kiểm tra nếu auto cron billing bị tắt
+  if (!autoCronBilling) {
+    toast.error('Tính năng tự động chạy CRON đã bị tắt');
+    return;
+  }
+
   try {
     setScheduleLoading(true);
     const { error } = await supabase.rpc('enable_process_monthly_billing', { cron_expr: cronExpr });
@@ -156,6 +180,12 @@ const handleEnableSchedule = async () => {
 };
 
 const handleDisableSchedule = async () => {
+  // Kiểm tra nếu auto cron billing bị tắt
+  if (!autoCronBilling) {
+    toast.error('Tính năng tự động chạy CRON đã bị tắt');
+    return;
+  }
+
   try {
     setScheduleLoading(true);
     const { error } = await supabase.rpc('disable_process_monthly_billing');
@@ -171,6 +201,12 @@ const handleDisableSchedule = async () => {
 };
 
 const handleRunNow = async () => {
+  // Kiểm tra nếu auto cron billing bị tắt
+  if (!autoCronBilling) {
+    toast.error('Tính năng tự động chạy CRON đã bị tắt');
+    return;
+  }
+
   try {
     setRunning(true);
     const { data, error } = await supabase.functions.invoke('process-monthly-billing', { 
@@ -198,6 +234,12 @@ const handleRunNow = async () => {
 };
 
 const handleManualPreview = async () => {
+  // Kiểm tra nếu auto monthly billing bị tắt
+  if (!autoMonthlyBilling) {
+    toast.error('Tính năng thanh toán thủ công đã bị tắt');
+    return;
+  }
+
   try {
     setManualProcessing(true);
     const { data, error } = await supabase.functions.invoke('manual-billing-preview', {
@@ -224,6 +266,12 @@ const handleManualPreview = async () => {
 };
 
 const handleManualCommit = async () => {
+  // Kiểm tra nếu auto monthly billing bị tắt
+  if (!autoMonthlyBilling) {
+    toast.error('Tính năng thanh toán thủ công đã bị tắt');
+    return;
+  }
+
   try {
     setManualProcessing(true);
     const { data, error } = await supabase.functions.invoke('manual-billing-commit', {
@@ -346,135 +394,141 @@ if (loading) {
 
         <div className="h-px bg-border my-4" />
 
-        {/* Manual Billing Section */}
-        <div className="space-y-4">
-          <h4 className="font-medium text-lg">Thanh toán thủ công</h4>
-          <p className="text-sm text-muted-foreground">
-            Tính toán và thanh toán cho tất cả các gói dịch vụ đang hoạt động và tạm dừng theo số ngày tích lũy.
-          </p>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={handleManualPreview}
-              disabled={manualProcessing}
-              className="flex items-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              {manualProcessing ? 'Đang xử lý...' : 'Xem trước'}
-            </Button>
-            
-            <Button 
-              onClick={handleManualCommit}
-              disabled={manualProcessing}
-              className="flex items-center gap-2"
-            >
-              <Play className="h-4 w-4" />
-              {manualProcessing ? 'Đang xử lý...' : 'Thanh toán thủ công'}
-            </Button>
-          </div>
-
-          {/* Preview Results Table */}
-          {showPreview && previewResults.length > 0 && (
-            <div className="space-y-4">
-              <h5 className="font-medium">Kết quả xem trước:</h5>
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Khách hàng</TableHead>
-                      <TableHead>Gói dịch vụ</TableHead>
-                      <TableHead>Giá/ngày</TableHead>
-                      <TableHead>Số lượng</TableHead>
-                      <TableHead>Ngày tích lũy</TableHead>
-                      <TableHead>Thành tiền</TableHead>
-                      <TableHead>Số dư trước</TableHead>
-                      <TableHead>Số dư sau</TableHead>
-                      <TableHead>Hành động</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {previewResults.map((customer) =>
-                      customer.packages.map((pkg, index) => (
-                        <TableRow key={`${customer.customer_id}-${pkg.package_id}`}>
-                          {index === 0 && (
-                            <TableCell rowSpan={customer.packages.length} className="font-medium">
-                              {customer.customer_name}
-                            </TableCell>
-                          )}
-                          <TableCell>{pkg.package_name}</TableCell>
-                          <TableCell>{pkg.daily_price.toLocaleString('vi-VN')} VND</TableCell>
-                          <TableCell>{pkg.quantity}</TableCell>
-                          <TableCell>{pkg.days_elapsed}</TableCell>
-                          <TableCell>{pkg.amount.toLocaleString('vi-VN')} VND</TableCell>
-                          {index === 0 && (
-                            <>
-                              <TableCell rowSpan={customer.packages.length}>
-                                {customer.balance_before.toLocaleString('vi-VN')} VND
-                              </TableCell>
-                              <TableCell rowSpan={customer.packages.length}>
-                                {customer.balance_after.toLocaleString('vi-VN')} VND
-                              </TableCell>
-                              <TableCell rowSpan={customer.packages.length}>
-                                <span className={getActionColor(customer.action)}>
-                                  {getActionText(customer.action)}
-                                </span>
-                              </TableCell>
-                            </>
-                          )}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="h-px bg-border my-4" />
-
-        {/* Legacy Auto Schedule Section */}
-        <div className="space-y-3">
-          <h4 className="font-medium">Lập lịch tự động tính phí (Legacy)</h4>
-          <p className="text-sm text-muted-foreground">
-            Trạng thái: {scheduleLoading ? 'Đang tải...' : (scheduleStatus ? `${scheduleStatus.active ? 'Đang bật' : 'Đang tắt'}` + (scheduleStatus.schedule ? ` • ${scheduleStatus.schedule}` : '') : 'Chưa thiết lập')}
-          </p>
-
-          <div className="space-y-2">
-            <Label htmlFor="cron_expr">Biểu thức CRON (mặc định: 0 1 * * *)</Label>
-            <Input
-              id="cron_expr"
-              value={cronExpr}
-              onChange={(e) => setCronExpr(e.target.value)}
-              placeholder="0 1 * * *"
-              disabled={scheduleLoading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Ví dụ: 0 1 * * * = chạy 01:00 hàng ngày. Hệ thống sẽ chỉ trừ tiền vào ngày BillingDate.
+        {/* Manual Billing Section - Chỉ hiển thị khi auto monthly billing được bật */}
+        {autoMonthlyBilling && (
+          <div className="space-y-4">
+            <h4 className="font-medium text-lg">Thanh toán thủ công</h4>
+            <p className="text-sm text-muted-foreground">
+              Tính toán và thanh toán cho tất cả các gói dịch vụ đang hoạt động và tạm dừng theo số ngày tích lũy.
             </p>
-          </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={handleManualPreview}
+                disabled={manualProcessing}
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                {manualProcessing ? 'Đang xử lý...' : 'Xem trước'}
+              </Button>
+              
+              <Button 
+                onClick={handleManualCommit}
+                disabled={manualProcessing}
+                className="flex items-center gap-2"
+              >
+                <Play className="h-4 w-4" />
+                {manualProcessing ? 'Đang xử lý...' : 'Thanh toán thủ công'}
+              </Button>
+            </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Button 
-              variant={scheduleStatus?.active ? "outline" : "default"} 
-              onClick={handleEnableSchedule} 
-              disabled={scheduleLoading || scheduleStatus?.active}
-            >
-              {scheduleLoading ? 'Đang xử lý...' : 'Bật lịch'}
-            </Button>
-            <Button 
-              variant={!scheduleStatus?.active ? "outline" : "default"} 
-              onClick={handleDisableSchedule} 
-              disabled={scheduleLoading || !scheduleStatus?.active}
-            >
-              {scheduleLoading ? 'Đang xử lý...' : 'Tắt lịch'}
-            </Button>
-            <Button variant="outline" onClick={handleRunNow} disabled={running}>
-              {running ? 'Đang chạy...' : 'Chạy ngay (Legacy)'}
-            </Button>
+            {/* Preview Results Table */}
+            {showPreview && previewResults.length > 0 && (
+              <div className="space-y-4">
+                <h5 className="font-medium">Kết quả xem trước:</h5>
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Khách hàng</TableHead>
+                        <TableHead>Gói dịch vụ</TableHead>
+                        <TableHead>Giá/ngày</TableHead>
+                        <TableHead>Số lượng</TableHead>
+                        <TableHead>Ngày tích lũy</TableHead>
+                        <TableHead>Thành tiền</TableHead>
+                        <TableHead>Số dư trước</TableHead>
+                        <TableHead>Số dư sau</TableHead>
+                        <TableHead>Hành động</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {previewResults.map((customer) =>
+                        customer.packages.map((pkg, index) => (
+                          <TableRow key={`${customer.customer_id}-${pkg.package_id}`}>
+                            {index === 0 && (
+                              <TableCell rowSpan={customer.packages.length} className="font-medium">
+                                {customer.customer_name}
+                              </TableCell>
+                            )}
+                            <TableCell>{pkg.package_name}</TableCell>
+                            <TableCell>{pkg.daily_price.toLocaleString('vi-VN')} VND</TableCell>
+                            <TableCell>{pkg.quantity}</TableCell>
+                            <TableCell>{pkg.days_elapsed}</TableCell>
+                            <TableCell>{pkg.amount.toLocaleString('vi-VN')} VND</TableCell>
+                            {index === 0 && (
+                              <>
+                                <TableCell rowSpan={customer.packages.length}>
+                                  {customer.balance_before.toLocaleString('vi-VN')} VND
+                                </TableCell>
+                                <TableCell rowSpan={customer.packages.length}>
+                                  {customer.balance_after.toLocaleString('vi-VN')} VND
+                                </TableCell>
+                                <TableCell rowSpan={customer.packages.length}>
+                                  <span className={getActionColor(customer.action)}>
+                                    {getActionText(customer.action)}
+                                  </span>
+                                </TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {(autoMonthlyBilling || autoCronBilling) && (
+          <div className="h-px bg-border my-4" />
+        )}
+
+        {/* Legacy Auto Schedule Section - Chỉ hiển thị khi auto cron billing được bật */}
+        {autoCronBilling && (
+          <div className="space-y-3">
+            <h4 className="font-medium">Lập lịch tự động tính phí (Legacy)</h4>
+            <p className="text-sm text-muted-foreground">
+              Trạng thái: {scheduleLoading ? 'Đang tải...' : (scheduleStatus ? `${scheduleStatus.active ? 'Đang bật' : 'Đang tắt'}` + (scheduleStatus.schedule ? ` • ${scheduleStatus.schedule}` : '') : 'Chưa thiết lập')}
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="cron_expr">Biểu thức CRON (mặc định: 0 1 * * *)</Label>
+              <Input
+                id="cron_expr"
+                value={cronExpr}
+                onChange={(e) => setCronExpr(e.target.value)}
+                placeholder="0 1 * * *"
+                disabled={scheduleLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Ví dụ: 0 1 * * * = chạy 01:00 hàng ngày. Hệ thống sẽ chỉ trừ tiền vào ngày BillingDate.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <Button 
+                variant={scheduleStatus?.active ? "outline" : "default"} 
+                onClick={handleEnableSchedule} 
+                disabled={scheduleLoading || scheduleStatus?.active}
+              >
+                {scheduleLoading ? 'Đang xử lý...' : 'Bật lịch'}
+              </Button>
+              <Button 
+                variant={!scheduleStatus?.active ? "outline" : "default"} 
+                onClick={handleDisableSchedule} 
+                disabled={scheduleLoading || !scheduleStatus?.active}
+              >
+                {scheduleLoading ? 'Đang xử lý...' : 'Tắt lịch'}
+              </Button>
+              <Button variant="outline" onClick={handleRunNow} disabled={running}>
+                {running ? 'Đang chạy...' : 'Chạy ngay (Legacy)'}
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
