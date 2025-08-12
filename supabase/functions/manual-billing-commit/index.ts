@@ -14,8 +14,6 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // Check if user is admin
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -26,6 +24,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const token = authHeader.replace('Bearer ', '');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { data: { user } } = await supabase.auth.getUser(token);
     
     if (!user) {
@@ -205,7 +204,7 @@ serve(async (req: Request): Promise<Response> => {
           customerBilling[customerId] = {
             user_id: customerId,
             farm_id: pkg.farm_id,
-            balance_before: (pkg.farms?.account_balance) || 0,
+            balance_before: (pkg.farms && pkg.farms.account_balance) || 0,
             total_amount: 0,
             packages: []
           };
@@ -238,9 +237,10 @@ serve(async (req: Request): Promise<Response> => {
       let totalFailed = 0;
 
       for (const [customerId, billing] of Object.entries(customerBilling)) {
+        const customerBillingData = billing as any;
         totalProcessed++;
         
-        const balanceAfter = (billing.balance_before || 0) - (billing.total_amount || 0);
+        const balanceAfter = (customerBillingData.balance_before || 0) - (customerBillingData.total_amount || 0);
         const newStatus = balanceAfter >= 0 ? 'active' : 'suspended';
 
         try {
@@ -249,15 +249,15 @@ serve(async (req: Request): Promise<Response> => {
             .from('invoices')
             .insert({
               run_id: runId,
-              farm_id: billing.farm_id,
+              farm_id: customerBillingData.farm_id,
               user_id: customerId,
-              total_amount: billing.total_amount,
-              balance_before: billing.balance_before,
+              total_amount: customerBillingData.total_amount,
+              balance_before: customerBillingData.balance_before,
               balance_after: balanceAfter,
               status: balanceAfter >= 0 ? 'paid' : 'failed',
               metadata: {
                 manual_billing: true,
-                package_count: billing.packages.length,
+                package_count: customerBillingData.packages.length,
                 action: balanceAfter >= 0 ? 'normal' : 'suspend'
               }
             })
@@ -268,7 +268,7 @@ serve(async (req: Request): Promise<Response> => {
 
           // Insert invoice items
           const customerInvoiceItems = invoiceItems
-            .filter(item => billing.packages.includes(item.package_id))
+            .filter(item => customerBillingData.packages.includes(item.package_id))
             .map(item => ({ ...item, invoice_id: invoice.id }));
 
           const { error: itemsError } = await supabase
@@ -281,13 +281,13 @@ serve(async (req: Request): Promise<Response> => {
           const { error: balanceError } = await supabase
             .from('farms')
             .update({ account_balance: balanceAfter })
-            .eq('id', billing.farm_id);
+            .eq('id', customerBillingData.farm_id);
 
           if (balanceError) throw balanceError;
 
           // Update package statuses and last_billed_at
           const customerPackageUpdates = packageUpdates.filter(update => 
-            billing.packages.includes(update.id)
+            customerBillingData.packages.includes(update.id)
           );
 
           for (const update of customerPackageUpdates) {
@@ -306,10 +306,10 @@ serve(async (req: Request): Promise<Response> => {
           const { error: transactionError } = await supabase
             .from('transactions')
             .insert({
-              farm_id: billing.farm_id,
+              farm_id: customerBillingData.farm_id,
               transaction_type: 'monthly_billing',
-              amount: -billing.total_amount,
-              description: `Thanh toán thủ công - ${billing.packages.length} gói dịch vụ`
+              amount: -customerBillingData.total_amount,
+              description: `Thanh toán thủ công - ${customerBillingData.packages.length} gói dịch vụ`
             });
 
           if (transactionError) throw transactionError;
@@ -320,8 +320,8 @@ serve(async (req: Request): Promise<Response> => {
             : 'Số dư không đủ - Dịch vụ tạm dừng';
           
           const notificationContent = balanceAfter >= 0
-            ? `Đã thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND cho ${billing.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
-            : `Số dư không đủ để thanh toán ${(billing.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
+            ? `Đã thanh toán ${(customerBillingData.total_amount || 0).toLocaleString('vi-VN')} VND cho ${customerBillingData.packages.length} gói dịch vụ. Số dư còn lại: ${balanceAfter.toLocaleString('vi-VN')} VND.`
+            : `Số dư không đủ để thanh toán ${(customerBillingData.total_amount || 0).toLocaleString('vi-VN')} VND. Các gói dịch vụ đã bị tạm dừng. Vui lòng nạp thêm tiền.`;
 
           const { error: notificationError } = await supabase
             .from('notifications')
