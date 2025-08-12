@@ -90,7 +90,7 @@ serve(async (req) => {
       if (!resend) {
         console.warn('RESEND_API_KEY is not set. Skipping email sending.');
       } else {
-        // Fetch emails for recipients
+        // Fetch emails for recipients - only necessary fields for security compliance
         const { data: profiles, error: profilesError } = await supabaseService
           .from('profiles')
           .select('id,email,full_name')

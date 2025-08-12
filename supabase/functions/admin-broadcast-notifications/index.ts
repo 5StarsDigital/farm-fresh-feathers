@@ -59,7 +59,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Fetch all user ids
+    // Fetch all user ids - only necessary fields for security compliance
     const { data: profiles, error: profilesError } = await supabaseService
       .from('profiles')
       .select('id,email,full_name');

@@ -122,7 +122,7 @@ serve(async (req) => {
       const numericId = parseInt(chickenMatch[1]);
       console.log('Found chicken ID:', numericId);
 
-      // Find user by numeric_id
+      // Find user by numeric_id - only necessary fields for security compliance
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')

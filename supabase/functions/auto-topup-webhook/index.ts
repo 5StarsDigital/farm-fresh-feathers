@@ -91,7 +91,7 @@ serve(async (req) => {
     const userNumericId = parseInt(chickensMatch[1]);
     console.log('Extracted user numeric ID:', userNumericId);
 
-    // Find user by numeric_id in profiles table
+    // Find user by numeric_id in profiles table - only necessary fields for security compliance
     const { data: userProfile, error: userError } = await supabaseService
       .from('profiles')
       .select('id, email, full_name')
