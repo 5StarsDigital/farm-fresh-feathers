@@ -234,12 +234,6 @@ const handleRunNow = async () => {
 };
 
 const handleManualPreview = async () => {
-  // Kiểm tra nếu auto monthly billing bị tắt
-  if (!autoMonthlyBilling) {
-    toast.error('Tính năng thanh toán thủ công đã bị tắt');
-    return;
-  }
-
   try {
     setManualProcessing(true);
     const { data, error } = await supabase.functions.invoke('manual-billing-preview', {
@@ -266,12 +260,6 @@ const handleManualPreview = async () => {
 };
 
 const handleManualCommit = async () => {
-  // Kiểm tra nếu auto monthly billing bị tắt
-  if (!autoMonthlyBilling) {
-    toast.error('Tính năng thanh toán thủ công đã bị tắt');
-    return;
-  }
-
   try {
     setManualProcessing(true);
     const { data, error } = await supabase.functions.invoke('manual-billing-commit', {
@@ -404,8 +392,9 @@ if (loading) {
           </>
         )}
 
-        {/* Manual Billing Section - Chỉ hiển thị khi auto monthly billing được bật */}
-        {autoMonthlyBilling && (
+        {/* Manual Billing Section - Chức năng độc lập, luôn hiển thị */}
+        <>
+          <div className="h-px bg-border" />
           <div className="space-y-4">
             <h4 className="font-medium text-lg">Thanh toán thủ công</h4>
             <p className="text-sm text-muted-foreground">
@@ -490,54 +479,53 @@ if (loading) {
               </div>
             )}
           </div>
-        )}
-
-        {(autoMonthlyBilling || autoCronBilling) && (
-          <div className="h-px bg-border my-4" />
-        )}
+        </>
 
         {/* Legacy Auto Schedule Section - Chỉ hiển thị khi auto cron billing được bật */}
         {autoCronBilling && (
-          <div className="space-y-3">
-            <h4 className="font-medium">Lập lịch tự động tính phí (Legacy)</h4>
-            <p className="text-sm text-muted-foreground">
-              Trạng thái: {scheduleLoading ? 'Đang tải...' : (scheduleStatus ? `${scheduleStatus.active ? 'Đang bật' : 'Đang tắt'}` + (scheduleStatus.schedule ? ` • ${scheduleStatus.schedule}` : '') : 'Chưa thiết lập')}
-            </p>
-
-            <div className="space-y-2">
-              <Label htmlFor="cron_expr">Biểu thức CRON (mặc định: 0 1 * * *)</Label>
-              <Input
-                id="cron_expr"
-                value={cronExpr}
-                onChange={(e) => setCronExpr(e.target.value)}
-                placeholder="0 1 * * *"
-                disabled={scheduleLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Ví dụ: 0 1 * * * = chạy 01:00 hàng ngày. Hệ thống sẽ chỉ trừ tiền vào ngày BillingDate.
+          <>
+            <div className="h-px bg-border" />
+            <div className="space-y-3">
+              <h4 className="font-medium">Lập lịch tự động tính phí (Legacy)</h4>
+              <p className="text-sm text-muted-foreground">
+                Trạng thái: {scheduleLoading ? 'Đang tải...' : (scheduleStatus ? `${scheduleStatus.active ? 'Đang bật' : 'Đang tắt'}` + (scheduleStatus.schedule ? ` • ${scheduleStatus.schedule}` : '') : 'Chưa thiết lập')}
               </p>
-            </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <Button 
-                variant={scheduleStatus?.active ? "outline" : "default"} 
-                onClick={handleEnableSchedule} 
-                disabled={scheduleLoading || scheduleStatus?.active}
-              >
-                {scheduleLoading ? 'Đang xử lý...' : 'Bật lịch'}
-              </Button>
-              <Button 
-                variant={!scheduleStatus?.active ? "outline" : "default"} 
-                onClick={handleDisableSchedule} 
-                disabled={scheduleLoading || !scheduleStatus?.active}
-              >
-                {scheduleLoading ? 'Đang xử lý...' : 'Tắt lịch'}
-              </Button>
-              <Button variant="outline" onClick={handleRunNow} disabled={running}>
-                {running ? 'Đang chạy...' : 'Chạy ngay (Legacy)'}
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="cron_expr">Biểu thức CRON (mặc định: 0 1 * * *)</Label>
+                <Input
+                  id="cron_expr"
+                  value={cronExpr}
+                  onChange={(e) => setCronExpr(e.target.value)}
+                  placeholder="0 1 * * *"
+                  disabled={scheduleLoading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ví dụ: 0 1 * * * = chạy 01:00 hàng ngày. Hệ thống sẽ chỉ trừ tiền vào ngày BillingDate.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <Button 
+                  variant={scheduleStatus?.active ? "outline" : "default"} 
+                  onClick={handleEnableSchedule} 
+                  disabled={scheduleLoading || scheduleStatus?.active}
+                >
+                  {scheduleLoading ? 'Đang xử lý...' : 'Bật lịch'}
+                </Button>
+                <Button 
+                  variant={!scheduleStatus?.active ? "outline" : "default"} 
+                  onClick={handleDisableSchedule} 
+                  disabled={scheduleLoading || !scheduleStatus?.active}
+                >
+                  {scheduleLoading ? 'Đang xử lý...' : 'Tắt lịch'}
+                </Button>
+                <Button variant="outline" onClick={handleRunNow} disabled={running}>
+                  {running ? 'Đang chạy...' : 'Chạy ngay (Legacy)'}
+                </Button>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </CardContent>
     </Card>
