@@ -172,6 +172,7 @@ serve(async (req) => {
           farm_id: farm.id,
           transaction_type: "purchase_chicken",
           amount: -totalCost,
+          quantity: additionalQuantity,
           description: `Mua thêm ${additionalQuantity} gà (${chickenType.name}) cho gói ${packageId}`,
         });
       if (txnErr) throw txnErr;

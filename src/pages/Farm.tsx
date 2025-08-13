@@ -468,6 +468,29 @@ const Farm = () => {
       currency: 'VND'
     }).format(amount);
   };
+
+  // Định dạng mô tả giao dịch: chuyển UUID thành tên gói + tên trại
+  const formatTransactionDescription = (desc: string | null) => {
+    if (!desc) return '';
+    const match = desc.match(/cho gói ([0-9a-f-]{36})/i);
+    if (match) {
+      const id = match[1];
+      const pkg = servicePackages.find(p => p.id === id);
+      if (pkg) {
+        const friendly = `Gói ${pkg.package_name} - ${farm?.farm_name || ''}`.trim();
+        return desc.replace(/cho gói [0-9a-f-]{36}/i, `cho ${friendly}`);
+      }
+    }
+    return desc;
+  };
+
+  // Lấy số lượng từ cột quantity; nếu thiếu thì parse trong mô tả
+  const getTransactionQuantity = (t: Transaction) => {
+    if (typeof t.quantity === 'number' && !Number.isNaN(t.quantity)) return t.quantity;
+    const m = t.description?.match(/Mua\s*thêm\s*(\d+)/i);
+    return m ? Number(m[1]) : null;
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-background">
         <Navigation />
@@ -739,12 +762,18 @@ const Farm = () => {
                     <TableBody>
                       {transactions.map(transaction => <TableRow key={transaction.id}>
                           <TableCell>
-                            <Badge variant={transaction.transaction_type === 'egg_collection' ? 'default' : transaction.transaction_type === 'egg_sale' ? 'secondary' : 'outline'}>
-                              {transaction.transaction_type === 'egg_collection' ? 'Thu hoạch' : transaction.transaction_type === 'egg_sale' ? 'Bán trứng' : transaction.transaction_type}
-                            </Badge>
+                            {transaction.transaction_type === 'purchase_chicken' ? (
+                              <Badge className="bg-orange-500 text-white border-2 border-orange-700">Mua thêm gà</Badge>
+                            ) : transaction.transaction_type === 'egg_collection' ? (
+                              <Badge>Thu hoạch</Badge>
+                            ) : transaction.transaction_type === 'egg_sale' ? (
+                              <Badge variant="secondary">Bán trứng</Badge>
+                            ) : (
+                              <Badge variant="outline">{transaction.transaction_type}</Badge>
+                            )}
                           </TableCell>
-                          <TableCell>{transaction.description}</TableCell>
-                          <TableCell>{transaction.quantity || '-'}</TableCell>
+                          <TableCell>{formatTransactionDescription(transaction.description)}</TableCell>
+                          <TableCell>{getTransactionQuantity(transaction) ?? '-'}</TableCell>
                           <TableCell>
                             {transaction.amount ? `${transaction.amount.toLocaleString()} VND` : '-'}
                           </TableCell>
