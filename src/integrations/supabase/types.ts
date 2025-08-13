@@ -328,6 +328,7 @@ export type Database = {
           created_at: string
           farm_id: string
           id: string
+          last_billed_at: string | null
           monthly_cost: number
           rental_price: number
           status: string | null
@@ -339,6 +340,7 @@ export type Database = {
           created_at?: string
           farm_id: string
           id?: string
+          last_billed_at?: string | null
           monthly_cost: number
           rental_price: number
           status?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           created_at?: string
           farm_id?: string
           id?: string
+          last_billed_at?: string | null
           monthly_cost?: number
           rental_price?: number
           status?: string | null
