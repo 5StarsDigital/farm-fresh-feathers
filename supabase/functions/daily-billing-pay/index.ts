@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -265,17 +266,18 @@ serve(async (req: Request): Promise<Response> => {
     });
     if (txErr) throw txErr;
 
-    // Send notification
+    // Send notification with a valid type = 'custom'
     const message = `Đã thanh toán ${total.toLocaleString("vi-VN")} VND. Số dư còn lại: ${balanceAfter.toLocaleString("vi-VN")} VND.`;
-    await supabase.from("notifications").insert({
+    const { error: notifErr } = await supabase.from("notifications").insert({
       user_id,
       title: "Thanh toán thành công",
       content: message,
-      type: "success",
+      type: "custom", // was "success" -> violates notifications_type_check
       send_email: false,
       status: "sent",
       metadata: { daily_billing: true, invoice_id: invoice.id },
     });
+    if (notifErr) throw notifErr;
 
     return new Response(
       JSON.stringify({ success: true, invoice_id: invoice.id, total, balance_before: balanceBefore, balance_after: balanceAfter }),
