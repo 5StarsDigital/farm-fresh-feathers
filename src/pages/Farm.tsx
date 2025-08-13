@@ -436,9 +436,14 @@ const Farm = () => {
       });
       if (error) throw error;
       if (data.success) {
+        const remaining = typeof data?.balance_after === 'number'
+          ? data.balance_after
+          : (typeof data?.new_balance === 'number' ? data.new_balance : null);
         toast({
           title: "Mua thêm gà thành công!",
-          description: `Đã thêm ${additionalQuantity} con gà. Số dư còn lại: ${data.new_balance.toLocaleString()} VND`
+          description: remaining !== null
+            ? `Đã thêm ${additionalQuantity} con gà. Số dư còn lại: ${formatCurrency(remaining)}`
+            : `Đã thêm ${additionalQuantity} con gà.`
         });
 
         // Reload farm data

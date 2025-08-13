@@ -185,7 +185,15 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, packageId, additionalQuantity, totalCost }),
+      JSON.stringify({
+        success: true,
+        packageId,
+        additionalQuantity,
+        totalCost,
+        balance_before: currentBalance,
+        balance_after: currentBalance - totalCost,
+        new_balance: currentBalance - totalCost
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
