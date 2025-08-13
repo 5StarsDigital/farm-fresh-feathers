@@ -26,14 +26,16 @@ interface UserBillingRow {
   total_amount: number;
 }
 
-function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+function startOfDayTZ(d: Date, offsetHours = 7) {
+  const utc = d.getTime() + d.getTimezoneOffset() * 60000;
+  const tz = new Date(utc + offsetHours * 3600000);
+  return new Date(Date.UTC(tz.getUTCFullYear(), tz.getUTCMonth(), tz.getUTCDate()));
 }
 
-function diffDays(a: Date, b: Date) {
-  const A = startOfDay(a).getTime();
-  const B = startOfDay(b).getTime();
-  return Math.max(0, Math.floor((A - B) / (1000 * 60 * 60 * 24)));
+function diffDays(a: Date, b: Date, offsetHours = 7) {
+  const A = startOfDayTZ(a, offsetHours).getTime();
+  const B = startOfDayTZ(b, offsetHours).getTime();
+  return Math.max(0, Math.floor((A - B) / 86400000));
 }
 
 serve(async (req: Request): Promise<Response> => {
