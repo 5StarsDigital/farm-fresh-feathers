@@ -469,7 +469,7 @@ const Farm = () => {
     }).format(amount);
   };
 
-  // Định dạng mô tả giao dịch: chuyển UUID thành tên gói + tên trại
+  // Định dạng mô tả giao dịch: chuyển UUID thành "Gói {package_name} - {coop_name}"
   const formatTransactionDescription = (desc: string | null) => {
     if (!desc) return '';
     const match = desc.match(/cho gói ([0-9a-f-]{36})/i);
@@ -477,7 +477,9 @@ const Farm = () => {
       const id = match[1];
       const pkg = servicePackages.find(p => p.id === id);
       if (pkg) {
-        const friendly = `Gói ${pkg.package_name} - ${farm?.farm_name || ''}`.trim();
+        const namePart = `Gói ${pkg.package_name}`.trim();
+        const coopPart = (pkg.coop_name || '').trim();
+        const friendly = coopPart ? `${namePart} - ${coopPart}` : namePart;
         return desc.replace(/cho gói [0-9a-f-]{36}/i, `cho ${friendly}`);
       }
     }
