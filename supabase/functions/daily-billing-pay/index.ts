@@ -182,6 +182,19 @@ serve(async (req: Request): Promise<Response> => {
     // Start writes
     const runId = crypto.randomUUID();
 
+    // Ensure a billing run exists to satisfy invoices.run_id FK
+    const { error: runErr } = await supabase
+      .from("billing_runs")
+      .insert({
+        id: runId,
+        initiated_by: userData.user.id,
+        type: "daily_pay_now",
+        status: "completed",
+        dry_run: false,
+        summary_json: { daily_billing: true, item_count: items.length, total_amount: total, user_id },
+      });
+    if (runErr) throw runErr;
+
     // Create invoice
     const { data: invoice, error: invErr } = await supabase
       .from("invoices")
