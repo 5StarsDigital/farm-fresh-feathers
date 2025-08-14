@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { FarmEditDialog, PackageEditDialog, ChickenEditDialog } from '@/components/ui/super-admin-edit-dialogs';
+import { UserManagement } from '@/components/ui/user-management';
 
 
 interface Transaction {
@@ -511,10 +512,11 @@ function SuperAdminContent() {
         </div>
 
         <Tabs defaultValue="activities" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
             <TabsTrigger value="admin-activities">Hoạt động Admin</TabsTrigger>
             <TabsTrigger value="users">Quản lý Role</TabsTrigger>
+            <TabsTrigger value="user-management">Quản lý người dùng</TabsTrigger>
             <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
           </TabsList>
 
@@ -910,6 +912,10 @@ function SuperAdminContent() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="user-management">
+            <UserManagement />
           </TabsContent>
 
           <TabsContent value="revenue">
