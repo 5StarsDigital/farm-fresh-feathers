@@ -100,10 +100,13 @@ serve(async (req: Request): Promise<Response> => {
       if (p && p.package_id) priceMap.set(p.package_id, Number(p.daily_price) || 0);
     });
 
-    // Fetch rentals (active)
+    // Fetch rentals (active) with available farm info
     const { data: rentals, error: rentErr } = await supabase
       .from("farm_rentals")
-      .select("id, user_id, farm_id, monthly_cost, created_at, last_billed_at, status")
+      .select(`
+        id, user_id, farm_id, monthly_cost, created_at, last_billed_at, status,
+        available_farms!farm_rentals_available_farm_id_fkey(monthly_cost)
+      `)
       .in("status", ["active", "suspended"]);
     if (rentErr) throw rentErr;
 
@@ -181,7 +184,13 @@ serve(async (req: Request): Promise<Response> => {
     for (const r of rentals || []) {
       const uid = r.user_id as string;
       if (!uid) continue;
-      const monthly = Number(r.monthly_cost || 0);
+      
+      // Use monthly_cost from farm_rentals, fallback to available_farms if 0
+      let monthly = Number(r.monthly_cost || 0);
+      if (monthly <= 0 && r.available_farms) {
+        monthly = Number(r.available_farms.monthly_cost || 0);
+      }
+      
       const dailyUnit = Math.round(monthly / 30);
       if (dailyUnit <= 0) continue;
 
