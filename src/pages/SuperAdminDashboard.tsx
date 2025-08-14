@@ -17,6 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { FarmEditDialog, PackageEditDialog, ChickenEditDialog } from '@/components/ui/super-admin-edit-dialogs';
 
 
 interface Transaction {
