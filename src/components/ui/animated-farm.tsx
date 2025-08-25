@@ -22,6 +22,7 @@ interface AnimatedFarmProps {
   totalChickens: number;
   chickens: any[];
   farmId: string;
+  userId: string;
   onCollectEgg: (quantity: number) => void;
   onSellEggs: (quantity: number) => void;
 }
@@ -55,6 +56,7 @@ export default function AnimatedFarm({
   totalChickens,
   chickens,
   farmId,
+  userId,
   onCollectEgg,
   onSellEggs
 }: AnimatedFarmProps) {
@@ -70,57 +72,58 @@ export default function AnimatedFarm({
   const [uncollectedEggs, setUncollectedEggs] = useState(0);
   const farmRef = useRef<HTMLDivElement>(null);
 
-  // Load uncollected eggs from database on mount
+  // Load uncollected eggs from profiles table on mount
   useEffect(() => {
     const loadUncollectedEggs = async () => {
-      if (!farmId) return;
+      if (!userId) return;
       try {
         const {
           data,
           error
-        } = await supabase.from('eggs_inventory').select('uncollected_eggs').eq('farm_id', farmId).single();
-        if (error && error.code !== 'PGRST116') {
-          // Column might not exist yet, ignore the error
-          if (error.message?.includes('uncollected_eggs')) {
-            console.log('uncollected_eggs column not found, using default value');
-            return;
-          }
-          throw error;
+        } = await supabase.from('profiles').select('uncollected_egg').eq('id', userId).single();
+        if (error) {
+          console.error('Error loading uncollected eggs:', error);
+          return;
         }
-        setUncollectedEggs((data as any)?.uncollected_eggs || 0);
+        setUncollectedEggs(data?.uncollected_egg || 0);
       } catch (error) {
         console.error('Error loading uncollected eggs:', error);
       }
     };
     loadUncollectedEggs();
-  }, [farmId]);
+  }, [userId]);
 
   // Update database when uncollected eggs change
   const updateUncollectedEggs = async (newCount: number, options?: {
     newTotalEggs?: number;
     retry?: number;
   }): Promise<boolean> => {
-    if (!farmId) return false;
+    if (!userId) return false;
     const retries = options?.retry ?? 1;
-    const payload: {
-      farm_id: string;
-      uncollected_eggs: number;
-      total_eggs?: number;
-    } = {
-      farm_id: farmId,
-      uncollected_eggs: newCount
-    };
-    if (typeof options?.newTotalEggs === 'number') {
-      payload.total_eggs = options.newTotalEggs;
-    }
+    
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
+        // Update uncollected eggs in profiles table
         const {
-          error
-        } = await supabase.from('eggs_inventory').upsert(payload, {
-          onConflict: 'farm_id'
-        });
-        if (error) throw error;
+          error: profileError
+        } = await supabase.from('profiles').update({ 
+          uncollected_egg: newCount 
+        }).eq('id', userId);
+        
+        if (profileError) throw profileError;
+
+        // Also update eggs_inventory if needed for total_eggs
+        if (typeof options?.newTotalEggs === 'number') {
+          const {
+            error: inventoryError
+          } = await supabase.from('eggs_inventory').upsert({
+            farm_id: farmId,
+            total_eggs: options.newTotalEggs
+          }, {
+            onConflict: 'farm_id'
+          });
+          if (inventoryError) throw inventoryError;
+        }
 
         // Keep local state in sync if needed (UI was already optimistically updated)
         setUncollectedEggs(newCount);
