@@ -213,21 +213,61 @@ function SuperAdminContent() {
         .from('farms')
         .select('id, user_id, farm_name');
 
-      // Calculate revenue
+      // Calculate revenue from multiple sources
       const currentMonth = new Date().getMonth() + 1;
       const currentYear = new Date().getFullYear();
+      const monthStart = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
+      const yearStart = `${currentYear}-01-01`;
       
-      const { data: monthlyData } = await supabase
+      // Revenue from payment transactions (nạp tiền từ bên ngoài)
+      const { data: monthlyPaymentData } = await supabase
         .from('payment_transactions')
         .select('amount')
-        .eq('status', 'completed')
-        .gte('created_at', `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`);
+        .in('status', ['completed', 'success', 'paid']) // Bao gồm các status có thể
+        .gte('created_at', monthStart);
       
-      const { data: yearlyData } = await supabase
+      const { data: yearlyPaymentData } = await supabase
         .from('payment_transactions')
         .select('amount')
-        .eq('status', 'completed')
-        .gte('created_at', `${currentYear}-01-01`);
+        .in('status', ['completed', 'success', 'paid'])
+        .gte('created_at', yearStart);
+
+      // Revenue from internal transactions (giao dịch trong hệ thống)
+      const revenueTransactionTypes = ['deposit', 'egg_sale', 'package_purchase'];
+      const { data: monthlyTransactionData } = await supabase
+        .from('transactions')
+        .select('amount, transaction_type')
+        .in('transaction_type', revenueTransactionTypes)
+        .gt('amount', 0) // Chỉ lấy giao dịch có amount dương (doanh thu)
+        .gte('created_at', monthStart);
+      
+      const { data: yearlyTransactionData } = await supabase
+        .from('transactions')
+        .select('amount, transaction_type')
+        .in('transaction_type', revenueTransactionTypes)
+        .gt('amount', 0)
+        .gte('created_at', yearStart);
+
+      // Trừ đi các khoản hoàn tiền
+      const { data: monthlyRefundData } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('transaction_type', 'refund')
+        .gt('amount', 0)
+        .gte('created_at', monthStart);
+      
+      const { data: yearlyRefundData } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('transaction_type', 'refund')
+        .gt('amount', 0)
+        .gte('created_at', yearStart);
+
+      console.log('Monthly revenue sources:', {
+        payments: monthlyPaymentData,
+        transactions: monthlyTransactionData,
+        refunds: monthlyRefundData
+      });
 
       setTransactions(transactionsData || []);
       setPayments(paymentsData || []);
@@ -246,8 +286,35 @@ function SuperAdminContent() {
       console.log('Users with roles:', usersWithRoles);
       setUsers(usersWithRoles);
       
-      setMonthlyRevenue(monthlyData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0);
-      setYearlyRevenue(yearlyData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0);
+      // Tính tổng doanh thu từ tất cả các nguồn
+      const monthlyPaymentRevenue = monthlyPaymentData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const monthlyTransactionRevenue = monthlyTransactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
+      const monthlyRefunds = monthlyRefundData?.reduce((sum, refund) => sum + Number(refund.amount), 0) || 0;
+      
+      const yearlyPaymentRevenue = yearlyPaymentData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const yearlyTransactionRevenue = yearlyTransactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
+      const yearlyRefunds = yearlyRefundData?.reduce((sum, refund) => sum + Number(refund.amount), 0) || 0;
+      
+      const calculatedMonthlyRevenue = monthlyPaymentRevenue + monthlyTransactionRevenue - monthlyRefunds;
+      const calculatedYearlyRevenue = yearlyPaymentRevenue + yearlyTransactionRevenue - yearlyRefunds;
+      
+      console.log('Revenue calculation:', {
+        monthly: {
+          payments: monthlyPaymentRevenue,
+          transactions: monthlyTransactionRevenue, 
+          refunds: monthlyRefunds,
+          total: calculatedMonthlyRevenue
+        },
+        yearly: {
+          payments: yearlyPaymentRevenue,
+          transactions: yearlyTransactionRevenue,
+          refunds: yearlyRefunds,
+          total: calculatedYearlyRevenue
+        }
+      });
+      
+      setMonthlyRevenue(Math.max(0, calculatedMonthlyRevenue)); // Đảm bảo không âm
+      setYearlyRevenue(Math.max(0, calculatedYearlyRevenue));
       
     } catch (error) {
       console.error('Error fetching data:', error);
