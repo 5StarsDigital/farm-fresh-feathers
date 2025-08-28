@@ -12,6 +12,8 @@ import Farm from "./pages/Farm";
 import Shop from "./pages/Shop";
 import FarmRental from "./pages/FarmRental";
 import ChickenRental from "./pages/ChickenRental";
+import FarmDetail from "./pages/FarmDetail";
+import ChickenDetail from "./pages/ChickenDetail";
 import Wallet from "./pages/Wallet";
 
 import TopUp from "./pages/TopUp";
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/farm" element={<Farm />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/shop/chickens" element={<ChickenRental />} />
+            <Route path="/farm-detail/:id" element={<FarmDetail />} />
+            <Route path="/chicken-detail/:id" element={<ChickenDetail />} />
             <Route path="/topup" element={<TopUp />} />
             <Route path="/checkout" element={<Checkout />} />
             

@@ -178,11 +178,18 @@ const Shop = () => {
                         </div>
                       </div>
                       
-                      <Link to="/checkout" className="block">
-                        <Button className="w-full mt-4" disabled={farmData.availableCoops === 0}>
-                          {farmData.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
-                        </Button>
-                      </Link>
+                      <div className="flex gap-2 mt-4">
+                        <Link to={`/farm-detail/${farmData.id}`} className="flex-1">
+                          <Button variant="outline" className="w-full">
+                            Xem chi tiết
+                          </Button>
+                        </Link>
+                        <Link to="/checkout" className="flex-1">
+                          <Button className="w-full" disabled={farmData.availableCoops === 0}>
+                            {farmData.availableCoops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
+                          </Button>
+                        </Link>
+                      </div>
                     </CardContent>
                   </Card>;
           })}

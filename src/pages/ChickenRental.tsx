@@ -149,15 +149,22 @@ const ChickenRental = () => {
                     <span className="text-sm text-muted-foreground">Giá thuê:</span>
                     <span className="font-semibold text-primary">{formatCurrency(chicken.price)}/con/tháng</span>
                   </div>
-                  <Button 
-                    className="w-full" 
-                    disabled={rentingChickenId === chicken.id?.toString()} 
-                    onClick={() => {
-                      navigate('/checkout');
-                    }}
-                  >
-                    Thuê ngay
-                  </Button>
+                  <div className="flex gap-2">
+                    <Link to={`/chicken-detail/${chicken.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Xem chi tiết
+                      </Button>
+                    </Link>
+                    <Button 
+                      className="flex-1" 
+                      disabled={rentingChickenId === chicken.id?.toString()} 
+                      onClick={() => {
+                        navigate('/checkout');
+                      }}
+                    >
+                      Thuê ngay
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>)}
           </div>
