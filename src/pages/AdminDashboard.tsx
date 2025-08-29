@@ -277,9 +277,23 @@ export default function AdminDashboard() {
 
   const handleSaveContentDetail = async (updatedItem: any) => {
     const tableName = contentDetailType === 'farm' ? 'available_farms' : 'chicken_types';
+    
+    // Prepare update data based on type
+    let updateData: any = {
+      detailed_content: updatedItem.detailed_content,
+      gallery_images: updatedItem.gallery_images
+    };
+
+    if (contentDetailType === 'farm') {
+      updateData.features = updatedItem.features;
+    } else {
+      updateData.characteristics = updatedItem.characteristics;
+      updateData.care_requirements = updatedItem.care_requirements;
+    }
+    
     const { error } = await supabase
       .from(tableName)
-      .update(updatedItem)
+      .update(updateData)
       .eq('id', updatedItem.id);
     
     if (error) throw error;
@@ -287,7 +301,7 @@ export default function AdminDashboard() {
     await logAdminActivity(
       `${contentDetailType}_content_update`,
       `Cập nhật nội dung chi tiết: ${updatedItem.name}`,
-      { updatedContent: updatedItem },
+      { updatedContent: updateData },
       tableName,
       updatedItem.id
     );
