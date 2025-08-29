@@ -19,6 +19,7 @@ import { BillingSettings } from '@/components/ui/billing-settings';
 import { ProductionSettings } from '@/components/ui/production-settings';
 import AdminNotificationsManager from '@/components/ui/admin-notifications-manager';
 import AdminEggsManager from '@/components/ui/admin-eggs';
+import { ContentDetailForm } from '@/components/ui/content-detail-form';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -83,6 +84,8 @@ export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'farms';
   const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [contentDetailItem, setContentDetailItem] = useState<any>(null);
+  const [contentDetailType, setContentDetailType] = useState<'farm' | 'chicken'>('farm');
 
   useEffect(() => {
     if (user && (userRole === 'admin' || userRole === 'super_admin')) {
@@ -265,6 +268,32 @@ export default function AdminDashboard() {
       console.error('Error deleting chicken type:', error);
       toast.error('Lỗi khi xóa giống gà');
     }
+  };
+
+  const handleContentDetail = (item: any, type: 'farm' | 'chicken') => {
+    setContentDetailItem(item);
+    setContentDetailType(type);
+  };
+
+  const handleSaveContentDetail = async (updatedItem: any) => {
+    const tableName = contentDetailType === 'farm' ? 'available_farms' : 'chicken_types';
+    const { error } = await supabase
+      .from(tableName)
+      .update(updatedItem)
+      .eq('id', updatedItem.id);
+    
+    if (error) throw error;
+    
+    await logAdminActivity(
+      `${contentDetailType}_content_update`,
+      `Cập nhật nội dung chi tiết: ${updatedItem.name}`,
+      { updatedContent: updatedItem },
+      tableName,
+      updatedItem.id
+    );
+    
+    fetchAllData();
+    setContentDetailItem(null);
   };
 
   // Handle transaction refund
@@ -475,6 +504,10 @@ export default function AdminDashboard() {
                             <FarmForm farm={farm} onSave={handleSaveFarm} onCancel={() => setEditingFarm(null)} />
                           </DialogContent>
                         </Dialog>
+                        <Button variant="secondary" size="sm" onClick={() => handleContentDetail(farm, 'farm')}>
+                          <Edit className="h-4 w-4 mr-1" />
+                          Nội dung
+                        </Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDeleteFarm(farm.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -533,6 +566,10 @@ export default function AdminDashboard() {
                             <ChickenForm chicken={chicken} onSave={handleSaveChicken} onCancel={() => setEditingChicken(null)} />
                           </DialogContent>
                         </Dialog>
+                        <Button variant="secondary" size="sm" onClick={() => handleContentDetail(chicken, 'chicken')}>
+                          <Edit className="h-4 w-4 mr-1" />
+                          Nội dung
+                        </Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDeleteChicken(chicken.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -683,6 +720,17 @@ export default function AdminDashboard() {
             </Tabs>
           </TabsContent>
         </Tabs>
+
+        {/* Content Detail Form */}
+        {contentDetailItem && (
+          <ContentDetailForm
+            type={contentDetailType}
+            item={contentDetailItem}
+            isOpen={!!contentDetailItem}
+            onClose={() => setContentDetailItem(null)}
+            onSave={handleSaveContentDetail}
+          />
+        )}
       </div>
     </div>;
 }
@@ -889,3 +937,7 @@ function ChickenForm({
       </div>
     </form>;
 }
+
+export default AdminDashboard;
+
+// Farm form component

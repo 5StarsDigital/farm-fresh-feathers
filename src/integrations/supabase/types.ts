@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -87,6 +87,9 @@ export type Database = {
         Row: {
           available_coops: number
           created_at: string
+          detailed_content: Json | null
+          features: Json | null
+          gallery_images: Json | null
           id: string
           image_url: string | null
           location: string
@@ -103,6 +106,9 @@ export type Database = {
         Insert: {
           available_coops?: number
           created_at?: string
+          detailed_content?: Json | null
+          features?: Json | null
+          gallery_images?: Json | null
           id?: string
           image_url?: string | null
           location: string
@@ -119,6 +125,9 @@ export type Database = {
         Update: {
           available_coops?: number
           created_at?: string
+          detailed_content?: Json | null
+          features?: Json | null
+          gallery_images?: Json | null
           id?: string
           image_url?: string | null
           location?: string
@@ -196,30 +205,42 @@ export type Database = {
       }
       chicken_types: {
         Row: {
+          care_requirements: Json | null
+          characteristics: Json | null
           created_at: string
           days_per_period: number
           description: string | null
+          detailed_content: Json | null
           eggs_per_period: number
+          gallery_images: Json | null
           id: string
           image_url: string | null
           name: string
           price: number
         }
         Insert: {
+          care_requirements?: Json | null
+          characteristics?: Json | null
           created_at?: string
           days_per_period?: number
           description?: string | null
+          detailed_content?: Json | null
           eggs_per_period?: number
+          gallery_images?: Json | null
           id?: string
           image_url?: string | null
           name: string
           price: number
         }
         Update: {
+          care_requirements?: Json | null
+          characteristics?: Json | null
           created_at?: string
           days_per_period?: number
           description?: string | null
+          detailed_content?: Json | null
           eggs_per_period?: number
+          gallery_images?: Json | null
           id?: string
           image_url?: string | null
           name?: string
@@ -1022,16 +1043,16 @@ export type Database = {
     }
     Functions: {
       add_chickens_to_package: {
-        Args: { package_id_param: string; additional_quantity: number }
+        Args: { additional_quantity: number; package_id_param: string }
         Returns: Json
       }
       adjust_uncollected_egg: {
         Args: {
-          p_user_id: string
-          p_mode: string
           p_amount?: number
-          p_set_value?: number
+          p_mode: string
           p_reason?: string
+          p_set_value?: number
+          p_user_id: string
         }
         Returns: Json
       }
@@ -1050,9 +1071,9 @@ export type Database = {
       get_process_monthly_billing_status: {
         Args: Record<PropertyKey, never>
         Returns: {
+          active: boolean
           jobname: string
           schedule: string
-          active: boolean
         }[]
       }
       get_user_role: {
@@ -1076,8 +1097,8 @@ export type Database = {
           p_action_type: string
           p_description: string
           p_details?: Json
-          p_target_table?: string
           p_target_id?: string
+          p_target_table?: string
         }
         Returns: string
       }

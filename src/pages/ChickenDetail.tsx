@@ -2,7 +2,7 @@ import Navigation from '@/components/ui/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bird, ArrowLeft, Award, TrendingUp, Clock, Heart } from 'lucide-react';
+import { Bird, ArrowLeft, Award, TrendingUp, Clock, Heart, Image, Video, FileText } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -254,11 +254,98 @@ const ChickenDetail = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {chicken.detailed_description || `${chicken.name} là một trong những giống gà được ưa chuộng nhất hiện nay với khả năng sản xuất trứng ổn định và chất lượng cao. Giống gà này có khả năng thích nghi tốt với điều kiện khí hậu Việt Nam và dễ dành chăm sóc.`}
-                  </p>
+                  {chicken.detailed_content?.content ? (
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: chicken.detailed_content.content
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                          .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
+                          .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mb-3">$1</h2>')
+                          .replace(/^### (.*$)/gm, '<h3 class="text-lg font-medium mb-2">$1</h3>')
+                          .replace(/^- (.*$)/gm, '<li class="ml-4">• $1</li>')
+                          .replace(/^\d+\. (.*$)/gm, '<li class="ml-4">$1</li>')
+                          .replace(/\n/g, '<br>')
+                      }}
+                    />
+                  ) : (
+                    <p className="text-muted-foreground leading-relaxed">
+                      {chicken.detailed_description || `${chicken.name} là một trong những giống gà được ưa chuộng nhất hiện nay với khả năng sản xuất trứng ổn định và chất lượng cao. Giống gà này có khả năng thích nghi tốt với điều kiện khí hậu Việt Nam và dễ dành chăm sóc.`}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
+
+              {/* Images from detailed content */}
+              {chicken.detailed_content?.images && chicken.detailed_content.images.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Image className="w-5 h-5" />
+                      Hình ảnh chi tiết
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {chicken.detailed_content.images.map((img: any, index: number) => (
+                        <div key={index} className="space-y-2">
+                          <img 
+                            src={img.url} 
+                            alt={img.caption || `Hình ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
+                          {img.caption && (
+                            <p className="text-xs text-muted-foreground">{img.caption}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Videos from detailed content */}
+              {chicken.detailed_content?.videos && chicken.detailed_content.videos.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Video className="w-5 h-5" />
+                      Video giới thiệu
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {chicken.detailed_content.videos.map((video: any, index: number) => (
+                        <div key={index} className="space-y-2">
+                          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                            {video.url.includes('youtube.com') || video.url.includes('youtu.be') ? (
+                              <iframe
+                                src={video.url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                className="w-full h-full"
+                                frameBorder="0"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video 
+                                src={video.url} 
+                                controls 
+                                className="w-full h-full"
+                              />
+                            )}
+                          </div>
+                          {video.caption && (
+                            <p className="text-sm text-muted-foreground">{video.caption}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Characteristics */}
               <Card>
@@ -270,7 +357,7 @@ const ChickenDetail = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {(chicken.characteristics || [
+                    {(chicken.characteristics && chicken.characteristics.length > 0 ? chicken.characteristics : [
                       "Năng suất đẻ trứng cao và ổn định",
                       "Thích nghi tốt với khí hậu nhiệt đới",
                       "Kháng bệnh tốt, ít bị ốm",
@@ -295,7 +382,7 @@ const ChickenDetail = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {(chicken.care_requirements || [
+                    {(chicken.care_requirements && chicken.care_requirements.length > 0 ? chicken.care_requirements : [
                       "Cung cấp thức ăn đầy đủ dinh dưỡng",
                       "Đảm bảo nguồn nước sạch thường xuyên",
                       "Vệ sinh chuồng trại định kỳ",
