@@ -937,7 +937,3 @@ function ChickenForm({
       </div>
     </form>;
 }
-
-export default AdminDashboard;
-
-// Farm form component
