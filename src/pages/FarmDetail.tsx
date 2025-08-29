@@ -141,7 +141,7 @@ const FarmDetail = () => {
           <div className="mb-6">
             <Link to="/shop" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4" />
-              Quay lại danh sách trang trái
+              Quay lại danh sách trang trại
             </Link>
           </div>
 
