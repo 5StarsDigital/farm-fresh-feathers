@@ -115,7 +115,7 @@ const Guide = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-16 pb-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4 text-center text-foreground">
             Hướng dẫn sử dụng hệ thống
