@@ -31,6 +31,25 @@ const FloatingContact = () => {
 
   useEffect(() => {
     fetchContacts();
+    
+    // Listen to realtime changes
+    const channel = supabase
+      .channel('contact_settings_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'contact_settings' 
+        }, 
+        () => {
+          fetchContacts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchContacts = async () => {
