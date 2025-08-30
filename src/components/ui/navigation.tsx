@@ -70,7 +70,7 @@ const Navigation = () => {
     href: '/farm',
     icon: MapPin
   }, {
-    name: 'Nạp/Rút',
+    name: 'Nạp tiền',
     href: '/topup',
     icon: CreditCard
   }, {
