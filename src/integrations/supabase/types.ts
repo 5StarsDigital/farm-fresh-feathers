@@ -1150,6 +1150,10 @@ export type Database = {
         Args: { cron_expr?: string }
         Returns: boolean
       }
+      format_vnd_amount: {
+        Args: { amount: number }
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
