@@ -417,6 +417,53 @@ export type Database = {
         }
         Relationships: []
       }
+      guide_sections: {
+        Row: {
+          content: Json
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          order_index: number
+          parent_id: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          parent_id?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          parent_id?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_sections_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "guide_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           amount: number
