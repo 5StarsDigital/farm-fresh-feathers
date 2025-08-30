@@ -21,6 +21,7 @@ import AdminNotificationsManager from '@/components/ui/admin-notifications-manag
 import AdminEggsManager from '@/components/ui/admin-eggs';
 import { ContentDetailForm } from '@/components/ui/content-detail-form';
 import GuideManagement from '@/components/ui/guide-management';
+import ContactSettings from '@/components/ui/contact-settings';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -464,6 +465,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="notifications">Thông báo</TabsTrigger>
             <TabsTrigger value="eggs">Trứng tồn</TabsTrigger>
             <TabsTrigger value="guide">Hướng dẫn</TabsTrigger>
+            <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
@@ -622,6 +624,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="guide" className="space-y-4">
             <GuideManagement />
+          </TabsContent>
+
+          <TabsContent value="contacts" className="space-y-4">
+            <ContactSettings />
           </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">

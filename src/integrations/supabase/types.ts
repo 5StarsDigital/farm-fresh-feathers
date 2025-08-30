@@ -248,6 +248,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_settings: {
+        Row: {
+          color: string | null
+          contact_type: string
+          created_at: string
+          display_order: number | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          color?: string | null
+          contact_type: string
+          created_at?: string
+          display_order?: number | null
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          color?: string | null
+          contact_type?: string
+          created_at?: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       egg_adjustments: {
         Row: {
           admin_email: string | null
