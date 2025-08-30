@@ -44,6 +44,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               className="px-8 py-4 text-lg font-semibold bg-gradient-primary hover:shadow-medium transition-all duration-300 group"
+              onClick={() => navigate('/checkout')}
             >
               👉 Bắt đầu nuôi gà
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
