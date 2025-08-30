@@ -1,8 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import heroImage from '@/assets/hero-farm.jpg';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
@@ -50,6 +53,7 @@ const HeroSection = () => {
               variant="outline" 
               size="lg" 
               className="px-8 py-4 text-lg font-semibold hover:bg-muted transition-all duration-300 group"
+              onClick={() => navigate('/guide')}
             >
               <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
               📚 Xem hướng dẫn
