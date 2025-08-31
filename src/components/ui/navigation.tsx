@@ -107,7 +107,7 @@ const Navigation = () => {
              {/* User Account or Login */}
             {user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex flex-col items-start space-y-0 h-auto p-2">
+                  <Button variant="ghost" className="flex flex-col items-start space-y-0 min-h-[60px] h-auto px-3 py-2">
                     <div className="flex items-center space-x-2">
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={getUserAvatar()} alt={getUserDisplayName()} />
