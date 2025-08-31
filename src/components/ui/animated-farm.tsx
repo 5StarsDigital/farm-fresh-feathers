@@ -299,7 +299,7 @@ export default function AnimatedFarm({
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animation: 'gentleBounce 5s ease-in-out infinite',
+            animation: 'gentleBounce 4s ease-in-out infinite',
             transform: 'translateY(0)'
           }}>
               <div className="absolute inset-0 bg-amber-500/80"></div>
@@ -316,7 +316,7 @@ export default function AnimatedFarm({
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animation: 'gentleBounce 5s ease-in-out infinite',
+            animation: 'gentleBounce 4s ease-in-out infinite',
             transform: 'translateY(0)'
           }}>
               <div className="absolute inset-0 bg-orange-500/80"></div>
@@ -333,7 +333,7 @@ export default function AnimatedFarm({
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animation: 'gentleBounce 5s ease-in-out infinite',
+            animation: 'gentleBounce 4s ease-in-out infinite',
             transform: 'translateY(0)'
           }}>
               <div className="absolute inset-0 bg-red-500/80"></div>
