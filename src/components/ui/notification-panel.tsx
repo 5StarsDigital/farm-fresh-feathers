@@ -23,6 +23,25 @@ function stripAppended(text: string) {
   // Xóa phần bắt đầu từ "Tệp đính kèm:" hoặc "Liên kết:" đến hết chuỗi
   return text.replace(/\n?\s*Tệp đính kèm:\s*[\s\S]*$/i, "").replace(/\n?\s*Liên kết:\s*[\s\S]*$/i, "").trim();
 }
+
+// Format thông báo biến động số dư với màu sắc
+function formatBalanceChangeNotification(content: string) {
+  if (!content.includes("Số dư thay đổi từ")) return content;
+  
+  // Regex để tìm format: "Số dư thay đổi từ [số cũ] thành [số mới]"
+  const balanceRegex = /Số dư thay đổi từ ([\d,\.]+)đ thành ([\d,\.]+)đ/g;
+  
+  return content.replace(balanceRegex, (match, oldAmount, newAmount) => {
+    const oldValue = parseFloat(oldAmount.replace(/[,\.]/g, ''));
+    const newValue = parseFloat(newAmount.replace(/[,\.]/g, ''));
+    const isIncrease = newValue > oldValue;
+    
+    const oldAmountColor = isIncrease ? 'text-muted-foreground' : 'text-destructive font-bold';
+    const newAmountColor = isIncrease ? 'text-success font-bold' : 'text-destructive font-bold';
+    
+    return `Số dư thay đổi từ <span class="${oldAmountColor}">${oldAmount}đ</span> thành <span class="${newAmountColor}">${newAmount}đ</span>`;
+  });
+}
 export default function NotificationPanel() {
   const {
     user
@@ -136,7 +155,9 @@ export default function NotificationPanel() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-foreground">{n.title}</div>
-          <div className="text-sm text-muted-foreground line-clamp-2 break-words">{linkifyText(stripAppended(n.content))}</div>
+          <div className="text-sm text-muted-foreground line-clamp-2 break-words" dangerouslySetInnerHTML={{
+            __html: linkifyText(formatBalanceChangeNotification(stripAppended(n.content)))
+          }} />
         </div>
         {!n.is_read && <span className="mt-0.5 inline-flex h-2 w-2 rounded-full bg-primary" aria-hidden />}
       </div>
@@ -176,7 +197,9 @@ export default function NotificationPanel() {
             </DialogDescription>
           </DialogHeader>
         <div className="whitespace-pre-line text-sm leading-relaxed text-foreground space-y-3">
-  <div>{selected ? linkifyText(stripAppended(selected.content)) : ""}</div>
+  <div dangerouslySetInnerHTML={{
+    __html: selected ? linkifyText(formatBalanceChangeNotification(stripAppended(selected.content))) : ""
+  }} />
   {selected?.metadata?.attachments?.length ? <div className="space-y-2">
       
       <div className="grid grid-cols-2 gap-2">
