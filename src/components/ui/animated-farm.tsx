@@ -336,7 +336,7 @@ export default function AnimatedFarm({
                   <img 
                     src={cuteChicken} 
                     alt="Cute chicken"
-                    className="w-8 h-8 drop-shadow-lg"
+                    className="w-10 h-10 drop-shadow-lg"
                   />
                 </div>
                 <p className="text-sm font-semibold drop-shadow-lg">Tổng số gà</p>
@@ -426,7 +426,7 @@ export default function AnimatedFarm({
                   <img 
                     src={cuteChicken} 
                     alt="Cute chicken"
-                    className="w-8 h-8 drop-shadow-lg"
+                    className="w-10 h-10 drop-shadow-lg"
                   />
                 </div>
               </div>
@@ -461,7 +461,7 @@ export default function AnimatedFarm({
                   <img 
                     src={cuteChicken} 
                     alt="Cute chicken"
-                    className="w-12 h-12 drop-shadow-lg"
+                    className="w-16 h-16 drop-shadow-lg"
                   />
                   {chicken.isLayingEgg && <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 animate-bounce">
                       <span className="text-xl">🥚</span>
