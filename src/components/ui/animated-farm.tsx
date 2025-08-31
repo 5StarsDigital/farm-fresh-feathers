@@ -6,7 +6,7 @@ import { Egg, Wallet, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import cardBackground from '@/assets/card-background.png';
-import cuteChicken from '@/assets/cute-chicken-transparent.png';
+import cuteChicken from '@/assets/game-style-chicken.png';
 interface Chicken {
   id: string;
   x: number;
