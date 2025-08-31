@@ -295,11 +295,12 @@ export default function AnimatedFarm({
           </div>
           
           <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="relative text-white p-4 rounded-xl border-4 border-amber-700 shadow-lg overflow-hidden animate-bounce" style={{
+            <div className="relative text-white p-4 rounded-xl border-4 border-amber-700 shadow-lg overflow-hidden" style={{
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animationDuration: '3s'
+            animation: 'gentleBounce 5s ease-in-out infinite',
+            transform: 'translateY(0)'
           }}>
               <div className="absolute inset-0 bg-amber-500/80"></div>
               <div className="relative z-10">
@@ -311,11 +312,12 @@ export default function AnimatedFarm({
               </div>
             </div>
             
-            <div className="relative text-white p-4 rounded-xl border-4 border-orange-700 shadow-lg overflow-hidden animate-bounce" style={{
+            <div className="relative text-white p-4 rounded-xl border-4 border-orange-700 shadow-lg overflow-hidden" style={{
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animationDuration: '3s'
+            animation: 'gentleBounce 5s ease-in-out infinite',
+            transform: 'translateY(0)'
           }}>
               <div className="absolute inset-0 bg-orange-500/80"></div>
               <div className="relative z-10">
@@ -327,11 +329,12 @@ export default function AnimatedFarm({
               </div>
             </div>
             
-            <div className="relative text-white p-4 rounded-xl border-4 border-red-700 shadow-lg overflow-hidden animate-bounce" style={{
+            <div className="relative text-white p-4 rounded-xl border-4 border-red-700 shadow-lg overflow-hidden" style={{
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animationDuration: '3s'
+            animation: 'gentleBounce 5s ease-in-out infinite',
+            transform: 'translateY(0)'
           }}>
               <div className="absolute inset-0 bg-red-500/80"></div>
               <div className="relative z-10">
