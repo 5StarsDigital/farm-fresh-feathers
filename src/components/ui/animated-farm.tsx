@@ -299,8 +299,7 @@ export default function AnimatedFarm({
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animationDelay: '0s',
-            animationDuration: '2s'
+            animationDuration: '3s'
           }}>
               <div className="absolute inset-0 bg-amber-500/80"></div>
               <div className="relative z-10">
@@ -316,8 +315,7 @@ export default function AnimatedFarm({
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animationDelay: '0.3s',
-            animationDuration: '2s'
+            animationDuration: '3s'
           }}>
               <div className="absolute inset-0 bg-orange-500/80"></div>
               <div className="relative z-10">
@@ -333,8 +331,7 @@ export default function AnimatedFarm({
             backgroundImage: `url(${cardBackground})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            animationDelay: '0.6s',
-            animationDuration: '2s'
+            animationDuration: '3s'
           }}>
               <div className="absolute inset-0 bg-red-500/80"></div>
               <div className="relative z-10">
