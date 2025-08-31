@@ -6,6 +6,7 @@ import { Egg, Wallet, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import cardBackground from '@/assets/card-background.png';
+import cuteChicken from '@/assets/cute-chicken.png';
 interface Chicken {
   id: string;
   x: number;
@@ -332,7 +333,11 @@ export default function AnimatedFarm({
               <div className="absolute inset-0 bg-red-500/80"></div>
               <div className="relative z-10">
                 <div className="flex items-center justify-center mb-2">
-                  <span className="text-2xl">🐔</span>
+                  <img 
+                    src={cuteChicken} 
+                    alt="Cute chicken"
+                    className="w-8 h-8 drop-shadow-lg"
+                  />
                 </div>
                 <p className="text-sm font-semibold drop-shadow-lg">Tổng số gà</p>
                 <p className="text-lg font-bold drop-shadow-lg">{totalChickens} con</p>
@@ -418,7 +423,11 @@ export default function AnimatedFarm({
                   LIVE
                 </div>
                 <div className="flex items-center justify-center h-full">
-                  <span className="text-white text-2xl">🐔</span>
+                  <img 
+                    src={cuteChicken} 
+                    alt="Cute chicken"
+                    className="w-8 h-8 drop-shadow-lg"
+                  />
                 </div>
               </div>
             </div>
@@ -449,9 +458,11 @@ export default function AnimatedFarm({
               transform: `translate(-50%, -50%) ${chicken.direction === 'left' ? 'scaleX(-1)' : ''}`
             }} onClick={() => soundEnabled && playChickenSound()}>
                 <div className="relative">
-                  <span className="text-4xl drop-shadow-lg">
-                    {chicken.animationState === 'crowing' ? '🐔' : '🐔'}
-                  </span>
+                  <img 
+                    src={cuteChicken} 
+                    alt="Cute chicken"
+                    className="w-12 h-12 drop-shadow-lg"
+                  />
                   {chicken.isLayingEgg && <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 animate-bounce">
                       <span className="text-xl">🥚</span>
                     </div>}
