@@ -36,10 +36,9 @@ function formatBalanceChangeNotification(content: string) {
     const newValue = parseFloat(newAmount.replace(/[,\.]/g, ''));
     const isIncrease = newValue > oldValue;
     
-    const oldAmountColor = isIncrease ? 'text-muted-foreground' : 'text-destructive font-bold';
-    const newAmountColor = isIncrease ? 'text-success font-bold' : 'text-destructive font-bold';
+    const amountColor = isIncrease ? 'text-green-700 font-bold' : 'text-red-700 font-bold';
     
-    return `Số dư thay đổi từ <span class="${oldAmountColor}">${oldAmount}đ</span> thành <span class="${newAmountColor}">${newAmount}đ</span>`;
+    return `Số dư thay đổi từ <span class="${amountColor}">${oldAmount}đ</span> thành <span class="${amountColor}">${newAmount}đ</span>`;
   });
 }
 export default function NotificationPanel() {
