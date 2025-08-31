@@ -794,6 +794,39 @@ export type Database = {
           },
         ]
       }
+      policy_pages: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          meta_description: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          meta_description?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          meta_description?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       processed_transactions: {
         Row: {
           amount: number

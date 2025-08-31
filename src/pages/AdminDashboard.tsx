@@ -22,6 +22,7 @@ import AdminEggsManager from '@/components/ui/admin-eggs';
 import { ContentDetailForm } from '@/components/ui/content-detail-form';
 import GuideManagement from '@/components/ui/guide-management';
 import ContactSettings from '@/components/ui/contact-settings';
+import PolicyManagement from '@/components/ui/policy-management';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -624,6 +625,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="guide" className="space-y-4">
             <GuideManagement />
+          </TabsContent>
+
+          <TabsContent value="policies" className="space-y-4">
+            <PolicyManagement />
           </TabsContent>
 
           <TabsContent value="contacts" className="space-y-4">

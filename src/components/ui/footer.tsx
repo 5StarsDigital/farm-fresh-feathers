@@ -24,8 +24,8 @@ const Footer = () => {
       text: 'Quyền riêng tư',
       href: '/privacy'
     }, {
-      text: 'Chính sách hoàn tiền',
-      href: '/refund'
+      text: 'Chính sách bảo hành',
+      href: '/warranty'
     }, {
       text: 'Điều khoản sử dụng',
       href: '/terms'
