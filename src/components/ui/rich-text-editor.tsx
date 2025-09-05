@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Bold, 
   Italic, 
@@ -18,9 +19,13 @@ import {
   Type,
   Plus,
   X,
-  Upload
+  Upload,
+  FolderOpen,
+  CloudUpload
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { FileUploadZone, UploadProgressList } from '@/components/ui/file-upload-zone';
+import { useMediaUpload, type MediaFile } from '@/hooks/useMediaUpload';
 
 interface RichTextEditorProps {
   value: {
@@ -48,6 +53,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [videoCaption, setVideoCaption] = useState('');
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  
+  const { uploadFile, uploadMultipleFiles, uploads, isUploading } = useMediaUpload();
 
   const handleContentChange = (newContent: string) => {
     onChange({
@@ -137,6 +145,32 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     toast.success('Đã xóa video');
   };
 
+  const handleFileUpload = async (files: File[]) => {
+    try {
+      const uploadedFiles = await uploadMultipleFiles(files, 'content');
+      
+      // Add uploaded images to the value
+      const newImages = uploadedFiles
+        .filter(file => file.mime_type.startsWith('image/'))
+        .map(file => ({ url: file.url!, caption: file.alt_text || '' }));
+        
+      const newVideos = uploadedFiles
+        .filter(file => file.mime_type.startsWith('video/'))
+        .map(file => ({ url: file.url!, caption: file.alt_text || '' }));
+
+      if (newImages.length > 0 || newVideos.length > 0) {
+        onChange({
+          ...value,
+          images: [...value.images, ...newImages],
+          videos: [...value.videos, ...newVideos]
+        });
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Có lỗi xảy ra khi upload file');
+    }
+  };
+
   const formatButtons = [
     { icon: Bold, action: () => insertText('**', '**'), tooltip: 'In đậm' },
     { icon: Italic, action: () => insertText('*', '*'), tooltip: 'In nghiêng' },
@@ -207,13 +241,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
         <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" title="Thêm video">
+            <Button variant="ghost" size="sm" title="Thêm video từ URL">
               <Video className="w-4 h-4" />
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Thêm video</DialogTitle>
+              <DialogTitle>Thêm video từ URL</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -240,6 +274,45 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 </Button>
                 <Button onClick={addVideo}>
                   Thêm
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm" title="Upload file từ máy tính">
+              <CloudUpload className="w-4 h-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Upload file từ máy tính</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <FileUploadZone 
+                onFilesSelected={handleFileUpload}
+                accept={['image/*', 'video/*']}
+                maxSize={50 * 1024 * 1024} // 50MB
+                multiple={true}
+                disabled={isUploading}
+              />
+              
+              {uploads.length > 0 && (
+                <div>
+                  <Label>Tiến trình upload</Label>
+                  <UploadProgressList uploads={uploads} />
+                </div>
+              )}
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsUploadDialogOpen(false)}
+                  disabled={isUploading}
+                >
+                  {isUploading ? 'Đang upload...' : 'Đóng'}
                 </Button>
               </div>
             </div>
