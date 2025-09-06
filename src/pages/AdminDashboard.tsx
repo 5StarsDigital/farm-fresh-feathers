@@ -23,6 +23,7 @@ import { ContentDetailForm } from '@/components/ui/content-detail-form';
 import GuideManagement from '@/components/ui/guide-management';
 import ContactSettings from '@/components/ui/contact-settings';
 import PolicyManagement from '@/components/ui/policy-management';
+import MediaLibrary from '@/components/ui/media-library';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -467,6 +468,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="eggs">Trứng tồn</TabsTrigger>
             <TabsTrigger value="guide">Hướng dẫn</TabsTrigger>
             <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
+            <TabsTrigger value="media">Kho Media</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
           </TabsList>
 
@@ -633,6 +635,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="contacts" className="space-y-4">
             <ContactSettings />
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-4">
+            <MediaLibrary />
           </TabsContent>
 
           <TabsContent value="activities" className="space-y-4">
