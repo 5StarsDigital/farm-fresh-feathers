@@ -7,6 +7,7 @@ import { Trash2, Copy, Upload, Image, Video, File, Search, ExternalLink } from '
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { FileUploadZone } from '@/components/ui/file-upload-zone';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -27,7 +28,7 @@ export const MediaLibrary: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'image' | 'video' | 'other'>('all');
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [fileToDelete, setFileToDelete] = useState<MediaFile | null>(null);
   const { uploadMultipleFiles, deleteFile, isUploading } = useMediaUpload();
 
   useEffect(() => {
@@ -80,9 +81,11 @@ export const MediaLibrary: React.FC = () => {
     }
   };
 
-  const handleDeleteFile = async (file: MediaFile) => {
+  const handleDeleteFile = async () => {
+    if (!fileToDelete) return;
+    
     try {
-      const success = await deleteFile(file);
+      const success = await deleteFile(fileToDelete);
       if (success) {
         toast.success('Đã xóa file thành công');
         fetchMediaFiles(); // Refresh the list
@@ -90,6 +93,8 @@ export const MediaLibrary: React.FC = () => {
     } catch (error) {
       console.error('Error deleting file:', error);
       toast.error('Lỗi khi xóa file');
+    } finally {
+      setFileToDelete(null);
     }
   };
 
@@ -264,14 +269,32 @@ export const MediaLibrary: React.FC = () => {
                 >
                   <ExternalLink className="h-3 w-3" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDeleteFile(file)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setFileToDelete(file)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Bạn có chắc chắn muốn xóa file "{file.file_name}" không? Hành động này không thể hoàn tác.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setFileToDelete(null)}>Hủy</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteFile} className="bg-destructive hover:bg-destructive/90">
+                        Xóa
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
