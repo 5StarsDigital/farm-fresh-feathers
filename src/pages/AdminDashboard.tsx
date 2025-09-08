@@ -18,6 +18,7 @@ import { PackageManagement } from '@/components/ui/package-management';
 import { BillingSettings } from '@/components/ui/billing-settings';
 import { ProductionSettings } from '@/components/ui/production-settings';
 import AdminNotificationsManager from '@/components/ui/admin-notifications-manager';
+import { AdminPackageEggs } from '@/components/ui/admin-package-eggs';
 import AdminEggsManager from '@/components/ui/admin-eggs';
 import { ContentDetailForm } from '@/components/ui/content-detail-form';
 import GuideManagement from '@/components/ui/guide-management';
@@ -466,6 +467,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="camera">Camera</TabsTrigger>
             <TabsTrigger value="notifications">Thông báo</TabsTrigger>
             <TabsTrigger value="eggs">Trứng tồn</TabsTrigger>
+            <TabsTrigger value="package-eggs">Thu hoạch trứng</TabsTrigger>
             <TabsTrigger value="guide">Hướng dẫn</TabsTrigger>
             <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
             <TabsTrigger value="media">Kho Media</TabsTrigger>
@@ -623,6 +625,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="eggs" className="space-y-4">
             <AdminEggsManager />
+          </TabsContent>
+
+          <TabsContent value="package-eggs" className="space-y-4">
+            <AdminPackageEggs />
           </TabsContent>
 
           <TabsContent value="guide" className="space-y-4">

@@ -981,6 +981,7 @@ export type Database = {
           id: string
           last_billed_at: string | null
           last_billing_date: string | null
+          package_code: string
           package_id: string
           package_name: string
           package_price: number
@@ -1004,6 +1005,7 @@ export type Database = {
           id?: string
           last_billed_at?: string | null
           last_billing_date?: string | null
+          package_code: string
           package_id: string
           package_name: string
           package_price: number
@@ -1027,6 +1029,7 @@ export type Database = {
           id?: string
           last_billed_at?: string | null
           last_billing_date?: string | null
+          package_code?: string
           package_id?: string
           package_name?: string
           package_price?: number
@@ -1224,6 +1227,10 @@ export type Database = {
       }
       format_vnd_amount: {
         Args: { amount: number }
+        Returns: string
+      }
+      generate_package_code: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_current_user_role: {

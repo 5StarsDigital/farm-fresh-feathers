@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { Home, Camera, History, Egg, Wallet, ShoppingCart, Trophy, MessageCircle, MapPin, Truck, User as UserIcon } from 'lucide-react';
-import UserPackagesSection from '@/components/ui/user-packages-section';
+import ServicePackagesSection from '@/components/ui/service-packages-section';
 import AnimatedFarm from '@/components/ui/animated-farm';
 import CameraMonitoring from '@/components/ui/camera-monitoring';
 import { AddChickensDialog } from '@/components/ui/add-chickens-dialog';
@@ -66,6 +66,7 @@ interface ProfileFormData {
 }
 interface ServicePackage {
   id: string;
+  package_code: string;
   package_name: string;
   package_price: number;
   coop_name: string;
@@ -552,10 +553,17 @@ const Farm = () => {
                 {servicePackages.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {servicePackages.map(pkg => <Card key={pkg.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105 border-2 border-purple-200">
                         <CardHeader className="bg-gradient-to-r from-orange-400 to-orange-500 text-white p-4">
-                          <CardTitle className="text-lg">{pkg.package_name}</CardTitle>
-                          <CardDescription className="text-orange-100 text-sm">
-                            Đã mua: {new Date(pkg.purchased_at).toLocaleDateString('vi-VN')}
-                          </CardDescription>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">{pkg.package_name}</CardTitle>
+                              <CardDescription className="text-orange-100 text-sm">
+                                Đã mua: {new Date(pkg.purchased_at).toLocaleDateString('vi-VN')}
+                              </CardDescription>
+                            </div>
+                            <div className="font-mono text-sm bg-white/20 px-2 py-1 rounded">
+                              {pkg.package_code}
+                            </div>
+                          </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-4">
                           <div className="space-y-2">
