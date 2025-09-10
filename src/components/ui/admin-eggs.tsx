@@ -20,6 +20,7 @@ interface ProfileRow {
   full_name?: string | null;
   email?: string | null;
   avatar_url?: string | null;
+  shop_name?: string | null;
   created_at: string;
   uncollected_egg: number;
   package_codes?: string[];
@@ -159,7 +160,7 @@ export default function AdminEggsManager() {
     try {
       let query = (supabase as any)
         .from("profiles")
-        .select("id, username, full_name, email, avatar_url, created_at, uncollected_egg", { count: "exact" });
+        .select("id, username, full_name, email, avatar_url, shop_name, created_at, uncollected_egg", { count: "exact" });
 
       if (dUserId) query = query.eq("id", dUserId.trim());
       if (dUsername) query = query.ilike("username", `%${dUsername.trim()}%`);
@@ -264,13 +265,22 @@ export default function AdminEggsManager() {
 
           if (error) throw error;
           successful++;
+
+          // Log successful update with shop name
+          console.log(`Đã cập nhật ${entry.eggCount} trứng cho shop: ${entry.userName}`);
         } catch (error) {
           console.error("Error updating eggs:", error);
           failed++;
         }
       }
 
-      toast.success(`Hoàn tất: ${successful} thành công, ${failed} thất bại`);
+      if (successful > 0) {
+        const shopNames = quickEntries.slice(0, successful).map(e => e.userName).join(", ");
+        toast.success(`Đã cập nhật thành công trứng tồn cho: ${shopNames}`);
+      }
+      if (failed > 0) {
+        toast.error(`${failed} gói cập nhật thất bại`);
+      }
       setQuickEntries([]);
       fetchUsers(); // Refresh the user list
     } catch (error) {
@@ -323,7 +333,7 @@ export default function AdminEggsManager() {
       const after_value = (data as any)?.after_value ?? after;
       // optimistic update
       setRows(prev => prev.map(r => r.id === current.id ? { ...r, uncollected_egg: after_value } : r));
-      toast.success(`Đã cập nhật trứng tồn cho ${current.username || current.full_name || current.id} từ ${current.uncollected_egg} → ${after_value}`);
+      toast.success(`Đã cập nhật trứng tồn cho ${current.shop_name || current.full_name || current.username || current.id} từ ${current.uncollected_egg} → ${after_value}`);
       setOpen(false);
     } catch (e: any) {
       console.error(e);
@@ -633,7 +643,7 @@ export default function AdminEggsManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Avatar</TableHead>
-                  <TableHead>User ID</TableHead>
+                  <TableHead>Tên shop gà</TableHead>
                   <TableHead>Username</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Mã gói</TableHead>
@@ -654,8 +664,8 @@ export default function AdminEggsManager() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <code className="text-xs">{r.id}</code>
-                        <Button variant="outline" size="icon" onClick={()=>copy(r.id)}>
+                        <span className="font-medium">{r.shop_name || r.full_name || r.username || "Chưa đặt tên"}</span>
+                        <Button variant="outline" size="icon" onClick={()=>copy(r.id)} title="Copy User ID">
                           <Copy className="w-4 h-4" />
                         </Button>
                       </div>
@@ -841,7 +851,7 @@ export default function AdminEggsManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>User: {current?.username || current?.full_name || current?.id}</Label>
+              <Label>Shop gà: {current?.shop_name || current?.full_name || current?.username || current?.id}</Label>
               <p className="text-sm text-muted-foreground">Hiện tại: {current?.uncollected_egg} trứng</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
