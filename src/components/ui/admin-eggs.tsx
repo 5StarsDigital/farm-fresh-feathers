@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Search, Pencil, History, X, Copy, Upload, Download } from "lucide-react";
+import { Loader2, Search, Pencil, History, X, Copy, Upload, Download, Plus } from "lucide-react";
 
 interface ProfileRow {
   id: string;
@@ -21,6 +22,22 @@ interface ProfileRow {
   avatar_url?: string | null;
   created_at: string;
   uncollected_egg: number;
+  package_codes?: string[];
+}
+
+interface ServicePackage {
+  id: string;
+  package_code: string;
+  package_name: string;
+  coop_name?: string;
+  selected_chicken_quantity: number;
+  status: string;
+  user_id: string;
+  profiles: {
+    full_name?: string;
+    email?: string;
+    username?: string;
+  };
 }
 
 interface AdjustmentRow {
@@ -47,8 +64,10 @@ export default function AdminEggsManager() {
   const { user, userRole } = useAuth();
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
+  const [packageCode, setPackageCode] = useState("");
   const dUserId = useDebounced(userId);
   const dUsername = useDebounced(username);
+  const dPackageCode = useDebounced(packageCode);
 
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -56,6 +75,13 @@ export default function AdminEggsManager() {
   const [rows, setRows] = useState<ProfileRow[]>([]);
   const [total, setTotal] = useState(0);
   const pageSize = 10;
+
+  // Package egg logging states
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
+  const [eggCount, setEggCount] = useState<string>("");
+  const [quickEntries, setQuickEntries] = useState<{ packageCode: string; packageName: string; eggCount: number; userName: string }[]>([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
 
   // Modal state
   const [open, setOpen] = useState(false);
@@ -84,6 +110,49 @@ export default function AdminEggsManager() {
 
   const canAccess = user && (userRole === "admin" || userRole === "super_admin");
 
+  const fetchPackages = async () => {
+    if (!canAccess) return;
+    setPackagesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("service_packages")
+        .select(`
+          id,
+          package_code,
+          package_name,
+          coop_name,
+          selected_chicken_quantity,
+          status,
+          user_id
+        `)
+        .eq("status", "active")
+        .order("package_code");
+      
+      if (error) throw error;
+      
+      // Fetch user profiles for each package
+      const enrichedPackages = await Promise.all((data || []).map(async (pkg) => {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email, username")
+          .eq("id", pkg.user_id)
+          .single();
+        
+        return {
+          ...pkg,
+          profiles: profile || { full_name: null, email: null, username: null }
+        };
+      }));
+      
+      setPackages(enrichedPackages);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Lỗi tải danh sách gói dịch vụ");
+    } finally {
+      setPackagesLoading(false);
+    }
+  };
+
   const fetchUsers = async () => {
     if (!canAccess) return;
     setLoading(true);
@@ -95,12 +164,45 @@ export default function AdminEggsManager() {
       if (dUserId) query = query.eq("id", dUserId.trim());
       if (dUsername) query = query.ilike("username", `%${dUsername.trim()}%`);
 
+      // If searching by package code, filter by users who have that package
+      if (dPackageCode) {
+        const { data: packageUsers } = await supabase
+          .from("service_packages")
+          .select("user_id")
+          .ilike("package_code", `%${dPackageCode.trim()}%`);
+        
+        if (packageUsers && packageUsers.length > 0) {
+          const userIds = packageUsers.map(p => p.user_id);
+          query = query.in("id", userIds);
+        } else {
+          // No packages found with that code, return empty result
+          setRows([]);
+          setTotal(0);
+          setLoading(false);
+          return;
+        }
+      }
+
       query = query.order(sort.key, { ascending: sort.dir === "asc" })
                    .range(page * pageSize, page * pageSize + pageSize - 1);
 
       const { data, error, count } = await query;
       if (error) throw error;
-      setRows(data || []);
+      
+      // Fetch package codes for each user
+      const enrichedData = await Promise.all((data || []).map(async (user) => {
+        const { data: userPackages } = await supabase
+          .from("service_packages")
+          .select("package_code")
+          .eq("user_id", user.id);
+        
+        return {
+          ...user,
+          package_codes: userPackages?.map(p => p.package_code) || []
+        };
+      }));
+      
+      setRows(enrichedData);
       setTotal(count || 0);
     } catch (e: any) {
       console.error(e);
@@ -113,7 +215,71 @@ export default function AdminEggsManager() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dUserId, dUsername, page, sort.key, sort.dir]);
+  }, [dUserId, dUsername, dPackageCode, page, sort.key, sort.dir]);
+
+  useEffect(() => {
+    fetchPackages();
+  }, [canAccess]);
+
+  // Package egg logging functions
+  const handleQuickEntry = (packageData: ServicePackage, eggs: number) => {
+    const entry = {
+      packageCode: packageData.package_code,
+      packageName: packageData.package_name,
+      eggCount: eggs,
+      userName: packageData.profiles.full_name || packageData.profiles.username || packageData.profiles.email || "N/A"
+    };
+    setQuickEntries(prev => [...prev, entry]);
+    setSelectedPackage(null);
+    setEggCount("");
+  };
+
+  const handleBatchSave = async () => {
+    if (quickEntries.length === 0) {
+      toast.error("Không có dữ liệu để lưu");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      let successful = 0;
+      let failed = 0;
+
+      for (const entry of quickEntries) {
+        try {
+          // Find the package to get user_id
+          const packageData = packages.find(p => p.package_code === entry.packageCode);
+          if (!packageData) {
+            failed++;
+            continue;
+          }
+
+          // Add eggs to user's uncollected_egg using adjust_uncollected_egg function
+          const { error } = await supabase.rpc("adjust_uncollected_egg", {
+            p_user_id: packageData.user_id,
+            p_mode: "add",
+            p_amount: entry.eggCount,
+            p_reason: `Thu hoạch trứng gói ${entry.packageCode}`
+          });
+
+          if (error) throw error;
+          successful++;
+        } catch (error) {
+          console.error("Error updating eggs:", error);
+          failed++;
+        }
+      }
+
+      toast.success(`Hoàn tất: ${successful} thành công, ${failed} thất bại`);
+      setQuickEntries([]);
+      fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error("Batch save error:", error);
+      toast.error("Lỗi khi lưu dữ liệu");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const openEdit = (row: ProfileRow) => {
     setCurrent(row);
@@ -314,13 +480,126 @@ export default function AdminEggsManager() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Trứng tồn</h2>
 
+      {/* Package Egg Entry Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ghi nhận trứng theo mã gói</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label>Chọn gói dịch vụ</Label>
+              <Select onValueChange={(value) => {
+                const pkg = packages.find(p => p.package_code === value);
+                setSelectedPackage(pkg || null);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn mã gói..." />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  {packagesLoading ? (
+                    <div className="p-2 text-center">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                    </div>
+                  ) : (
+                    packages.map(pkg => (
+                      <SelectItem key={pkg.id} value={pkg.package_code}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{pkg.package_code} - {pkg.package_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {pkg.profiles.full_name || pkg.profiles.username} ({pkg.selected_chicken_quantity} gà)
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Số trứng</Label>
+              <Input
+                type="number"
+                placeholder="Nhập số trứng..."
+                value={eggCount}
+                onChange={(e) => setEggCount(e.target.value)}
+                min="0"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => {
+                  if (!selectedPackage) {
+                    toast.error("Vui lòng chọn gói dịch vụ");
+                    return;
+                  }
+                  const eggs = parseInt(eggCount);
+                  if (isNaN(eggs) || eggs < 0) {
+                    toast.error("Số trứng không hợp lệ");
+                    return;
+                  }
+                  handleQuickEntry(selectedPackage, eggs);
+                }}
+                disabled={!selectedPackage || !eggCount}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ghi nhận
+              </Button>
+            </div>
+          </div>
+
+          {/* Quick entries preview */}
+          {quickEntries.length > 0 && (
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium">Các mục chờ lưu ({quickEntries.length})</h4>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setQuickEntries([])}
+                  >
+                    Xóa tất cả
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleBatchSave}
+                    disabled={saving}
+                  >
+                    {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Lưu tất cả
+                  </Button>
+                </div>
+              </div>
+              <div className="border rounded p-2 bg-muted/50">
+                {quickEntries.map((entry, index) => (
+                  <div key={index} className="flex justify-between items-center py-1 border-b last:border-b-0">
+                    <span className="text-sm">
+                      <Badge variant="outline" className="mr-2">{entry.packageCode}</Badge>
+                      {entry.userName} - {entry.eggCount} trứng
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setQuickEntries(prev => prev.filter((_, i) => i !== index))}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* A - Tìm kiếm */}
       <Card>
         <CardHeader>
           <CardTitle>Bộ lọc & Tìm kiếm</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="uid">User ID</Label>
               <Input id="uid" placeholder="e.g., 6f6f6c6d-1234-5678-aaaa-bbbbccccdddd" value={userId} onChange={e=>{ setUserId(e.target.value); setPage(0); }} />
@@ -328,6 +607,10 @@ export default function AdminEggsManager() {
             <div>
               <Label htmlFor="uname">Username</Label>
               <Input id="uname" placeholder="e.g., nguyenvana" value={username} onChange={e=>{ setUsername(e.target.value); setPage(0); }} />
+            </div>
+            <div>
+              <Label htmlFor="pcode">Mã gói</Label>
+              <Input id="pcode" placeholder="e.g., GA001" value={packageCode} onChange={e=>{ setPackageCode(e.target.value); setPage(0); }} />
             </div>
             <div className="flex items-end gap-2">
               <Button onClick={fetchUsers} disabled={loading}>
@@ -353,6 +636,7 @@ export default function AdminEggsManager() {
                   <TableHead>User ID</TableHead>
                   <TableHead>Username</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Mã gói</TableHead>
                   <TableHead>uncollectedEgg</TableHead>
                   <TableHead>Ngày tạo</TableHead>
                   <TableHead>Hành động</TableHead>
@@ -378,6 +662,19 @@ export default function AdminEggsManager() {
                     </TableCell>
                     <TableCell>{r.username || "—"}</TableCell>
                     <TableCell>{r.email || "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {r.package_codes && r.package_codes.length > 0 ? (
+                          r.package_codes.map(code => (
+                            <Badge key={code} variant="outline" className="text-xs">
+                              {code}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell><Badge>{r.uncollected_egg}</Badge></TableCell>
                     <TableCell>{new Date(r.created_at).toLocaleString("vi-VN")}</TableCell>
                     <TableCell>
@@ -394,7 +691,7 @@ export default function AdminEggsManager() {
                 ))}
                 {rows.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">Không có dữ liệu</TableCell>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">Không có dữ liệu</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -420,7 +717,7 @@ export default function AdminEggsManager() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <Label>Danh sách User ID (mỗi dòng 1 ID)</Label>
-              <Textarea value={bulkIds} onChange={e=>setBulkIds(e.target.value)} rows={6} placeholder="uuid-1\nuuid-2" />
+              <Textarea value={bulkIds} onChange={e=>setBulkIds(e.target.value)} rows={6} placeholder="uuid-1&#10;uuid-2" />
             </div>
             <div className="space-y-2">
               <Label>CSV (user_id, ...)</Label>
@@ -442,94 +739,97 @@ export default function AdminEggsManager() {
                 Áp dụng cho {bulkList.length} ID
               </Button>
             </div>
-            <div>
-              <Label>Preview</Label>
-              <div className="text-sm bg-muted rounded-md p-3 h-[180px] overflow-auto">
-                {bulkList.slice(0,5).map((id,i)=> <div key={i}>{id}</div>)}
-                {bulkList.length>5 && <div className="text-muted-foreground">... {bulkList.length-5} dòng nữa</div>}
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Danh sách phát hiện: {bulkList.length}</p>
+              <div className="max-h-32 overflow-y-auto border rounded p-2 text-xs">
+                {bulkList.slice(0, 10).map((id, i) => <div key={i}>{id}</div>)}
+                {bulkList.length > 10 && <div>... và {bulkList.length - 10} ID khác</div>}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* D - Lịch sử toàn hệ thống */}
+      {/* D - Lịch sử hệ thống */}
       <Card>
         <CardHeader>
-          <CardTitle>Lịch sử điều chỉnh</CardTitle>
+          <CardTitle>Lịch sử điều chỉnh hệ thống</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-              <Label>Từ ngày</Label>
-              <Input type="datetime-local" value={histFrom} onChange={e=>{ setHistFrom(e.target.value); setHistPage(0); }} />
-            </div>
-            <div>
-              <Label>Đến ngày</Label>
-              <Input type="datetime-local" value={histTo} onChange={e=>{ setHistTo(e.target.value); setHistPage(0); }} />
-            </div>
-            <div className="md:col-span-2">
-              <Label>Từ khóa (lọc client-side)</Label>
-              <Input value={histKeyword} onChange={e=>setHistKeyword(e.target.value)} placeholder="username/id" />
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">Hiển thị {histRows.length} bản ghi</div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={exportCsv}><Download className="w-4 h-4 mr-2"/>Xuất CSV</Button>
-              <Button variant="outline" onClick={loadSystemHistory}><Search className="w-4 h-4 mr-2"/>Làm mới</Button>
-            </div>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Thời gian</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead>Thay đổi</TableHead>
-                <TableHead>Reason</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {histRows
-                .filter(r => !histKeyword || r.user_id.includes(histKeyword) || r.admin_id.includes(histKeyword))
-                .map(r => (
-                <TableRow key={r.id}>
-                  <TableCell>{new Date(r.created_at).toLocaleString("vi-VN")}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <code className="text-xs">{r.user_id}</code>
-                      <Button variant="outline" size="icon" onClick={()=>copy(r.user_id)}><Copy className="w-4 h-4"/></Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <code className="text-xs">{r.admin_id}</code>
-                      <Button variant="outline" size="icon" onClick={()=>copy(r.admin_id)}><Copy className="w-4 h-4"/></Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>{r.before_value} → {r.change_amount >= 0 ? `+${r.change_amount}` : r.change_amount} → {r.after_value}</TableCell>
-                  <TableCell className="max-w-[320px] truncate" title={r.reason || ''}>{r.reason || "—"}</TableCell>
-                </TableRow>
-              ))}
-              {histRows.length === 0 && !histLoading && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">Không có dữ liệu</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          <div className="flex justify-between items-center mt-3 text-sm">
-            <div></div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled={histPage===0} onClick={()=>setHistPage(p=>Math.max(0,p-1))}>Trước</Button>
-              <span>Trang {histPage+1}</span>
-              <Button variant="outline" size="sm" onClick={()=>setHistPage(p=>p+1)}>Sau</Button>
-            </div>
-          </div>
+        <CardContent>
+          <Tabs defaultValue="filters" className="w-full">
+            <TabsList>
+              <TabsTrigger value="filters">Bộ lọc</TabsTrigger>
+              <TabsTrigger value="history">Lịch sử</TabsTrigger>
+            </TabsList>
+            <TabsContent value="filters" className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Từ ngày</Label>
+                  <Input type="date" value={histFrom} onChange={e => setHistFrom(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Đến ngày</Label>
+                  <Input type="date" value={histTo} onChange={e => setHistTo(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Từ khóa</Label>
+                  <Input placeholder="user_id, admin_id, reason..." value={histKeyword} onChange={e => setHistKeyword(e.target.value)} />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={loadSystemHistory} disabled={histLoading}>
+                    <Search className="w-4 h-4 mr-2" /> Tìm
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="history" className="space-y-3">
+              <div className="flex justify-between">
+                <p className="text-sm text-muted-foreground">Tổng: {histRows.length}</p>
+                <Button variant="outline" size="sm" onClick={exportCsv}>
+                  <Download className="w-4 h-4 mr-2" /> CSV
+                </Button>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Thời gian</TableHead>
+                    <TableHead>User ID</TableHead>
+                    <TableHead>Admin ID</TableHead>
+                    <TableHead>Trước</TableHead>
+                    <TableHead>Thay đổi</TableHead>
+                    <TableHead>Sau</TableHead>
+                    <TableHead>Lý do</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {histRows.map(h => (
+                    <TableRow key={h.id}>
+                      <TableCell>{new Date(h.created_at).toLocaleString("vi-VN")}</TableCell>
+                      <TableCell><code className="text-xs">{h.user_id}</code></TableCell>
+                      <TableCell><code className="text-xs">{h.admin_id}</code></TableCell>
+                      <TableCell><Badge variant="outline">{h.before_value}</Badge></TableCell>
+                      <TableCell><Badge variant={h.change_amount >= 0 ? "default" : "destructive"}>{h.change_amount >= 0 ? "+" : ""}{h.change_amount}</Badge></TableCell>
+                      <TableCell><Badge>{h.after_value}</Badge></TableCell>
+                      <TableCell>{h.reason || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                  {histRows.length === 0 && !histLoading && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">Không có dữ liệu</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              <div className="flex justify-between items-center mt-3 text-sm">
+                <div></div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled={histPage===0} onClick={()=>setHistPage(p=>Math.max(0,p-1))}>Trước</Button>
+                  <span>Trang {histPage+1}</span>
+                  <Button variant="outline" size="sm" onClick={()=>setHistPage(p=>p+1)}>Sau</Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -537,58 +837,49 @@ export default function AdminEggsManager() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Điều chỉnh trứng tồn</DialogTitle>
+            <DialogTitle>Chỉnh sửa trứng tồn</DialogTitle>
           </DialogHeader>
-          {current && (
-            <div className="space-y-3">
-              <div className="text-sm text-muted-foreground">User: {current.username || current.full_name || current.id}</div>
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label>Chế độ</Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant={mode==='set'?'default':'outline'} onClick={()=>setMode('set')}>Đặt</Button>
-                    <Button variant={mode==='add'?'default':'outline'} onClick={()=>setMode('add')}>Cộng</Button>
-                    <Button variant={mode==='subtract'?'default':'outline'} onClick={()=>setMode('subtract')}>Trừ</Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <Label>Giá trị</Label>
-                    <Input value={amount} onChange={e=>setAmount(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Hiệu lực sau điều chỉnh</Label>
-                    <Input value={String(calculateAfter())} readOnly />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label>Lý do (tuỳ chọn)</Label>
-                <Textarea rows={3} value={reason} onChange={e=>setReason(e.target.value)} />
-              </div>
-              <div className="flex justify-between items-center">
-                <Button variant="outline" onClick={()=>current && loadHistory(current.id)}>
-                  <History className="w-4 h-4 mr-2"/> Xem lịch sử
-                </Button>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={()=>setOpen(false)}><X className="w-4 h-4 mr-1"/>Huỷ</Button>
-                  <Button onClick={handleConfirm} disabled={saving}>{saving && <Loader2 className="w-4 h-4 mr-2 animate-spin"/>}Xác nhận</Button>
-                </div>
-              </div>
+          <div className="space-y-4">
+            <div>
+              <Label>User: {current?.username || current?.full_name || current?.id}</Label>
+              <p className="text-sm text-muted-foreground">Hiện tại: {current?.uncollected_egg} trứng</p>
             </div>
-          )}
+            <div className="grid grid-cols-3 gap-2">
+              <Button variant={mode==='set'? 'default':'outline'} onClick={()=>setMode('set')}>Đặt về</Button>
+              <Button variant={mode==='add'? 'default':'outline'} onClick={()=>setMode('add')}>Cộng</Button>
+              <Button variant={mode==='subtract'? 'default':'outline'} onClick={()=>setMode('subtract')}>Trừ</Button>
+            </div>
+            <div>
+              <Label>Giá trị</Label>
+              <Input value={amount} onChange={e=>setAmount(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Sau điều chỉnh: {calculateAfter()}</p>
+            </div>
+            <div>
+              <Label>Lý do (tùy chọn)</Label>
+              <Textarea value={reason} onChange={e=>setReason(e.target.value)} />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleConfirm} disabled={saving}>
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin"/>}
+                Xác nhận
+              </Button>
+              <Button variant="outline" onClick={()=>setOpen(false)}>Hủy</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Modal lịch sử người dùng */}
+      {/* Modal lịch sử user */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Lịch sử điều chỉnh (10 gần nhất)</DialogTitle>
+            <DialogTitle>Lịch sử điều chỉnh</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="space-y-4">
             {historyLoading ? (
-              <div className="flex items-center gap-2 text-sm"><Loader2 className="w-4 h-4 animate-spin"/> Đang tải...</div>
+              <div className="flex justify-center">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -603,17 +894,16 @@ export default function AdminEggsManager() {
                 <TableBody>
                   {history.map(h => (
                     <TableRow key={h.id}>
-                      <TableCell>{new Date(h.created_at).toLocaleString('vi-VN')}</TableCell>
-                      <TableCell>{h.before_value}</TableCell>
-                      <TableCell>{h.change_amount >= 0 ? `+${h.change_amount}` : h.change_amount}</TableCell>
-                      <TableCell>{h.after_value}</TableCell>
-                      <TableCell className="max-w-[280px] truncate" title={h.reason || ''}>{h.reason || '—'}</TableCell>
+                      <TableCell>{new Date(h.created_at).toLocaleString("vi-VN")}</TableCell>
+                      <TableCell><Badge variant="outline">{h.before_value}</Badge></TableCell>
+                      <TableCell><Badge variant={h.change_amount >= 0 ? "default" : "destructive"}>{h.change_amount >= 0 ? "+" : ""}{h.change_amount}</Badge></TableCell>
+                      <TableCell><Badge>{h.after_value}</Badge></TableCell>
+                      <TableCell>{h.reason || "—"}</TableCell>
                     </TableRow>
-                  ))
-                  }
+                  ))}
                   {history.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">Không có dữ liệu</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">Không có lịch sử</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
