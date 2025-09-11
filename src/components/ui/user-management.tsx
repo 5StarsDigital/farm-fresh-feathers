@@ -310,105 +310,31 @@ export function UserManagement() {
     if (!confirm('Bạn có chắc chắn muốn xóa gói này? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn!')) return;
     
     try {
-      console.log('Starting package deletion:', packageId);
+      console.log('Starting package deletion with function:', packageId);
       
-      // Lấy thông tin package
-      const { data: packageData, error: fetchError } = await supabase
-        .from('service_packages')
-        .select('farm_id, package_name, package_code, user_id')
-        .eq('id', packageId)
-        .single();
+      // Use the secure database function to delete package
+      const { data, error } = await supabase.rpc('delete_service_package', {
+        p_package_id: packageId
+      });
 
-      if (fetchError) {
-        console.error('Error fetching package:', fetchError);
-        throw fetchError;
+      if (error) {
+        console.error('Database function error:', error);
+        throw error;
       }
 
-      console.log('Package data:', packageData);
+      console.log('Database function result:', data);
 
-      // Xóa theo thứ tự để tránh vi phạm foreign key constraints
-      
-      // 1. Xóa invoice_items liên quan đến package
-      console.log('Deleting invoice_items...');
-      const { error: invoiceItemsError } = await supabase
-        .from('invoice_items')
-        .delete()
-        .eq('package_id', packageId);
-
-      if (invoiceItemsError) {
-        console.error('Error deleting invoice_items:', invoiceItemsError);
-      } else {
-        console.log('Invoice items deleted successfully');
+      const result = data as any;
+      if (!result.success) {
+        throw new Error(result.error || 'Unknown error occurred');
       }
 
-      // 2. Xóa monthly_bills liên quan đến package
-      console.log('Deleting monthly_bills...');
-      const { error: monthlyBillsError } = await supabase
-        .from('monthly_bills')
-        .delete()
-        .eq('package_id', packageId);
-
-      if (monthlyBillsError) {
-        console.error('Error deleting monthly_bills:', monthlyBillsError);
-      } else {
-        console.log('Monthly bills deleted successfully');
-      }
-
-      // 3. Lấy danh sách invoices để xóa
-      console.log('Finding related invoices...');
-      const { data: invoicesData } = await supabase
-        .from('invoices')
-        .select('id')
-        .eq('farm_id', packageData.farm_id);
-
-      if (invoicesData && invoicesData.length > 0) {
-        console.log('Deleting invoices:', invoicesData.length);
-        for (const invoice of invoicesData) {
-          // Xóa invoice_items của invoice trước
-          await supabase
-            .from('invoice_items')
-            .delete()
-            .eq('invoice_id', invoice.id);
-          
-          // Rồi xóa invoice
-          await supabase
-            .from('invoices')
-            .delete()
-            .eq('id', invoice.id);
-        }
-        console.log('Invoices deleted successfully');
-      }
-
-      // 4. Cuối cùng xóa service_package
-      console.log('Deleting service_package...');
-      const { error: packageError } = await supabase
-        .from('service_packages')
-        .delete()
-        .eq('id', packageId);
-
-      if (packageError) {
-        console.error('Error deleting service_package:', packageError);
-        throw packageError;
-      }
-
-      console.log('Service package deleted successfully');
-
-      // Verify deletion
-      const { data: verifyData } = await supabase
-        .from('service_packages')
-        .select('id')
-        .eq('id', packageId);
-
-      if (verifyData && verifyData.length > 0) {
-        throw new Error('Package still exists after deletion');
-      }
-
-      console.log('Package deletion verified');
+      // Refresh the user list
       await fetchUsers();
       
       toast({
         title: "Thành công", 
-        description: `Đã xóa hoàn toàn gói ${packageData.package_code || packageData.package_name}`,
+        description: `Đã xóa gói thành công! (Xóa ${result.invoice_items_deleted} invoice items, ${result.monthly_bills_deleted} monthly bills)`,
       });
     } catch (error) {
       console.error('Error deleting package:', error);

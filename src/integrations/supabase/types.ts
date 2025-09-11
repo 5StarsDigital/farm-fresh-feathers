@@ -1217,6 +1217,10 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_service_package: {
+        Args: { p_package_id: string }
+        Returns: Json
+      }
       disable_process_monthly_billing: {
         Args: Record<PropertyKey, never>
         Returns: boolean
