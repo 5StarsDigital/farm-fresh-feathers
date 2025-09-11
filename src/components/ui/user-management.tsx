@@ -307,26 +307,62 @@ export function UserManagement() {
   };
 
   const deletePackage = async (packageId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa gói này?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa gói này? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn!')) return;
     
     try {
-      const { error } = await supabase
+      // Lấy thông tin package
+      const { data: packageData, error: fetchError } = await supabase
+        .from('service_packages')
+        .select('farm_id, package_name, package_code')
+        .eq('id', packageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Xóa theo thứ tự để tránh vi phạm foreign key constraints
+      
+      // 1. Xóa invoice_items liên quan đến package
+      const { error: invoiceItemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('package_id', packageId);
+
+      if (invoiceItemsError) console.warn('Error deleting invoice_items:', invoiceItemsError);
+
+      // 2. Xóa monthly_bills liên quan đến package
+      const { error: monthlyBillsError } = await supabase
+        .from('monthly_bills')
+        .delete()
+        .eq('package_id', packageId);
+
+      if (monthlyBillsError) console.warn('Error deleting monthly_bills:', monthlyBillsError);
+
+      // 3. Xóa invoices liên quan nếu có
+      const { error: invoicesError } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('farm_id', packageData.farm_id);
+
+      if (invoicesError) console.warn('Error deleting invoices:', invoicesError);
+
+      // 4. Cuối cùng xóa service_package
+      const { error: packageError } = await supabase
         .from('service_packages')
         .delete()
         .eq('id', packageId);
 
-      if (error) throw error;
+      if (packageError) throw packageError;
 
       await fetchUsers();
       toast({
-        title: "Thành công",
-        description: "Đã xóa gói",
+        title: "Thành công", 
+        description: `Đã xóa hoàn toàn gói ${packageData.package_code || packageData.package_name} và toàn bộ dữ liệu liên quan`,
       });
     } catch (error) {
       console.error('Error deleting package:', error);
       toast({
         title: "Lỗi",
-        description: "Không thể xóa gói",
+        description: "Không thể xóa gói: " + (error as Error).message,
         variant: "destructive",
       });
     }
