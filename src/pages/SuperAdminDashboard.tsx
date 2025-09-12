@@ -243,6 +243,21 @@ function SuperAdminContent() {
         .select('total_amount')
         .gte('created_at', yearStart);
 
+      // Fallback: nếu vì lý do nào đó chưa có bản ghi service_packages, lấy từ transactions (package_purchase là âm)
+      const { data: monthlyPackagePurchaseTx } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('transaction_type', 'package_purchase')
+        .lt('amount', 0)
+        .gte('created_at', monthStart);
+
+      const { data: yearlyPackagePurchaseTx } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('transaction_type', 'package_purchase')
+        .lt('amount', 0)
+        .gte('created_at', yearStart);
+
       // Revenue from egg sales and other positive transactions
       const { data: monthlyTransactionData } = await supabase
         .from('transactions')
