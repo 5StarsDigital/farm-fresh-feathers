@@ -291,6 +291,7 @@ function SuperAdminContent() {
       console.log('Monthly revenue sources:', {
         payments: monthlyPaymentData,
         packages: monthlyPackageData,
+        packagesFallback: monthlyPackagePurchaseTx,
         transactions: monthlyTransactionData,
         refunds: monthlyRefundData
       });
@@ -314,26 +315,41 @@ function SuperAdminContent() {
       
       // Tính tổng doanh thu từ tất cả các nguồn
       const monthlyPackageRevenue = monthlyPackageData?.reduce((sum, pkg) => sum + Number(pkg.total_amount), 0) || 0;
+      
+      // Fallback: nếu không có service_packages trong tháng này, lấy từ transactions (trị tuyệt đối của amount âm)
+      const monthlyPackageFallbackRevenue = monthlyPackagePurchaseTx?.reduce((sum, tx) => sum + Math.abs(Number(tx.amount)), 0) || 0;
+      
       const monthlyTransactionRevenue = monthlyTransactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
       const monthlyRefunds = monthlyRefundData?.reduce((sum, refund) => sum + Number(refund.amount), 0) || 0;
       
       const yearlyPackageRevenue = yearlyPackageData?.reduce((sum, pkg) => sum + Number(pkg.total_amount), 0) || 0;
+      
+      // Fallback cho năm
+      const yearlyPackageFallbackRevenue = yearlyPackagePurchaseTx?.reduce((sum, tx) => sum + Math.abs(Number(tx.amount)), 0) || 0;
+      
       const yearlyTransactionRevenue = yearlyTransactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
       const yearlyRefunds = yearlyRefundData?.reduce((sum, refund) => sum + Number(refund.amount), 0) || 0;
       
-      // Doanh thu thật = doanh thu từ bán gói + doanh thu khác - hoàn tiền
-      const calculatedMonthlyRevenue = monthlyPackageRevenue + monthlyTransactionRevenue - monthlyRefunds;
-      const calculatedYearlyRevenue = yearlyPackageRevenue + yearlyTransactionRevenue - yearlyRefunds;
+      // Doanh thu thật = doanh thu từ bán gói (ưu tiên service_packages, fallback về transactions) + doanh thu khác - hoàn tiền
+      const actualMonthlyPackageRevenue = monthlyPackageRevenue || monthlyPackageFallbackRevenue;
+      const actualYearlyPackageRevenue = yearlyPackageRevenue || yearlyPackageFallbackRevenue;
+      
+      const calculatedMonthlyRevenue = actualMonthlyPackageRevenue + monthlyTransactionRevenue - monthlyRefunds;
+      const calculatedYearlyRevenue = actualYearlyPackageRevenue + yearlyTransactionRevenue - yearlyRefunds;
       
       console.log('Revenue calculation:', {
         monthly: {
           packages: monthlyPackageRevenue,
+          packagesFallback: monthlyPackageFallbackRevenue,
+          actualPackages: actualMonthlyPackageRevenue,
           transactions: monthlyTransactionRevenue, 
           refunds: monthlyRefunds,
           total: calculatedMonthlyRevenue
         },
         yearly: {
           packages: yearlyPackageRevenue,
+          packagesFallback: yearlyPackageFallbackRevenue,
+          actualPackages: actualYearlyPackageRevenue,
           transactions: yearlyTransactionRevenue,
           refunds: yearlyRefunds,
           total: calculatedYearlyRevenue
