@@ -219,11 +219,11 @@ function SuperAdminContent() {
       const monthStart = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
       const yearStart = `${currentYear}-01-01`;
       
-      // Revenue from payment transactions (nạp tiền từ bên ngoài)
+      // Revenue from payment transactions (nạp tiền từ bên ngoài) - KHÔNG tính vào doanh thu thực
       const { data: monthlyPaymentData } = await supabase
         .from('payment_transactions')
         .select('amount')
-        .in('status', ['completed', 'success', 'paid']) // Bao gồm các status có thể
+        .in('status', ['completed', 'success', 'paid'])
         .gte('created_at', monthStart);
       
       const { data: yearlyPaymentData } = await supabase
@@ -232,19 +232,29 @@ function SuperAdminContent() {
         .in('status', ['completed', 'success', 'paid'])
         .gte('created_at', yearStart);
 
-      // Revenue from internal transactions (giao dịch trong hệ thống)
-      const revenueTransactionTypes = ['deposit', 'egg_sale', 'package_purchase'];
+      // Revenue from service packages (doanh thu thật từ bán gói)
+      const { data: monthlyPackageData } = await supabase
+        .from('service_packages')
+        .select('total_amount')
+        .gte('created_at', monthStart);
+      
+      const { data: yearlyPackageData } = await supabase
+        .from('service_packages')
+        .select('total_amount')
+        .gte('created_at', yearStart);
+
+      // Revenue from egg sales and other positive transactions
       const { data: monthlyTransactionData } = await supabase
         .from('transactions')
         .select('amount, transaction_type')
-        .in('transaction_type', revenueTransactionTypes)
-        .gt('amount', 0) // Chỉ lấy giao dịch có amount dương (doanh thu)
+        .in('transaction_type', ['deposit', 'egg_sale'])
+        .gt('amount', 0)
         .gte('created_at', monthStart);
       
       const { data: yearlyTransactionData } = await supabase
         .from('transactions')
         .select('amount, transaction_type')
-        .in('transaction_type', revenueTransactionTypes)
+        .in('transaction_type', ['deposit', 'egg_sale'])
         .gt('amount', 0)
         .gte('created_at', yearStart);
 
@@ -265,6 +275,7 @@ function SuperAdminContent() {
 
       console.log('Monthly revenue sources:', {
         payments: monthlyPaymentData,
+        packages: monthlyPackageData,
         transactions: monthlyTransactionData,
         refunds: monthlyRefundData
       });
@@ -287,26 +298,27 @@ function SuperAdminContent() {
       setUsers(usersWithRoles);
       
       // Tính tổng doanh thu từ tất cả các nguồn
-      const monthlyPaymentRevenue = monthlyPaymentData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const monthlyPackageRevenue = monthlyPackageData?.reduce((sum, pkg) => sum + Number(pkg.total_amount), 0) || 0;
       const monthlyTransactionRevenue = monthlyTransactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
       const monthlyRefunds = monthlyRefundData?.reduce((sum, refund) => sum + Number(refund.amount), 0) || 0;
       
-      const yearlyPaymentRevenue = yearlyPaymentData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const yearlyPackageRevenue = yearlyPackageData?.reduce((sum, pkg) => sum + Number(pkg.total_amount), 0) || 0;
       const yearlyTransactionRevenue = yearlyTransactionData?.reduce((sum, transaction) => sum + Number(transaction.amount), 0) || 0;
       const yearlyRefunds = yearlyRefundData?.reduce((sum, refund) => sum + Number(refund.amount), 0) || 0;
       
-      const calculatedMonthlyRevenue = monthlyPaymentRevenue + monthlyTransactionRevenue - monthlyRefunds;
-      const calculatedYearlyRevenue = yearlyPaymentRevenue + yearlyTransactionRevenue - yearlyRefunds;
+      // Doanh thu thật = doanh thu từ bán gói + doanh thu khác - hoàn tiền
+      const calculatedMonthlyRevenue = monthlyPackageRevenue + monthlyTransactionRevenue - monthlyRefunds;
+      const calculatedYearlyRevenue = yearlyPackageRevenue + yearlyTransactionRevenue - yearlyRefunds;
       
       console.log('Revenue calculation:', {
         monthly: {
-          payments: monthlyPaymentRevenue,
+          packages: monthlyPackageRevenue,
           transactions: monthlyTransactionRevenue, 
           refunds: monthlyRefunds,
           total: calculatedMonthlyRevenue
         },
         yearly: {
-          payments: yearlyPaymentRevenue,
+          packages: yearlyPackageRevenue,
           transactions: yearlyTransactionRevenue,
           refunds: yearlyRefunds,
           total: calculatedYearlyRevenue
