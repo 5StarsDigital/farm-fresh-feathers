@@ -1275,6 +1275,10 @@ export type Database = {
         }
         Returns: string
       }
+      resync_user_chickens: {
+        Args: { p_farm_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "customer" | "admin" | "super_admin"

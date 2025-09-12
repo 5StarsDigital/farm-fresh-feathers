@@ -332,9 +332,14 @@ export function UserManagement() {
       // Refresh the user list
       await fetchUsers();
       
+      // Log resync information if available
+      if (result.resync) {
+        console.log('Resync completed:', result.resync);
+      }
+      
       toast({
         title: "Thành công", 
-        description: `Đã xóa gói thành công! (Xóa ${result.invoice_items_deleted} invoice items, ${result.monthly_bills_deleted} monthly bills)`,
+        description: `Đã xóa gói và đồng bộ số lượng gà thành công!`,
       });
     } catch (error) {
       console.error('Error deleting package:', error);
