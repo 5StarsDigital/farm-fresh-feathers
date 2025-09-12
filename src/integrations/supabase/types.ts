@@ -1229,6 +1229,22 @@ export type Database = {
         Args: { cron_expr?: string }
         Returns: boolean
       }
+      execute_checkout_transaction: {
+        Args: {
+          p_coop_id?: string
+          p_farm_id: string
+          p_package_id: string
+          p_package_name: string
+          p_package_price: number
+          p_selected_chicken_quantity: number
+          p_selected_chicken_type_id: string
+          p_selected_chicken_type_name: string
+          p_selected_chickens?: Json
+          p_total_amount: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       format_vnd_amount: {
         Args: { amount: number }
         Returns: string

@@ -108,11 +108,11 @@ serve(async (req) => {
       p_package_id: packageId,
       p_package_name: packageInfo[packageId].name,
       p_package_price: packageInfo[packageId].price,
-      p_coop_id: coopId || null,
       p_selected_chicken_type_id: selectedChickenTypeId,
       p_selected_chicken_type_name: chickenType.name,
       p_selected_chicken_quantity: parseInt(selectedQuantity as string),
       p_total_amount: totalAmount,
+      p_coop_id: coopId || null,
       p_selected_chickens: selectedChickens
     });
 
