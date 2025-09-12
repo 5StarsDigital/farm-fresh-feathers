@@ -101,157 +101,29 @@ serve(async (req) => {
       });
     }
 
-    // Deduct money from account
-    const { error: balanceError } = await supabaseServiceRole
-      .from('farms')
-      .update({ account_balance: farm.account_balance - totalAmount })
-      .eq('id', farm.id);
+    // Start a transaction to ensure all operations succeed or fail together
+    const { error: txError } = await supabaseServiceRole.rpc('execute_checkout_transaction', {
+      p_user_id: user.id,
+      p_farm_id: farm.id,
+      p_package_id: packageId,
+      p_package_name: packageInfo[packageId].name,
+      p_package_price: packageInfo[packageId].price,
+      p_coop_id: coopId || null,
+      p_selected_chicken_type_id: selectedChickenTypeId,
+      p_selected_chicken_type_name: chickenType.name,
+      p_selected_chicken_quantity: parseInt(selectedQuantity as string),
+      p_total_amount: totalAmount,
+      p_selected_chickens: selectedChickens
+    });
 
-    if (balanceError) {
-      console.error('Balance update error:', balanceError);
-      throw balanceError;
-    }
-
-    let coopName = 'Chuồng Nuôi Chung';
-    let coopPrice = 0;
-
-    // Handle farm rental if it's advanced or vip package
-    if ((packageId === 'advanced' || packageId === 'vip') && coopId) {
-      // Check if coopId is actually an available_farm_id
-      const { data: availableFarm, error: farmCheckError } = await supabaseServiceRole
-        .from('available_farms')
-        .select('*')
-        .eq('id', coopId)
-        .single();
-
-      if (!farmCheckError && availableFarm) {
-        coopName = availableFarm.name;
-        coopPrice = availableFarm.rental_price;
-
-        // Create farm rental record
-        const { error: rentalError } = await supabaseServiceRole
-          .from('farm_rentals')
-          .insert({
-            user_id: user.id,
-            farm_id: farm.id,
-            available_farm_id: coopId,
-            rental_price: availableFarm.rental_price,
-            monthly_cost: availableFarm.monthly_cost,
-            status: 'active'
-          });
-
-        if (rentalError) {
-          console.error('Farm rental error:', rentalError);
-          throw rentalError;
-        }
-
-        // Decrease available coops
-        const { error: farmUpdateError } = await supabaseServiceRole
-          .from('available_farms')
-          .update({ available_coops: availableFarm.available_coops - 1 })
-          .eq('id', coopId);
-
-        if (farmUpdateError) {
-          console.error('Farm update error:', farmUpdateError);
-          throw farmUpdateError;
-        }
-      }
-    } else if (coopId) {
-      // Handle regular coop designs
-      const coopDesigns = {
-        'shared': { name: 'Chuồng Nuôi Chung', price: 0 },
-        'individual': { name: 'Chuồng Riêng Biệt', price: 100000 },
-        'luxury': { name: 'Chuồng Cao Cấp', price: 200000 },
-        'ai-designed': { name: 'Chuồng Thiết Kế AI', price: 300000 }
-      };
-      
-      if (coopDesigns[coopId]) {
-        coopName = coopDesigns[coopId].name;
-        coopPrice = coopDesigns[coopId].price;
-      }
-    }
-
-    // Add chickens to user's farm
-    for (const [chickenTypeId, quantity] of Object.entries(selectedChickens)) {
-      if (quantity > 0) {
-        // Check if user already has this chicken type
-        const { data: existingChicken, error: existingError } = await supabaseServiceRole
-          .from('user_chickens')
-          .select('*')
-          .eq('farm_id', farm.id)
-          .eq('chicken_type_id', chickenTypeId)
-          .single();
-
-        if (existingError && existingError.code !== 'PGRST116') {
-          console.error('Existing chicken check error:', existingError);
-          throw existingError;
-        }
-
-        if (existingChicken) {
-          // Update existing quantity
-          const { error: updateError } = await supabaseServiceRole
-            .from('user_chickens')
-            .update({ quantity: existingChicken.quantity + parseInt(quantity as string) })
-            .eq('id', existingChicken.id);
-
-          if (updateError) {
-            console.error('Chicken update error:', updateError);
-            throw updateError;
-          }
-        } else {
-          // Insert new chicken record
-          const { error: insertError } = await supabaseServiceRole
-            .from('user_chickens')
-            .insert({
-              farm_id: farm.id,
-              chicken_type_id: chickenTypeId,
-              quantity: parseInt(quantity as string)
-            });
-
-          if (insertError) {
-            console.error('Chicken insert error:', insertError);
-            throw insertError;
-          }
-        }
-      }
-    }
-
-    // Create service package record
-    const { error: servicePackageError } = await supabaseServiceRole
-      .from('service_packages')
-      .insert({
-        user_id: user.id,
-        farm_id: farm.id,
-        package_id: packageId,
-        package_name: packageInfo[packageId].name,
-        package_price: packageInfo[packageId].price,
-        coop_id: coopId,
-        coop_name: coopName,
-        coop_price: coopPrice,
-        selected_chicken_type_id: selectedChickenTypeId,
-        selected_chicken_type_name: chickenType.name,
-        selected_chicken_quantity: parseInt(selectedQuantity as string),
-        total_amount: totalAmount
+    if (txError) {
+      console.error('Checkout transaction error:', txError);
+      return new Response(JSON.stringify({ 
+        error: 'Checkout failed: ' + (txError.message || 'Unknown error')
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-
-    if (servicePackageError) {
-      console.error('Service package error:', servicePackageError);
-      throw servicePackageError;
-    }
-
-    // Record transaction
-    const { error: transactionError } = await supabaseServiceRole
-      .from('transactions')
-      .insert({
-        farm_id: farm.id,
-        transaction_type: 'package_purchase',
-        amount: -totalAmount,
-        description: `Mua gói ${packageInfo[packageId].name} - ${chickenType.name} (${selectedQuantity} con) - Tổng tiền: ${totalAmount.toLocaleString()} VND`
-      });
-
-    if (transactionError) {
-      console.error('Transaction error:', transactionError);
-      throw transactionError;
     }
 
     console.log('Checkout completed successfully');
