@@ -126,6 +126,7 @@ export default function Checkout() {
   useEffect(() => {
     const packageId = searchParams.get("package");
     const farmId = searchParams.get("farmId");
+    const chickenId = searchParams.get("chickenId");
     
     if (packageId && packages.find(p => p.package_id === packageId)) {
       setSelectedPackage(packageId);
@@ -139,7 +140,13 @@ export default function Checkout() {
     if (farmId && availableFarms.find(f => f.id === farmId)) {
       setSelectedCoop(farmId);
     }
-  }, [searchParams, packages, availableFarms]);
+    
+    // Auto-select chicken when chickenId is provided
+    if (chickenId && chickenTypes.find(c => c.id === chickenId)) {
+      setSelectedChickenType(chickenId);
+      setSelectedChickens({ [chickenId]: 1 });
+    }
+  }, [searchParams, packages, availableFarms, chickenTypes]);
   const loadChickenTypes = async () => {
     try {
       const {

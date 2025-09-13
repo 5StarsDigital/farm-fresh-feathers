@@ -143,7 +143,7 @@ const ChickenTypesSection = () => {
                         Xem chi tiết
                       </Button>
                     </Link>
-                    <Link to="/checkout" className="flex-1">
+                    <Link to={`/checkout?chickenId=${chicken.id}`} className="flex-1">
                       <Button className="w-full">
                         Thuê ngay
                       </Button>

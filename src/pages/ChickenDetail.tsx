@@ -429,14 +429,14 @@ const ChickenDetail = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    disabled={renting}
-                    onClick={handleRentChicken}
-                  >
-                    {renting ? 'Đang xử lý...' : 'Thuê ngay'}
-                  </Button>
+                  <Link to={`/checkout?chickenId=${chicken.id}`}>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                    >
+                      Thuê ngay
+                    </Button>
+                  </Link>
 
                   <p className="text-xs text-muted-foreground text-center">
                     Miễn phí vận chuyển và bảo hành sức khỏe

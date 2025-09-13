@@ -159,7 +159,7 @@ const ChickenRental = () => {
                       className="flex-1" 
                       disabled={rentingChickenId === chicken.id?.toString()} 
                       onClick={() => {
-                        navigate('/checkout');
+                        navigate(`/checkout?chickenId=${chicken.id}`);
                       }}
                     >
                       Thuê ngay
