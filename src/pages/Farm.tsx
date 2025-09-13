@@ -377,7 +377,6 @@ const Farm = () => {
     try {
       const pricePerEgg = 3000; // 3,000 VND per egg
       const totalAmount = quantity * pricePerEgg;
-      const newBalance = farm.account_balance + totalAmount;
 
       // Update egg inventory
       const {
@@ -387,24 +386,7 @@ const Farm = () => {
       }).eq('farm_id', farm.id);
       if (eggError) throw eggError;
 
-      // Update farm balance
-      const {
-        error: balanceError
-      } = await (supabase as any).from('farms').update({
-        account_balance: newBalance
-      }).eq('id', farm.id);
-      if (balanceError) throw balanceError;
-
-      // Create notification with reason
-      const { error: notifError } = await (supabase as any).rpc('create_balance_change_notification_with_reason', {
-        target_user_id: user?.id,
-        old_balance: farm.account_balance,
-        new_balance: newBalance,
-        reason_text: `Bán ${quantity} quả trứng với giá ${pricePerEgg.toLocaleString()}đ/quả`
-      });
-      if (notifError) console.warn('Notification error:', notifError);
-
-      // Record transaction
+      // Record transaction first (for trigger to detect reason)
       await (supabase as any).from('transactions').insert({
         farm_id: farm.id,
         transaction_type: 'egg_sale',
@@ -412,6 +394,14 @@ const Farm = () => {
         quantity: quantity,
         description: `Bán ${quantity} quả trứng`
       });
+
+      // Update farm balance (trigger will create notification with reason)
+      const {
+        error: balanceError
+      } = await (supabase as any).from('farms').update({
+        account_balance: farm.account_balance + totalAmount
+      }).eq('id', farm.id);
+      if (balanceError) throw balanceError;
       setEggInventory(prev => ({
         total_eggs: prev.total_eggs - quantity
       }));
