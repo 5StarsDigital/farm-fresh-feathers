@@ -130,15 +130,22 @@ const AvailableFarmsSection = () => {
                     </div>
                   </div>
 
-                  <Link to="/checkout">
-                    <Button 
-                      className="w-full" 
-                      disabled={farm.available_coops === 0}
-                      variant={farm.available_coops > 0 ? "default" : "secondary"}
-                    >
-                      {farm.available_coops > 0 ? "Thuê Ngay" : "Hết chỗ"}
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2 mt-4">
+                    <Link to={`/farm-detail/${farm.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        Xem chi tiết
+                      </Button>
+                    </Link>
+                    <Link to="/checkout" className="flex-1">
+                      <Button 
+                        className="w-full" 
+                        disabled={farm.available_coops === 0}
+                        variant={farm.available_coops > 0 ? "default" : "secondary"}
+                      >
+                        {farm.available_coops > 0 ? "Thuê Ngay" : "Hết chỗ"}
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             ))}
