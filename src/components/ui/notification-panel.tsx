@@ -199,6 +199,12 @@ export default function NotificationPanel() {
   <div dangerouslySetInnerHTML={{
     __html: selected ? linkifyText(formatBalanceChangeNotification(stripAppended(selected.content))) : ""
   }} />
+  {selected?.metadata?.reason && (
+    <div className="p-3 bg-muted rounded-lg border border-border">
+      <div className="text-sm font-medium text-foreground mb-1">Lý do:</div>
+      <div className="text-sm text-muted-foreground">{selected.metadata.reason}</div>
+    </div>
+  )}
   {selected?.metadata?.attachments?.length ? <div className="space-y-2">
       
       <div className="grid grid-cols-2 gap-2">
