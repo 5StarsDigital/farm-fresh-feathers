@@ -459,9 +459,11 @@ export default function Checkout() {
                 {!selectedPackage ? <p className="text-center text-muted-foreground py-8">
                     Vui lòng chọn gói gà trước
                   </p> : <RadioGroup value={selectedChickenType} onValueChange={value => {
+                const minQuantity = showFarmDesigns && selectedFarmData ? 
+                  (selectedFarmData.min_chickens_per_coop || 1) : 1;
                 setSelectedChickenType(value);
                 setSelectedChickens({
-                  [value]: 1
+                  [value]: minQuantity
                 });
               }}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
