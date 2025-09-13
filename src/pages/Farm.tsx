@@ -377,6 +377,7 @@ const Farm = () => {
     try {
       const pricePerEgg = 3000; // 3,000 VND per egg
       const totalAmount = quantity * pricePerEgg;
+      const newBalance = farm.account_balance + totalAmount;
 
       // Update egg inventory
       const {
@@ -390,9 +391,18 @@ const Farm = () => {
       const {
         error: balanceError
       } = await (supabase as any).from('farms').update({
-        account_balance: farm.account_balance + totalAmount
+        account_balance: newBalance
       }).eq('id', farm.id);
       if (balanceError) throw balanceError;
+
+      // Create notification with reason
+      const { error: notifError } = await (supabase as any).rpc('create_balance_change_notification_with_reason', {
+        target_user_id: user?.id,
+        old_balance: farm.account_balance,
+        new_balance: newBalance,
+        reason_text: `Bán ${quantity} quả trứng với giá ${pricePerEgg.toLocaleString()}đ/quả`
+      });
+      if (notifError) console.warn('Notification error:', notifError);
 
       // Record transaction
       await (supabase as any).from('transactions').insert({
