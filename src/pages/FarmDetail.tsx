@@ -391,14 +391,15 @@ const FarmDetail = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    disabled={farm.available_coops === 0 || renting}
-                    onClick={handleRentFarm}
-                  >
-                    {renting ? 'Đang xử lý...' : farm.available_coops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
-                  </Button>
+                  <Link to={`/checkout?farmId=${farm.id}`}>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      disabled={farm.available_coops === 0}
+                    >
+                      {farm.available_coops === 0 ? 'Hết chỗ' : 'Thuê ngay'}
+                    </Button>
+                  </Link>
 
                   <p className="text-xs text-muted-foreground text-center">
                     Bạn có thể hủy thuê bất cứ lúc nào

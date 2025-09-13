@@ -125,6 +125,8 @@ export default function Checkout() {
   }, []);
   useEffect(() => {
     const packageId = searchParams.get("package");
+    const farmId = searchParams.get("farmId");
+    
     if (packageId && packages.find(p => p.package_id === packageId)) {
       setSelectedPackage(packageId);
       // Auto-select shared coop for basic package
@@ -132,7 +134,12 @@ export default function Checkout() {
         setSelectedCoop("shared");
       }
     }
-  }, [searchParams, packages]);
+    
+    // Auto-select farm when farmId is provided
+    if (farmId && availableFarms.find(f => f.id === farmId)) {
+      setSelectedCoop(farmId);
+    }
+  }, [searchParams, packages, availableFarms]);
   const loadChickenTypes = async () => {
     try {
       const {
