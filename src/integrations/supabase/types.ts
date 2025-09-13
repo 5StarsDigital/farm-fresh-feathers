@@ -1217,6 +1217,15 @@ export type Database = {
         }
         Returns: Json
       }
+      create_balance_change_notification_with_reason: {
+        Args: {
+          new_balance: number
+          old_balance: number
+          reason_text?: string
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       delete_service_package: {
         Args: { p_package_id: string }
         Returns: Json
