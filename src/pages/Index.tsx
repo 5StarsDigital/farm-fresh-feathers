@@ -3,6 +3,7 @@ import HeroSection from '@/components/ui/hero-section';
 import FeaturesSection from '@/components/ui/features-section';
 import HowItWorksSection from '@/components/ui/how-it-works';
 import AvailableFarmsSection from '@/components/ui/available-farms-section';
+import ChickenTypesSection from '@/components/ui/chicken-types-section';
 import PackagesSection from '@/components/ui/packages-section';
 import AiChickenCoopDesigner from '@/components/ui/ai-chicken-coop-designer';
 import TestimonialsSection from '@/components/ui/testimonials-section';
@@ -17,6 +18,7 @@ const Index = () => {
         <FeaturesSection />
         <HowItWorksSection />
         <AvailableFarmsSection />
+        <ChickenTypesSection />
         <PackagesSection />
         <AiChickenCoopDesigner />
         <TestimonialsSection />
