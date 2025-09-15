@@ -1230,8 +1230,16 @@ export type Database = {
         Args: { p_package_id: string }
         Returns: Json
       }
+      disable_insufficient_balance_check: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       disable_process_monthly_billing: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      enable_insufficient_balance_check: {
+        Args: { cron_expr?: string }
         Returns: boolean
       }
       enable_process_monthly_billing: {
@@ -1265,6 +1273,14 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_insufficient_balance_check_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active: boolean
+          jobname: string
+          schedule: string
+        }[]
       }
       get_process_monthly_billing_status: {
         Args: Record<PropertyKey, never>
