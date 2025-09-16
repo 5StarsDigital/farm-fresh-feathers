@@ -207,12 +207,16 @@ export type Database = {
         Row: {
           care_requirements: Json | null
           characteristics: Json | null
+          chicken_category:
+            | Database["public"]["Enums"]["chicken_category"]
+            | null
           created_at: string
           days_per_period: number
           description: string | null
           detailed_content: Json | null
           eggs_per_period: number
           gallery_images: Json | null
+          gender: Database["public"]["Enums"]["chicken_gender"] | null
           id: string
           image_url: string | null
           name: string
@@ -221,12 +225,16 @@ export type Database = {
         Insert: {
           care_requirements?: Json | null
           characteristics?: Json | null
+          chicken_category?:
+            | Database["public"]["Enums"]["chicken_category"]
+            | null
           created_at?: string
           days_per_period?: number
           description?: string | null
           detailed_content?: Json | null
           eggs_per_period?: number
           gallery_images?: Json | null
+          gender?: Database["public"]["Enums"]["chicken_gender"] | null
           id?: string
           image_url?: string | null
           name: string
@@ -235,12 +243,16 @@ export type Database = {
         Update: {
           care_requirements?: Json | null
           characteristics?: Json | null
+          chicken_category?:
+            | Database["public"]["Enums"]["chicken_category"]
+            | null
           created_at?: string
           days_per_period?: number
           description?: string | null
           detailed_content?: Json | null
           eggs_per_period?: number
           gallery_images?: Json | null
+          gender?: Database["public"]["Enums"]["chicken_gender"] | null
           id?: string
           image_url?: string | null
           name?: string
@@ -1323,6 +1335,8 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "admin" | "super_admin"
+      chicken_category: "egg_laying" | "meat"
+      chicken_gender: "hen" | "rooster" | "mixed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1451,6 +1465,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "admin", "super_admin"],
+      chicken_category: ["egg_laying", "meat"],
+      chicken_gender: ["hen", "rooster", "mixed"],
     },
   },
 } as const

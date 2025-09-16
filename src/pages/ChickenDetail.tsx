@@ -2,7 +2,7 @@ import Navigation from '@/components/ui/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bird, ArrowLeft, Award, TrendingUp, Clock, Heart, Image, Video, FileText } from 'lucide-react';
+import { Bird, ArrowLeft, Award, TrendingUp, Clock, Heart, Image, Video, FileText, Egg, Beef } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,18 +24,20 @@ const ChickenDetail = () => {
   const staticChickenData = {
     '1': {
       id: '1',
-      name: "Gà Đông Tảo",
+      name: "Gà Đông Tảo (Mái)",
       description: "Gà đặc sản Việt Nam với chân to, thịt thơm ngon",
-      eggs_per_period: 280,
+      eggs_per_period: 0,
       days_per_period: 365,
       price: 150000,
       image_url: gaDongTao,
+      chicken_category: 'meat',
+      gender: 'hen',
       detailed_description: "Gà Đông Tảo là giống gà đặc sản của Việt Nam, nổi tiếng với đôi chân to, vảy chân dày và thịt thơm ngon. Đây là giống gà quý hiếm, được nuôi chủ yếu ở vùng Đông Tảo, Hưng Yên.",
       characteristics: [
         "Chân to, vảy chân dày đặc trưng",
         "Thịt thơm ngon, mềm ngọt",
         "Kháng bệnh tốt, thích nghi cao",
-        "Trứng có kích thước lớn, dinh dưỡng cao"
+        "Phù hợp nuôi thịt chất lượng cao"
       ],
       care_requirements: [
         "Cần không gian rộng rãi",
@@ -46,12 +48,14 @@ const ChickenDetail = () => {
     },
     '2': {
       id: '2',
-      name: "Gà Rí",
+      name: "Gà Rí (Mái)",
       description: "Gà lai năng suất cao, cho trứng nhiều",
       eggs_per_period: 250,
       days_per_period: 365,
       price: 120000,
       image_url: gaRi,
+      chicken_category: 'egg_laying',
+      gender: 'hen',
       detailed_description: "Gà Rí là giống gà lai được chọn lọc từ các giống gà tốt, có năng suất đẻ trứng cao và thích nghi tốt với điều kiện khí hậu Việt Nam.",
       characteristics: [
         "Năng suất đẻ trứng cao",
@@ -167,6 +171,28 @@ const ChickenDetail = () => {
     return Math.round((chicken.eggs_per_period / chicken.days_per_period) * 100) / 100;
   };
 
+  const getCategoryInfo = (category: string) => {
+    switch (category) {
+      case 'egg_laying':
+        return { icon: Egg, label: 'Gà đẻ trứng', color: 'bg-green-100 text-green-800' };
+      case 'meat':
+        return { icon: Beef, label: 'Gà thịt', color: 'bg-orange-100 text-orange-800' };
+      default:
+        return { icon: Bird, label: 'Gà giống', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
+
+  const getGenderInfo = (gender: string) => {
+    switch (gender) {
+      case 'hen':
+        return { label: 'Mái', color: 'bg-pink-100 text-pink-800' };
+      case 'rooster':
+        return { label: 'Trống', color: 'bg-blue-100 text-blue-800' };
+      default:
+        return { label: 'Hỗn hợp', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -233,15 +259,35 @@ const ChickenDetail = () => {
                 <h1 className="text-3xl font-bold text-foreground mb-4">{chicken.name}</h1>
                 <p className="text-lg text-muted-foreground mb-6">{chicken.description}</p>
                 
-                <div className="flex items-center gap-4 mb-6">
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
-                    {chicken.eggs_per_period || chicken.egg_production_rate} trứng/năm
-                  </Badge>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {calculateDailyEggs()} trứng/ngày
-                  </Badge>
+                <div className="flex items-center gap-2 mb-6 flex-wrap">
+                  {chicken.chicken_category && (
+                    <Badge className={getCategoryInfo(chicken.chicken_category).color}>
+                      {getCategoryInfo(chicken.chicken_category).label}
+                    </Badge>
+                  )}
+                  {chicken.gender && (
+                    <Badge className={getGenderInfo(chicken.gender).color}>
+                      {getGenderInfo(chicken.gender).label}
+                    </Badge>
+                  )}
+                  {chicken.chicken_category === 'egg_laying' && (
+                    <>
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        {chicken.eggs_per_period || chicken.egg_production_rate} trứng/năm
+                      </Badge>
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {calculateDailyEggs()} trứng/ngày
+                      </Badge>
+                    </>
+                  )}
+                  {chicken.chicken_category === 'meat' && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Beef className="w-3 h-3" />
+                      Gà thịt chất lượng cao
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -415,13 +461,23 @@ const ChickenDetail = () => {
                     
                     <div className="border-t pt-3 space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Sản lượng năm:</span>
-                        <span className="font-medium">{chicken.eggs_per_period || chicken.egg_production_rate} trứng</span>
+                        <span className="text-muted-foreground">Loại:</span>
+                        <span className="font-medium">
+                          {chicken.chicken_category === 'egg_laying' ? 'Gà đẻ trứng' : 'Gà thịt'} - {chicken.gender === 'hen' ? 'Mái' : chicken.gender === 'rooster' ? 'Trống' : 'Hỗn hợp'}
+                        </span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Sản lượng ngày:</span>
-                        <span className="font-medium">{calculateDailyEggs()} trứng</span>
-                      </div>
+                      {chicken.chicken_category === 'egg_laying' && (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Sản lượng năm:</span>
+                            <span className="font-medium">{chicken.eggs_per_period || chicken.egg_production_rate} trứng</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Sản lượng ngày:</span>
+                            <span className="font-medium">{calculateDailyEggs()} trứng</span>
+                          </div>
+                        </>
+                      )}
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Chu kỳ:</span>
                         <span className="font-medium">{chicken.days_per_period || 365} ngày</span>

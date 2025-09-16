@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bird } from "lucide-react";
+import { Bird, Egg, Beef } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -14,20 +14,24 @@ const ChickenTypesSection = () => {
 
   const staticChickenTypes = [{
     id: '1',
-    name: "Gà Đông Tảo",
+    name: "Gà Đông Tảo (Mái)",
     description: "Gà đặc sản Việt Nam với chân to, thịt thơm ngon",
-    eggs_per_period: 280,
+    eggs_per_period: 0,
     days_per_period: 365,
     price: 150000,
-    image_url: gaDongTao
+    image_url: gaDongTao,
+    chicken_category: 'meat',
+    gender: 'hen'
   }, {
     id: '2',
-    name: "Gà Rí",
+    name: "Gà Rí (Mái)",
     description: "Gà lai năng suất cao, cho trứng nhiều",
     eggs_per_period: 250,
     days_per_period: 365,
     price: 120000,
-    image_url: gaRi
+    image_url: gaRi,
+    chicken_category: 'egg_laying',
+    gender: 'hen'
   }];
 
   useEffect(() => {
@@ -63,6 +67,28 @@ const ChickenTypesSection = () => {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  const getCategoryInfo = (category: string) => {
+    switch (category) {
+      case 'egg_laying':
+        return { icon: Egg, label: 'Gà đẻ trứng', color: 'bg-green-100 text-green-800' };
+      case 'meat':
+        return { icon: Beef, label: 'Gà thịt', color: 'bg-orange-100 text-orange-800' };
+      default:
+        return { icon: Bird, label: 'Gà giống', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
+
+  const getGenderInfo = (gender: string) => {
+    switch (gender) {
+      case 'hen':
+        return { label: 'Mái', color: 'bg-pink-100 text-pink-800' };
+      case 'rooster':
+        return { label: 'Trống', color: 'bg-blue-100 text-blue-800' };
+      default:
+        return { label: 'Hỗn hợp', color: 'bg-gray-100 text-gray-800' };
+    }
   };
 
   return (
@@ -109,25 +135,52 @@ const ChickenTypesSection = () => {
                 </div>
                 
                 <CardHeader>
-                  <CardTitle className="text-xl">{chicken.name}</CardTitle>
+                  <div className="flex items-start justify-between mb-2">
+                    <CardTitle className="text-xl">{chicken.name}</CardTitle>
+                    <div className="flex gap-1">
+                      {chicken.chicken_category && (
+                        <Badge className={getCategoryInfo(chicken.chicken_category).color}>
+                          {getCategoryInfo(chicken.chicken_category).label}
+                        </Badge>
+                      )}
+                      {chicken.gender && (
+                        <Badge className={getGenderInfo(chicken.gender).color}>
+                          {getGenderInfo(chicken.gender).label}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                   <CardDescription>{chicken.description}</CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Sản lượng trứng:</span>
-                      <Badge variant="secondary">
-                        {chicken.eggs_per_period || chicken.egg_production_rate} trứng/năm
-                      </Badge>
-                    </div>
+                    {chicken.chicken_category === 'egg_laying' && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Sản lượng trứng:</span>
+                          <Badge variant="secondary">
+                            {chicken.eggs_per_period || chicken.egg_production_rate} trứng/năm
+                          </Badge>
+                        </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Sản lượng hàng ngày:</span>
-                      <span className="font-medium text-primary">
-                        {Math.round(((chicken.eggs_per_period || chicken.egg_production_rate) / (chicken.days_per_period || 365)) * 100) / 100} trứng/ngày
-                      </span>
-                    </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Sản lượng hàng ngày:</span>
+                          <span className="font-medium text-primary">
+                            {Math.round(((chicken.eggs_per_period || chicken.egg_production_rate) / (chicken.days_per_period || 365)) * 100) / 100} trứng/ngày
+                          </span>
+                        </div>
+                      </>
+                    )}
+
+                    {chicken.chicken_category === 'meat' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Loại:</span>
+                        <Badge variant="outline">
+                          Gà thịt chất lượng cao
+                        </Badge>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Giá thuê:</span>
