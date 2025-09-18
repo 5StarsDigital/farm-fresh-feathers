@@ -39,11 +39,13 @@ serve(async (req) => {
       packageId,
       coopId,
       selectedChickens,
+      selectedChickenGenders,
       totalAmount
     } = await req.json();
 
     console.log('Processing checkout for user:', user.id);
     console.log('Package:', packageId, 'Coop:', coopId, 'Total:', totalAmount);
+    console.log('Selected chicken genders:', selectedChickenGenders);
 
     // Package info mapping
     const packageInfo = {

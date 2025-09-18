@@ -217,10 +217,12 @@ export type Database = {
           eggs_per_period: number
           gallery_images: Json | null
           gender: Database["public"]["Enums"]["chicken_gender"] | null
+          hen_price: number
           id: string
           image_url: string | null
           name: string
           price: number
+          rooster_price: number
         }
         Insert: {
           care_requirements?: Json | null
@@ -235,10 +237,12 @@ export type Database = {
           eggs_per_period?: number
           gallery_images?: Json | null
           gender?: Database["public"]["Enums"]["chicken_gender"] | null
+          hen_price?: number
           id?: string
           image_url?: string | null
           name: string
           price: number
+          rooster_price?: number
         }
         Update: {
           care_requirements?: Json | null
@@ -253,10 +257,12 @@ export type Database = {
           eggs_per_period?: number
           gallery_images?: Json | null
           gender?: Database["public"]["Enums"]["chicken_gender"] | null
+          hen_price?: number
           id?: string
           image_url?: string | null
           name?: string
           price?: number
+          rooster_price?: number
         }
         Relationships: []
       }

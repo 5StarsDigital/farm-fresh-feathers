@@ -197,9 +197,15 @@ const ChickenRental = () => {
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Giá thuê:</span>
-                    <span className="font-semibold text-primary">{formatCurrency(chicken.price)}/con/tháng</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Giá Trống:</span>
+                      <span className="font-semibold text-blue-600">{formatCurrency(chicken.rooster_price || chicken.price)}/con/tháng</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Giá Mái:</span>
+                      <span className="font-semibold text-pink-600">{formatCurrency(chicken.hen_price || chicken.price)}/con/tháng</span>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Link to={`/chicken-detail/${chicken.id}`} className="flex-1">

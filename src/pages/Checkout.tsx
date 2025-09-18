@@ -29,10 +29,14 @@ interface ChickenType {
   id: string;
   name: string;
   price: number;
+  rooster_price?: number;
+  hen_price?: number;
   description: string;
   image_url: string;
   eggs_per_period: number;
   days_per_period: number;
+  chicken_category?: string;
+  gender?: string;
 }
 interface AvailableFarm {
   id: string;
@@ -81,6 +85,9 @@ export default function Checkout() {
   const [selectedCoop, setSelectedCoop] = useState<string>("");
   const [selectedChickens, setSelectedChickens] = useState<{
     [key: string]: number;
+  }>({});
+  const [selectedChickenGenders, setSelectedChickenGenders] = useState<{
+    [key: string]: 'rooster' | 'hen';
   }>({});
   const [selectedChickenType, setSelectedChickenType] = useState<string>("");
   const [chickenTypes, setChickenTypes] = useState<ChickenType[]>([]);
@@ -145,6 +152,7 @@ export default function Checkout() {
     if (chickenId && chickenTypes.find(c => c.id === chickenId)) {
       setSelectedChickenType(chickenId);
       setSelectedChickens({ [chickenId]: 1 });
+      setSelectedChickenGenders({ [chickenId]: 'hen' }); // Default to hen
     }
   }, [searchParams, packages, availableFarms, chickenTypes]);
   const loadChickenTypes = async () => {
@@ -216,11 +224,22 @@ export default function Checkout() {
       }
     }
 
-    // Add chicken prices
+    // Add chicken prices based on gender
     Object.entries(selectedChickens).forEach(([chickenId, quantity]) => {
       const chicken = chickenTypes.find(c => c.id === chickenId);
+      const gender = selectedChickenGenders[chickenId] || 'hen';
+      
       if (chicken && quantity > 0) {
-        total += chicken.price * quantity;
+        let chickenPrice = chicken.price; // fallback to original price
+        
+        // Use gender-specific pricing if available
+        if (gender === 'rooster' && chicken.rooster_price) {
+          chickenPrice = chicken.rooster_price;
+        } else if (gender === 'hen' && chicken.hen_price) {
+          chickenPrice = chicken.hen_price;
+        }
+        
+        total += chickenPrice * quantity;
       }
     });
     return total;
@@ -266,6 +285,7 @@ export default function Checkout() {
           packageId: selectedPackage,
           coopId: selectedCoop,
           selectedChickens,
+          selectedChickenGenders,
           totalAmount: getTotalPrice()
         }
       });
@@ -465,6 +485,9 @@ export default function Checkout() {
                 setSelectedChickens({
                   [value]: minQuantity
                 });
+                setSelectedChickenGenders({
+                  [value]: 'hen'  // Default to hen
+                });
               }}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {chickenTypes.map(chicken => <div key={chicken.id} className="relative">
@@ -479,19 +502,47 @@ export default function Checkout() {
                                     </div>
                                     <h4 className="font-semibold mb-1">{chicken.name}</h4>
                                     <p className="text-sm text-muted-foreground mb-2">{chicken.description}</p>
-                                    <div className="mb-3">
-                                      <p className="text-lg font-bold text-green-600">{formatCurrency(chicken.price)}/con</p>
-                                       <p className="text-xs text-muted-foreground">
-                                         Sản lượng: {chicken.eggs_per_period} trứng/{chicken.days_per_period} ngày
-                                       </p>
-                                    </div>
-                                    {selectedChickenType === chicken.id && <div className="flex items-center gap-2 mt-3">
-                                        <Label>Số lượng:</Label>
-                                        {showFarmDesigns && selectedFarmData && <span className="text-xs text-muted-foreground mr-2">
-                                            ({selectedFarmData.min_chickens_per_coop || 1}-{selectedFarmData.max_chickens_per_coop || 999})
-                                          </span>}
-                                        <Input type="number" min={showFarmDesigns && selectedFarmData ? selectedFarmData.min_chickens_per_coop || 1 : 1} max={showFarmDesigns && selectedFarmData ? selectedFarmData.max_chickens_per_coop || 999 : 999} value={selectedChickens[chicken.id] || 1} onChange={e => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)} className="w-20" />
-                                      </div>}
+                                     <div className="mb-3">
+                                       <div className="space-y-1">
+                                         <div className="flex items-center justify-between">
+                                           <span className="text-sm text-muted-foreground">Giá Trống:</span>
+                                           <span className="text-sm font-bold text-blue-600">{formatCurrency(chicken.rooster_price || chicken.price)}/con</span>
+                                         </div>
+                                         <div className="flex items-center justify-between">
+                                           <span className="text-sm text-muted-foreground">Giá Mái:</span>
+                                           <span className="text-sm font-bold text-pink-600">{formatCurrency(chicken.hen_price || chicken.price)}/con</span>
+                                         </div>
+                                       </div>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                          Sản lượng: {chicken.eggs_per_period} trứng/{chicken.days_per_period} ngày
+                                        </p>
+                                     </div>
+                                     {selectedChickenType === chicken.id && (
+                                       <div className="space-y-3 mt-3">
+                                         <div className="flex items-center gap-2">
+                                           <Label>Giới tính:</Label>
+                                           <select 
+                                             className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                                             value={selectedChickenGenders[chicken.id] || 'hen'}
+                                             onChange={(e) => setSelectedChickenGenders({
+                                               ...selectedChickenGenders,
+                                               [chicken.id]: e.target.value as 'rooster' | 'hen'
+                                             })}
+                                           >
+                                             <option value="hen">🐔 Mái</option>
+                                             <option value="rooster">🐓 Trống</option>
+                                           </select>
+                                         </div>
+                                         
+                                         <div className="flex items-center gap-2">
+                                           <Label>Số lượng:</Label>
+                                           {showFarmDesigns && selectedFarmData && <span className="text-xs text-muted-foreground mr-2">
+                                               ({selectedFarmData.min_chickens_per_coop || 1}-{selectedFarmData.max_chickens_per_coop || 999})
+                                             </span>}
+                                           <Input type="number" min={showFarmDesigns && selectedFarmData ? selectedFarmData.min_chickens_per_coop || 1 : 1} max={showFarmDesigns && selectedFarmData ? selectedFarmData.max_chickens_per_coop || 999 : 999} value={selectedChickens[chicken.id] || 1} onChange={e => updateChickenQuantity(chicken.id, parseInt(e.target.value) || 1)} className="w-20" />
+                                         </div>
+                                       </div>
+                                     )}
                                   </div>
                                 </div>
                               </CardContent>
@@ -526,10 +577,22 @@ export default function Checkout() {
 
                     {Object.entries(selectedChickens).map(([chickenId, quantity]) => {
                   const chicken = chickenTypes.find(c => c.id === chickenId);
+                  const gender = selectedChickenGenders[chickenId] || 'hen';
+                  
                   if (!chicken || quantity === 0) return null;
+                  
+                  let chickenPrice = chicken.price; // fallback
+                  if (gender === 'rooster' && chicken.rooster_price) {
+                    chickenPrice = chicken.rooster_price;
+                  } else if (gender === 'hen' && chicken.hen_price) {
+                    chickenPrice = chicken.hen_price;
+                  }
+                  
+                  const genderLabel = gender === 'rooster' ? '🐓 Trống' : '🐔 Mái';
+                  
                   return <div key={chickenId} className="flex justify-between">
-                          <span>{chicken.name} x {quantity}</span>
-                          <span>{formatCurrency(chicken.price * quantity)}</span>
+                          <span>{chicken.name} ({genderLabel}) x {quantity}</span>
+                          <span>{formatCurrency(chickenPrice * quantity)}</span>
                         </div>;
                 })}
 

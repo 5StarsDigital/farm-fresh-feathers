@@ -44,9 +44,13 @@ interface ChickenType {
   name: string;
   description: string;
   price: number;
+  rooster_price: number;
+  hen_price: number;
   image_url: string;
   eggs_per_period: number;
   days_per_period: number;
+  chicken_category: string;
+  gender: string;
 }
 interface Transaction {
   id: string;
@@ -569,7 +573,8 @@ export default function AdminDashboard() {
                           <h3 className="font-semibold text-lg">{chicken.name}</h3>
                           <p className="text-muted-foreground">{chicken.description}</p>
           <div className="flex gap-4 mt-2 text-sm">
-            <span>Giá: {formatCurrency(chicken.price)}</span>
+            <span>Giá Trống: {formatCurrency(chicken.rooster_price || chicken.price)}</span>
+            <span>Giá Mái: {formatCurrency(chicken.hen_price || chicken.price)}</span>
             <span>Tỷ lệ đẻ trứng: {chicken.eggs_per_period} trứng/{chicken.days_per_period} ngày</span>
           </div>
                         </div>
@@ -904,9 +909,13 @@ function ChickenForm({
     name: chicken?.name || '',
     description: chicken?.description || '',
     price: chicken?.price || 0,
+    rooster_price: chicken?.rooster_price || chicken?.price || 0,
+    hen_price: chicken?.hen_price || chicken?.price || 0,
     image_url: chicken?.image_url || '',
     eggs_per_period: chicken?.eggs_per_period || 1,
-    days_per_period: chicken?.days_per_period || 1
+    days_per_period: chicken?.days_per_period || 1,
+    chicken_category: chicken?.chicken_category || 'egg_laying',
+    gender: chicken?.gender || 'hen'
   });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -937,15 +946,61 @@ function ChickenForm({
       })} />
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="chicken_price">Giá (VND)</Label>
+          <Label htmlFor="chicken_price">Giá cũ (VND)</Label>
           <Input id="chicken_price" type="number" value={formData.price} onChange={e => setFormData({
           ...formData,
           price: Number(e.target.value)
-        })} required />
+        })} disabled />
         </div>
         
+        <div>
+          <Label htmlFor="rooster_price">Giá Trống (VND)</Label>
+          <Input id="rooster_price" type="number" value={formData.rooster_price} onChange={e => setFormData({
+          ...formData,
+          rooster_price: Number(e.target.value)
+        })} required />
+        </div>
+
+        <div>
+          <Label htmlFor="hen_price">Giá Mái (VND)</Label>
+          <Input id="hen_price" type="number" value={formData.hen_price} onChange={e => setFormData({
+          ...formData,
+          hen_price: Number(e.target.value)
+        })} required />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="chicken_category">Loại gà</Label>
+          <select 
+            id="chicken_category"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={formData.chicken_category}
+            onChange={e => setFormData({...formData, chicken_category: e.target.value})}
+          >
+            <option value="egg_laying">Gà đẻ trứng</option>
+            <option value="meat">Gà thịt</option>
+          </select>
+        </div>
+
+        <div>
+          <Label htmlFor="gender">Giới tính</Label>
+          <select 
+            id="gender"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={formData.gender}
+            onChange={e => setFormData({...formData, gender: e.target.value})}
+          >
+            <option value="hen">Mái</option>
+            <option value="rooster">Trống</option>
+          </select>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="eggs_per_period">Số trứng</Label>
           <Input id="eggs_per_period" type="number" value={formData.eggs_per_period} onChange={e => setFormData({
@@ -953,9 +1008,7 @@ function ChickenForm({
           eggs_per_period: Number(e.target.value)
         })} required />
         </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
+        
         <div>
           <Label htmlFor="days_per_period">Trong bao nhiêu ngày</Label>
           <Input id="days_per_period" type="number" value={formData.days_per_period} onChange={e => setFormData({
