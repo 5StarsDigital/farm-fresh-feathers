@@ -55,17 +55,16 @@ serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    // Service client for unrestricted reads/writes
-    const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-    // User-context client for admin check
-    const userClient = createClient(supabaseUrl, serviceKey, {
+    // Create anon client to validate user token
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData } = await supabase.auth.getUser(token);
-    if (!userData?.user) {
+    // Validate user and check admin
+    const { data: userData, error: userError } = await userClient.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -80,6 +79,9 @@ serve(async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Service client for unrestricted reads/writes
+    const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
     // Fetch active/suspended packages
     const { data: packages, error: pkErr } = await supabase
