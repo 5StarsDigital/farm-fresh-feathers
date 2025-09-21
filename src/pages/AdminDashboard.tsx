@@ -262,9 +262,34 @@ export default function AdminDashboard() {
   const handleDeleteChicken = async (chickenId: string) => {
     try {
       const chickenToDelete = chickenTypes.find(c => c.id === chickenId);
-      const {
-        error
-      } = await supabase.from('chicken_types').delete().eq('id', chickenId);
+      
+      // Check if there are any user_chickens referencing this chicken type
+      const { data: userChickens, error: checkError } = await supabase
+        .from('user_chickens')
+        .select('id')
+        .eq('chicken_type_id', chickenId);
+      
+      if (checkError) throw checkError;
+      
+      if (userChickens && userChickens.length > 0) {
+        toast.error(`Không thể xóa giống gà "${chickenToDelete?.name}" vì đã có người dùng sở hữu loại gà này. Cần xóa hoặc chuyển đổi gà của người dùng trước.`);
+        return;
+      }
+
+      // Check if there are any service_packages referencing this chicken type
+      const { data: servicePackages, error: packageError } = await supabase
+        .from('service_packages')
+        .select('id')
+        .eq('selected_chicken_type_id', chickenId);
+      
+      if (packageError) throw packageError;
+      
+      if (servicePackages && servicePackages.length > 0) {
+        toast.error(`Không thể xóa giống gà "${chickenToDelete?.name}" vì có gói dịch vụ đang sử dụng loại gà này.`);
+        return;
+      }
+
+      const { error } = await supabase.from('chicken_types').delete().eq('id', chickenId);
       if (error) throw error;
 
       // Log admin activity
