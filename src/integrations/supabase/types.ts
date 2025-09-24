@@ -1341,7 +1341,7 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "admin" | "super_admin"
-      chicken_category: "egg_laying" | "meat"
+      chicken_category: "egg_laying" | "meat" | "royal" | "other"
       chicken_gender: "hen" | "rooster" | "mixed"
     }
     CompositeTypes: {
@@ -1471,7 +1471,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "admin", "super_admin"],
-      chicken_category: ["egg_laying", "meat"],
+      chicken_category: ["egg_laying", "meat", "royal", "other"],
       chicken_gender: ["hen", "rooster", "mixed"],
     },
   },

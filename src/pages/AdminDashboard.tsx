@@ -1006,8 +1006,10 @@ function ChickenForm({
             value={formData.chicken_category}
             onChange={e => setFormData({...formData, chicken_category: e.target.value})}
           >
-            <option value="egg_laying">Gà đẻ trứng</option>
-            <option value="meat">Gà thịt</option>
+            <option value="egg_laying">Gà lấy trứng</option>
+            <option value="meat">Gà lấy thịt</option>
+            <option value="royal">Gà tiến vua</option>
+            <option value="other">Gà khác</option>
           </select>
         </div>
 
