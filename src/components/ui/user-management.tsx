@@ -4,13 +4,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronUp, Plus, Trash2, Edit } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, Trash2, Edit, UserX } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { FarmEditDialog, PackageEditDialog, ChickenEditDialog } from './super-admin-edit-dialogs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface UserData {
   id: string;
@@ -67,6 +68,7 @@ export function UserManagement() {
     package: { open: false, data: null as any },
     chicken: { open: false, data: null as any }
   });
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -377,6 +379,46 @@ export function UserManagement() {
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    try {
+      setDeletingUser(userId);
+      
+      console.log('Calling delete-user function for user:', userId);
+      
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
+
+      if (error) {
+        console.error('Error calling delete-user function:', error);
+        throw error;
+      }
+
+      console.log('Delete user response:', data);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Unknown error occurred');
+      }
+
+      // Refresh the user list
+      await fetchUsers();
+      
+      toast({
+        title: "Thành công",
+        description: "Đã xóa người dùng và toàn bộ dữ liệu liên quan",
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa người dùng: " + (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingUser(null);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -483,6 +525,45 @@ export function UserManagement() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Ngày tạo:</span>
                           <span className="text-sm">{new Date(user.created_at).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        <div className="pt-4 border-t">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="w-full"
+                                disabled={deletingUser === user.id}
+                              >
+                                <UserX className="h-4 w-4 mr-2" />
+                                {deletingUser === user.id ? 'Đang xóa...' : 'Xóa người dùng'}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Bạn có chắc chắn muốn xóa người dùng này?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Hành động này sẽ xóa vĩnh viễn toàn bộ dữ liệu của người dùng bao gồm:
+                                  <br />• Thông tin cá nhân và tài khoản
+                                  <br />• Tất cả trại gà và số dư
+                                  <br />• Gói nuôi gà và lịch sử thanh toán
+                                  <br />• Gà giống và phụ kiện
+                                  <br />• Lịch sử giao dịch và thông báo
+                                  <br /><br />
+                                  <strong>Hành động này không thể hoàn tác!</strong>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteUser(user.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Xóa vĩnh viễn
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </CardContent>
                     </Card>
