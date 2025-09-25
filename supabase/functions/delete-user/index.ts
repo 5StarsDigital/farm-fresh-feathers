@@ -28,46 +28,71 @@ serve(async (req) => {
 
     console.log(`Starting deletion process for user: ${userId}`);
 
+    // Get user's farm IDs first
+    const { data: userFarms, error: farmsFetchError } = await supabase
+      .from('farms')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (farmsFetchError) {
+      throw new Error(`Failed to fetch user farms: ${farmsFetchError.message}`);
+    }
+
+    const farmIds = userFarms?.map(farm => farm.id) || [];
+    console.log(`Found ${farmIds.length} farms for user`);
+
     // Start transaction by deleting all related data
     const deletionSteps = [];
 
     // 1. Delete user accessories
-    const { error: accessoriesError } = await supabase
-      .from('user_accessories')
-      .delete()
-      .eq('farm_id', supabase.from('farms').select('id').eq('user_id', userId));
-    
-    if (accessoriesError) {
-      console.log('Error deleting accessories:', accessoriesError);
-      deletionSteps.push({ step: 'accessories', error: accessoriesError });
+    if (farmIds.length > 0) {
+      const { error: accessoriesError } = await supabase
+        .from('user_accessories')
+        .delete()
+        .in('farm_id', farmIds);
+      
+      if (accessoriesError) {
+        console.log('Error deleting accessories:', accessoriesError);
+        deletionSteps.push({ step: 'accessories', error: accessoriesError });
+      } else {
+        deletionSteps.push({ step: 'accessories', success: true });
+      }
     } else {
-      deletionSteps.push({ step: 'accessories', success: true });
+      deletionSteps.push({ step: 'accessories', success: true, message: 'No farms to process' });
     }
 
     // 2. Delete user chickens
-    const { error: chickensError } = await supabase
-      .from('user_chickens') 
-      .delete()
-      .in('farm_id', supabase.from('farms').select('id').eq('user_id', userId));
+    if (farmIds.length > 0) {
+      const { error: chickensError } = await supabase
+        .from('user_chickens') 
+        .delete()
+        .in('farm_id', farmIds);
 
-    if (chickensError) {
-      console.log('Error deleting chickens:', chickensError);
-      deletionSteps.push({ step: 'chickens', error: chickensError });
+      if (chickensError) {
+        console.log('Error deleting chickens:', chickensError);
+        deletionSteps.push({ step: 'chickens', error: chickensError });
+      } else {
+        deletionSteps.push({ step: 'chickens', success: true });
+      }
     } else {
-      deletionSteps.push({ step: 'chickens', success: true });
+      deletionSteps.push({ step: 'chickens', success: true, message: 'No farms to process' });
     }
 
     // 3. Delete egg inventory
-    const { error: eggsError } = await supabase
-      .from('eggs_inventory')
-      .delete()
-      .in('farm_id', supabase.from('farms').select('id').eq('user_id', userId));
+    if (farmIds.length > 0) {
+      const { error: eggsError } = await supabase
+        .from('eggs_inventory')
+        .delete()
+        .in('farm_id', farmIds);
 
-    if (eggsError) {
-      console.log('Error deleting eggs inventory:', eggsError);
-      deletionSteps.push({ step: 'eggs_inventory', error: eggsError });
+      if (eggsError) {
+        console.log('Error deleting eggs inventory:', eggsError);
+        deletionSteps.push({ step: 'eggs_inventory', error: eggsError });
+      } else {
+        deletionSteps.push({ step: 'eggs_inventory', success: true });
+      }
     } else {
-      deletionSteps.push({ step: 'eggs_inventory', success: true });
+      deletionSteps.push({ step: 'eggs_inventory', success: true, message: 'No farms to process' });
     }
 
     // 4. Delete service packages (and their related data)
@@ -85,10 +110,12 @@ serve(async (req) => {
           .eq('package_id', pkg.id);
 
         // Delete monthly bills for this package
-        await supabase
-          .from('monthly_bills')
-          .delete()
-          .in('farm_id', supabase.from('farms').select('id').eq('user_id', userId));
+        if (farmIds.length > 0) {
+          await supabase
+            .from('monthly_bills')
+            .delete()
+            .in('farm_id', farmIds);
+        }
       }
     }
 
@@ -118,16 +145,20 @@ serve(async (req) => {
     }
 
     // 6. Delete transactions
-    const { error: transactionsError } = await supabase
-      .from('transactions')
-      .delete()
-      .in('farm_id', supabase.from('farms').select('id').eq('user_id', userId));
+    if (farmIds.length > 0) {
+      const { error: transactionsError } = await supabase
+        .from('transactions')
+        .delete()
+        .in('farm_id', farmIds);
 
-    if (transactionsError) {
-      console.log('Error deleting transactions:', transactionsError);
-      deletionSteps.push({ step: 'transactions', error: transactionsError });
+      if (transactionsError) {
+        console.log('Error deleting transactions:', transactionsError);
+        deletionSteps.push({ step: 'transactions', error: transactionsError });
+      } else {
+        deletionSteps.push({ step: 'transactions', success: true });
+      }
     } else {
-      deletionSteps.push({ step: 'transactions', success: true });
+      deletionSteps.push({ step: 'transactions', success: true, message: 'No farms to process' });
     }
 
     // 7. Delete invoices
