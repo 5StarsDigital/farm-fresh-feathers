@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, Play, Bell, BellOff } from "lucide-react";
+import { FarmRentalsManagement } from "@/components/ui/farm-rentals-management";
 
 // New daily billing types matching edge function
 interface BillingItem {
@@ -139,6 +140,9 @@ export const BillingSettings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Farm Rentals Management */}
+      <FarmRentalsManagement />
+      
       {/* Balance Warning Settings */}
       <Card>
         <CardHeader>
