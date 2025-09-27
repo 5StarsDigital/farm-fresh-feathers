@@ -115,6 +115,11 @@ export function UserManagement() {
         .from('service_packages')
         .select('*');
 
+      // Fetch farm rentals with available farm details
+      const { data: farmRentalsData } = await supabase
+        .from('farm_rentals')
+        .select('*, available_farms(name, rental_price, monthly_cost)');
+
       // Fetch user chickens with chicken types
       const { data: chickensData } = await supabase
         .from('user_chickens')
@@ -125,6 +130,7 @@ export function UserManagement() {
         const userRole = rolesData?.find(role => role.user_id === profile.id);
         const userFarms = farmsData?.filter(farm => farm.user_id === profile.id) || [];
         const userPackages = packagesData?.filter(pkg => pkg.user_id === profile.id) || [];
+        const userFarmRentals = farmRentalsData?.filter(rental => rental.user_id === profile.id) || [];
         const userChickens = chickensData?.filter(chicken => {
           const farm = userFarms.find(f => f.id === chicken.farm_id);
           return farm !== undefined;
@@ -135,6 +141,7 @@ export function UserManagement() {
           role: userRole?.role || 'customer',
           farms: userFarms,
           packages: userPackages,
+          farmRentals: userFarmRentals,
           chickens: userChickens
         };
       }) || [];
@@ -571,7 +578,7 @@ export function UserManagement() {
                     {/* Trại gà */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">Trại gà</CardTitle>
+                        <CardTitle className="text-base">Trại gà cá nhân</CardTitle>
                       </CardHeader>
                       <CardContent>
                         {user.farms.length === 0 ? (
@@ -599,6 +606,37 @@ export function UserManagement() {
                                   >
                                     <Trash2 className="h-3 w-3" />
                                   </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Trại gà thuê (Farm Rentals) */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Trại gà thuê</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {user.farmRentals.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">Chưa thuê trại nào</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {user.farmRentals.map((rental) => (
+                              <div key={rental.id} className="flex items-center justify-between p-2 border rounded bg-blue-50">
+                                <div>
+                                  <div className="font-medium">{rental.available_farms?.name || 'Trại không xác định'}</div>
+                                  <div className="text-sm text-blue-600">
+                                    Thuê: {formatCurrency(rental.rental_price)} | Hàng tháng: {formatCurrency(rental.monthly_cost)}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Trạng thái: {rental.status === 'active' ? 'Đang hoạt động' : 'Tạm dừng'}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(rental.created_at).toLocaleDateString('vi-VN')}
                                 </div>
                               </div>
                             ))}

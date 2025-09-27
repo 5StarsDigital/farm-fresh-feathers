@@ -409,6 +409,7 @@ export type Database = {
           last_billed_at: string | null
           monthly_cost: number
           rental_price: number
+          service_package_id: string | null
           status: string | null
           updated_at: string
           user_id: string
@@ -421,6 +422,7 @@ export type Database = {
           last_billed_at?: string | null
           monthly_cost: number
           rental_price: number
+          service_package_id?: string | null
           status?: string | null
           updated_at?: string
           user_id: string
@@ -433,6 +435,7 @@ export type Database = {
           last_billed_at?: string | null
           monthly_cost?: number
           rental_price?: number
+          service_package_id?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string
@@ -443,6 +446,13 @@ export type Database = {
             columns: ["available_farm_id"]
             isOneToOne: false
             referencedRelation: "available_farms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farm_rentals_service_package_id_fkey"
+            columns: ["service_package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
             referencedColumns: ["id"]
           },
         ]
