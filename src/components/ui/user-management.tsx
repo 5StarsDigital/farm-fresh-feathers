@@ -22,6 +22,7 @@ interface UserData {
   uncollected_egg: number;
   farms: Farm[];
   packages: ServicePackage[];
+  farmRentals: FarmRental[];
   chickens: UserChicken[];
 }
 
@@ -31,6 +32,22 @@ interface Farm {
   farm_name: string;
   account_balance: number;
   created_at: string;
+}
+
+interface FarmRental {
+  id: string;
+  user_id: string;
+  farm_id: string;
+  available_farm_id: string | null;
+  rental_price: number;
+  monthly_cost: number;
+  status: string;
+  created_at: string;
+  available_farms?: {
+    name: string;
+    rental_price: number;
+    monthly_cost: number;
+  };
 }
 
 interface ServicePackage {
