@@ -185,7 +185,7 @@ const ChickenTypesSection = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Giá thuê:</span>
                       <span className="font-semibold text-lg text-primary">
-                        {formatCurrency(chicken.price)}/con/tháng
+                        {formatCurrency(chicken.price)}/con
                       </span>
                     </div>
                   </div>
