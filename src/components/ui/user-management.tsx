@@ -403,6 +403,32 @@ export function UserManagement() {
     }
   };
 
+  const deleteFarmRental = async (rentalId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa trại thuê này? Số chuồng sẽ được hoàn trả lại.')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('farm_rentals')
+        .delete()
+        .eq('id', rentalId);
+
+      if (error) throw error;
+
+      await fetchUsers();
+      toast({
+        title: "Thành công",
+        description: "Đã xóa trại thuê",
+      });
+    } catch (error) {
+      console.error('Error deleting farm rental:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa trại thuê",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteUser = async (userId: string) => {
     try {
       setDeletingUser(userId);
@@ -643,7 +669,7 @@ export function UserManagement() {
                           <div className="space-y-2">
                             {user.farmRentals.map((rental) => (
                               <div key={rental.id} className="flex items-center justify-between p-2 border rounded bg-blue-50">
-                                <div>
+                                <div className="flex-1">
                                   <div className="font-medium">{rental.available_farms?.name || 'Trại không xác định'}</div>
                                   <div className="text-sm text-blue-600">
                                     Thuê: {formatCurrency(rental.rental_price)} | Hàng tháng: {formatCurrency(rental.monthly_cost)}
@@ -651,10 +677,17 @@ export function UserManagement() {
                                   <div className="text-xs text-muted-foreground">
                                     Trạng thái: {rental.status === 'active' ? 'Đang hoạt động' : 'Tạm dừng'}
                                   </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Ngày thuê: {new Date(rental.created_at).toLocaleDateString('vi-VN')}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {new Date(rental.created_at).toLocaleDateString('vi-VN')}
-                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => deleteFarmRental(rental.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
                               </div>
                             ))}
                           </div>
