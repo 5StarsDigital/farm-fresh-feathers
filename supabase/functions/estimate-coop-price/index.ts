@@ -5,94 +5,83 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Price factors based on specifications
+const materialPrices: Record<string, number> = {
+  'gỗ tự nhiên': 1.0,
+  'gỗ composite': 1.3,
+  'kim loại': 1.5,
+  'nhựa': 0.8,
+  'tre': 0.7
+};
+
+const sizePrices: Record<string, number> = {
+  'nhỏ': 3000000,
+  'trung bình': 5000000,
+  'lớn': 8000000,
+  'rất lớn': 12000000
+};
+
+const featurePrices: Record<string, number> = {
+  'cơ bản': 0,
+  'tự động cho ăn': 1500000,
+  'tự động uống nước': 800000,
+  'điều hòa nhiệt độ': 3000000,
+  'camera giám sát': 2000000,
+  'năng lượng mặt trời': 5000000
+};
+
+const stylePrices: Record<string, number> = {
+  'truyền thống': 0,
+  'hiện đại': 1000000,
+  'rustic': 500000,
+  'minimalist': 800000,
+  'industrial': 1200000
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
     const { material, size, features, style, additional } = await req.json();
 
     console.log('Estimating price for:', { material, size, features, style, additional });
 
-    const prompt = `Bạn là chuyên gia xây dựng chuồng gà. Hãy ước tính giá xây dựng chuồng gà với các thông số sau:
-- Vật liệu: ${material || 'gỗ tự nhiên'}
-- Kích thước: ${size || 'trung bình'}
-- Tính năng: ${features || 'cơ bản'}
-- Phong cách: ${style || 'truyền thống'}
-${additional ? `- Yêu cầu thêm: ${additional}` : ''}
-
-Hãy trả về ước tính giá chi tiết theo định dạng JSON với các trường sau:
-{
-  "estimatedPrice": số tiền tổng ước tính (VND),
-  "breakdown": {
-    "materials": chi phí vật liệu (VND),
-    "labor": chi phí nhân công (VND),
-    "features": chi phí tính năng đặc biệt (VND)
-  },
-  "notes": "Ghi chú về ước tính giá"
-}
-
-Lưu ý: Giá phải thực tế và phù hợp với thị trường Việt Nam năm 2025.`;
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: 'Bạn là chuyên gia xây dựng chuồng gà chuyên nghiệp. Trả lời bằng tiếng Việt và chỉ trả về JSON hợp lệ.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
+    // Calculate base price
+    const basePrice = sizePrices[size] || sizePrices['trung bình'];
     
-    console.log('AI response:', content);
+    // Apply material multiplier
+    const materialMultiplier = materialPrices[material] || 1.0;
+    const materialsPrice = Math.round(basePrice * materialMultiplier * 0.6);
+    
+    // Calculate labor cost (40% of materials)
+    const laborPrice = Math.round(materialsPrice * 0.67);
+    
+    // Add feature cost
+    const featuresPrice = featurePrices[features] || 0;
+    
+    // Add style premium
+    const stylePremium = stylePrices[style] || 0;
+    
+    // Additional requirements add 10-20%
+    const additionalCost = additional ? Math.round(basePrice * 0.15) : 0;
+    
+    // Calculate totals
+    const totalMaterialsCost = materialsPrice + stylePremium;
+    const totalPrice = totalMaterialsCost + laborPrice + featuresPrice + additionalCost;
 
-    // Parse JSON from response
-    let result;
-    try {
-      // Try to extract JSON from markdown code blocks
-      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content;
-      result = JSON.parse(jsonStr);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      // Fallback estimation
-      result = {
-        estimatedPrice: 5000000,
-        breakdown: {
-          materials: 3000000,
-          labor: 1500000,
-          features: 500000
-        },
-        notes: 'Đây là ước tính cơ bản. Vui lòng liên hệ để được tư vấn chi tiết hơn.'
-      };
-    }
+    const result = {
+      estimatedPrice: totalPrice,
+      breakdown: {
+        materials: totalMaterialsCost,
+        labor: laborPrice,
+        features: featuresPrice + additionalCost
+      },
+      notes: `Ước tính dựa trên ${material || 'gỗ tự nhiên'}, kích thước ${size || 'trung bình'} với ${features || 'tính năng cơ bản'}. Giá chưa bao gồm VAT và phí vận chuyển. Liên hệ để được báo giá chính xác.`
+    };
+
+    console.log('Estimated price:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
