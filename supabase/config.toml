@@ -18,5 +18,11 @@ email_confirm = false
 [functions.generate-chicken-coop]
 verify_jwt = false
 
+[functions.estimate-coop-price]
+verify_jwt = false
+
+[functions.request-coop-quote]
+verify_jwt = true
+
 [functions.acb-auto-topup]
 verify_jwt = false

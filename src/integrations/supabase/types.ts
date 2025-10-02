@@ -305,6 +305,50 @@ export type Database = {
         }
         Relationships: []
       }
+      coop_quote_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          design_params: Json
+          estimated_price: number | null
+          id: string
+          image_url: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          design_params?: Json
+          estimated_price?: number | null
+          id?: string
+          image_url: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          design_params?: Json
+          estimated_price?: number | null
+          id?: string
+          image_url?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coop_quote_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       egg_adjustments: {
         Row: {
           admin_email: string | null
