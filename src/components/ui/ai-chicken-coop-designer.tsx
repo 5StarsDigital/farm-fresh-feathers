@@ -90,21 +90,39 @@ const AiChickenCoopDesigner = () => {
   };
 
   const handleDownload = async () => {
-    if (!generatedImageBlob) {
-      toast.error('Không có thiết kế để tải xuống.');
-      return;
-    }
-    
     try {
-      const url = window.URL.createObjectURL(generatedImageBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `chuong-ga-thiet-ke-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Đã tải xuống thiết kế!');
+      if (generatedImageBlob) {
+        const url = window.URL.createObjectURL(generatedImageBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chuong-ga-thiet-ke-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Đã tải xuống thiết kế!');
+        return;
+      }
+
+      if (generatedImage) {
+        // Fallback qua edge function để vượt CORS
+        const { data, error } = await supabase.functions.invoke('proxy-image-download', {
+          body: { imageUrl: generatedImage }
+        });
+        if (error) throw error;
+        if (data?.image) {
+          const a = document.createElement('a');
+          a.href = data.image; // data URL
+          a.download = `chuong-ga-thiet-ke-${Date.now()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          toast.success('Đã tải xuống thiết kế!');
+          return;
+        }
+      }
+
+      toast.error('Không có thiết kế để tải xuống.');
     } catch (error) {
       console.error('Error downloading image:', error);
       toast.error('Không thể tải xuống. Vui lòng thử lại.');
