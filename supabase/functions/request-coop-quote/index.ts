@@ -22,22 +22,37 @@ serve(async (req) => {
       }
     );
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    // Get current user from Authorization header (decode JWT payload)
+    const authHeader = req.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) {
+      throw new Error('Unauthorized');
+    }
+
+    // Base64url decode helper
+    const base64urlToBase64 = (str: string) => str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (str.length % 4)) % 4);
+    const parts = token.split('.');
+    let userId: string | null = null;
+    try {
+      const payload = JSON.parse(atob(base64urlToBase64(parts[1] || '')));
+      userId = payload?.sub || null;
+    } catch (_) {
+      userId = null;
+    }
     
-    if (authError || !user) {
+    if (!userId) {
       throw new Error('Unauthorized');
     }
 
     const { imageUrl, designParams, estimatedPrice } = await req.json();
 
-    console.log('Creating quote request for user:', user.id);
+    console.log('Creating quote request for user:', userId);
 
     // Insert quote request
     const { data: quoteRequest, error: insertError } = await supabaseClient
       .from('coop_quote_requests')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         image_url: imageUrl,
         design_params: designParams,
         estimated_price: estimatedPrice,
@@ -57,7 +72,7 @@ serve(async (req) => {
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('full_name, email')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     // Get Zalo contact info
