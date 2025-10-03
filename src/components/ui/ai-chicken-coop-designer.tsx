@@ -29,6 +29,16 @@ const AiChickenCoopDesigner = () => {
     additional: ''
   });
 
+  // Chuẩn hoá link Zalo: dùng nguyên URL nếu đã có giao thức hoặc domain zalo.me,
+  // nếu chỉ là số/ID thì tự thêm https://zalo.me/
+  const buildZaloLink = (val: string) => {
+    const v = (val || '').trim();
+    if (!v) return 'https://zalo.me';
+    if (/^https?:\/\//i.test(v)) return v;
+    if (/^zalo\.me\//i.test(v)) return `https://${v}`;
+    return `https://zalo.me/${v.replace(/\s+/g, '')}`;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -511,7 +521,8 @@ const AiChickenCoopDesigner = () => {
                   <Button 
                     className="w-full"
                     onClick={() => {
-                      window.open(`https://zalo.me/${zaloContact}`, '_blank');
+                      const link = buildZaloLink(zaloContact || '');
+                      window.open(link, '_blank');
                     }}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
