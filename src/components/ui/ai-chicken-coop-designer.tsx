@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 const AiChickenCoopDesigner = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImageBlob, setGeneratedImageBlob] = useState<Blob | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedPrice, setEstimatedPrice] = useState<any>(null);
   const [showPriceDialog, setShowPriceDialog] = useState(false);
@@ -54,6 +55,7 @@ const AiChickenCoopDesigner = () => {
 
     setIsGenerating(true);
     setEstimatedPrice(null);
+    setGeneratedImageBlob(null);
     try {
       const prompt = generatePrompt();
       
@@ -65,6 +67,18 @@ const AiChickenCoopDesigner = () => {
 
       if (data?.imageUrl) {
         setGeneratedImage(data.imageUrl);
+        
+        // Fetch and store the blob immediately for download
+        try {
+          const response = await fetch(data.imageUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            setGeneratedImageBlob(blob);
+          }
+        } catch (fetchError) {
+          console.error('Error fetching image blob:', fetchError);
+        }
+        
         toast.success('Thiết kế chuồng gà đã được tạo thành công!');
       }
     } catch (error) {
@@ -76,12 +90,13 @@ const AiChickenCoopDesigner = () => {
   };
 
   const handleDownload = async () => {
-    if (!generatedImage) return;
+    if (!generatedImageBlob) {
+      toast.error('Không có thiết kế để tải xuống.');
+      return;
+    }
     
     try {
-      const response = await fetch(generatedImage);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(generatedImageBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `chuong-ga-thiet-ke-${Date.now()}.png`;
@@ -127,15 +142,16 @@ const AiChickenCoopDesigner = () => {
       return;
     }
 
+    // Check authentication first
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      toast.error('Vui lòng đăng nhập để yêu cầu báo giá.');
+      return;
+    }
+
     setIsRequestingQuote(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error('Vui lòng đăng nhập để yêu cầu báo giá.');
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('request-coop-quote', {
         body: {
           imageUrl: generatedImage,
@@ -144,16 +160,24 @@ const AiChickenCoopDesigner = () => {
         }
       });
 
-      if (error) throw error;
-
-      if (data?.zaloContact) {
-        setZaloContact(data.zaloContact);
+      if (error) {
+        console.error('Quote request error:', error);
+        throw error;
       }
-      setShowQuoteDialog(true);
-      toast.success(data?.message || 'Yêu cầu báo giá đã được gửi!');
+
+      if (data?.success) {
+        if (data?.zaloContact) {
+          setZaloContact(data.zaloContact);
+        }
+        setShowQuoteDialog(true);
+        toast.success(data?.message || 'Yêu cầu báo giá đã được gửi!');
+      } else {
+        throw new Error(data?.error || 'Không thể gửi yêu cầu');
+      }
     } catch (error) {
       console.error('Error requesting quote:', error);
-      toast.error('Không thể gửi yêu cầu. Vui lòng thử lại.');
+      const errorMessage = error instanceof Error ? error.message : 'Không thể gửi yêu cầu. Vui lòng thử lại.';
+      toast.error(errorMessage);
     } finally {
       setIsRequestingQuote(false);
     }
