@@ -13,11 +13,11 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY is not configured');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY is not configured');
       return new Response(
-        JSON.stringify({ error: 'OpenAI API key is not configured' }),
+        JSON.stringify({ error: 'Lovable API key is not configured' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -37,26 +37,50 @@ serve(async (req) => {
       );
     }
 
-    console.log('Generating chicken coop design with prompt:', prompt);
+    console.log('Generating chicken coop design with Lovable AI:', prompt);
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'hd'
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        modalities: ['image', 'text']
       }),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI API error:', error);
+      console.error('Lovable AI error:', error);
+      
+      // Handle rate limit and payment errors
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Giới hạn số lượng yêu cầu, vui lòng thử lại sau.' }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Cần nạp thêm credits vào Lovable AI workspace.' }),
+          { 
+            status: 402, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Failed to generate image' }),
         { 
@@ -67,19 +91,22 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('OpenAI response received:', data);
+    console.log('Lovable AI response received');
 
-    if (data.data && data.data[0] && data.data[0].url) {
+    // Extract base64 image from response
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (imageUrl) {
       return new Response(
-        JSON.stringify({ imageUrl: data.data[0].url }),
+        JSON.stringify({ imageUrl }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     } else {
-      console.error('Unexpected OpenAI response format:', data);
+      console.error('Unexpected Lovable AI response format:', data);
       return new Response(
-        JSON.stringify({ error: 'Invalid response from OpenAI' }),
+        JSON.stringify({ error: 'Invalid response from Lovable AI' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
