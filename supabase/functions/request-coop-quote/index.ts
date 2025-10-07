@@ -12,13 +12,21 @@ serve(async (req) => {
   }
 
   try {
+    // Check for authorization header
+    const authHeader = req.headers.get('Authorization');
+    console.log('Authorization header present:', !!authHeader);
+    
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
     // User client for auth check
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     );
@@ -32,8 +40,14 @@ serve(async (req) => {
     // Get current user
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     
+    console.log('User authentication result:', { 
+      userId: user?.id, 
+      hasError: !!userError,
+      errorMessage: userError?.message 
+    });
+    
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      throw new Error(`Authentication failed: ${userError?.message || 'No user found'}`);
     }
     
     const userId = user.id;
