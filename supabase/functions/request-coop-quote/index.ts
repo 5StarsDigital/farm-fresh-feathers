@@ -12,7 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // User client for auth check
+    const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
@@ -22,34 +23,27 @@ serve(async (req) => {
       }
     );
 
-    // Get current user from Authorization header (decode JWT payload)
-    const authHeader = req.headers.get('Authorization') || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!token) {
-      throw new Error('Unauthorized');
-    }
+    // Service role client for admin operations (bypass RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // Base64url decode helper
-    const base64urlToBase64 = (str: string) => str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (str.length % 4)) % 4);
-    const parts = token.split('.');
-    let userId: string | null = null;
-    try {
-      const payload = JSON.parse(atob(base64urlToBase64(parts[1] || '')));
-      userId = payload?.sub || null;
-    } catch (_) {
-      userId = null;
+    // Get current user
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    
+    if (userError || !user) {
+      throw new Error('Unauthorized');
     }
     
-    if (!userId) {
-      throw new Error('Unauthorized');
-    }
+    const userId = user.id;
 
     const { imageUrl, designParams, estimatedPrice } = await req.json();
 
     console.log('Creating quote request for user:', userId);
 
-    // Insert quote request
-    const { data: quoteRequest, error: insertError } = await supabaseClient
+    // Insert quote request using user client
+    const { data: quoteRequest, error: insertError } = await userClient
       .from('coop_quote_requests')
       .insert({
         user_id: userId,
@@ -69,25 +63,29 @@ serve(async (req) => {
     console.log('Quote request created:', quoteRequest.id);
 
     // Get user profile for notification
-    const { data: profile } = await supabaseClient
+    const { data: profile } = await userClient
       .from('profiles')
       .select('full_name, email')
       .eq('id', userId)
       .single();
 
     // Get Zalo contact info
-    const { data: zaloContact } = await supabaseClient
+    const { data: zaloContact } = await userClient
       .from('contact_settings')
       .select('value, label')
       .eq('contact_type', 'zalo')
       .eq('is_active', true)
       .single();
 
-    // Create notification for admins
-    const { data: adminRoles } = await supabaseClient
+    // Get admins using admin client to bypass RLS
+    const { data: adminRoles, error: adminError } = await supabaseAdmin
       .from('user_roles')
       .select('user_id')
       .in('role', ['admin', 'super_admin']);
+
+    if (adminError) {
+      console.error('Error fetching admin roles:', adminError);
+    }
 
     if (adminRoles && adminRoles.length > 0) {
       const notifications = adminRoles.map(admin => ({
@@ -105,9 +103,18 @@ serve(async (req) => {
         }
       }));
 
-      await supabaseClient
+      // Use admin client to insert notifications (bypass RLS)
+      const { error: notifError } = await supabaseAdmin
         .from('notifications')
         .insert(notifications);
+      
+      if (notifError) {
+        console.error('Error inserting notifications:', notifError);
+      } else {
+        console.log(`Created ${notifications.length} notifications for admins`);
+      }
+    } else {
+      console.log('No admin users found to notify');
     }
 
     return new Response(
