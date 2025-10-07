@@ -78,29 +78,15 @@ const AiChickenCoopDesigner = () => {
       if (data?.imageUrl) {
         setGeneratedImage(data.imageUrl);
         
-        // Convert base64 to blob immediately for download
+        // Fetch and store the blob immediately for download
         try {
-          // Check if it's a base64 data URL
-          if (data.imageUrl.startsWith('data:')) {
-            const base64Data = data.imageUrl.split(',')[1];
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'image/png' });
+          const response = await fetch(data.imageUrl);
+          if (response.ok) {
+            const blob = await response.blob();
             setGeneratedImageBlob(blob);
-          } else {
-            // Fallback for URL-based images
-            const response = await fetch(data.imageUrl);
-            if (response.ok) {
-              const blob = await response.blob();
-              setGeneratedImageBlob(blob);
-            }
           }
         } catch (fetchError) {
-          console.error('Error processing image:', fetchError);
+          console.error('Error fetching image blob:', fetchError);
         }
         
         toast.success('Thiết kế chuồng gà đã được tạo thành công!');
