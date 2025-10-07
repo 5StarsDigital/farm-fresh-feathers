@@ -180,12 +180,17 @@ const AiChickenCoopDesigner = () => {
 
     setIsRequestingQuote(true);
     try {
+      // Đảm bảo gửi kèm access_token của người dùng vào Authorization header
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
       const { data, error } = await supabase.functions.invoke('request-coop-quote', {
         body: {
           imageUrl: generatedImage,
           designParams: formData,
           estimatedPrice: estimatedPrice?.estimatedPrice
-        }
+        },
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
 
       if (error) {
