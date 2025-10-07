@@ -37,8 +37,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get current user
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    // Get current user using the JWT from Authorization header
+    const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
+    const { data: { user }, error: userError } = await userClient.auth.getUser(token);
     
     console.log('User authentication result:', { 
       userId: user?.id, 
