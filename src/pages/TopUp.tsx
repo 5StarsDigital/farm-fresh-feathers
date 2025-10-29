@@ -18,35 +18,54 @@ const TopUp = () => {
   const { toast } = useToast();
   const [copySuccess, setCopySuccess] = useState('');
 
-  // Lấy numeric_id của user
+  const [bankInfo, setBankInfo] = useState({
+    bankName: 'ACB',
+    accountNumber: '18144631',
+    accountName: 'NGUYỄN THẾ ANH',
+    transferPrefix: 'chicken'
+  });
+
+  // Lấy numeric_id của user và bank settings
   useEffect(() => {
-    const fetchUserNumericId = async () => {
+    const fetchData = async () => {
       if (user?.id) {
-        const { data, error } = await supabase
+        // Fetch user numeric ID
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('numeric_id')
           .eq('id', user.id)
           .single();
         
-        if (data && !error) {
-          setUserNumericId((data as any).numeric_id);
+        if (profileData && !profileError) {
+          setUserNumericId((profileData as any).numeric_id);
+        }
+
+        // Fetch bank settings
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('production_settings')
+          .select('setting_value')
+          .eq('setting_name', 'bank_settings')
+          .single();
+
+        if (settingsData && !settingsError) {
+          const settings = settingsData.setting_value as any;
+          setBankInfo({
+            bankName: settings.bank_name || 'ACB',
+            accountNumber: settings.account_number || '18144631',
+            accountName: settings.account_name || 'NGUYỄN THẾ ANH',
+            transferPrefix: settings.transfer_prefix || 'chicken'
+          });
         }
       }
     };
 
-    fetchUserNumericId();
+    fetchData();
   }, [user?.id]);
 
-  // Thông tin chuyển khoản
-  const bankInfo = {
-    bankName: 'ACB',
-    accountNumber: '18144631',
-    accountName: 'NGUYỄN THẾ ANH',
-    transferContent: `chicken${userNumericId || ''}`
-  };
+  const transferContent = `${bankInfo.transferPrefix}${userNumericId || ''}`;
 
   // URL QR Code từ VietQR
-  const qrCodeUrl = `https://img.vietqr.io/image/acb-18144631-compact2.jpg?accountName=NGUYEN+THE+ANH&addInfo=${bankInfo.transferContent}`;
+  const qrCodeUrl = `https://img.vietqr.io/image/${bankInfo.bankName.toLowerCase()}-${bankInfo.accountNumber}-compact2.jpg?accountName=${encodeURIComponent(bankInfo.accountName)}&addInfo=${transferContent}`;
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -189,12 +208,12 @@ const TopUp = () => {
                   <div className="flex justify-between items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex-1">
                       <div className="text-sm text-yellow-700 font-medium">Nội dung chuyển khoản</div>
-                      <div className="font-bold font-mono text-yellow-800">{bankInfo.transferContent}</div>
+                      <div className="font-bold font-mono text-yellow-800">{transferContent}</div>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => copyToClipboard(bankInfo.transferContent, 'Nội dung chuyển khoản')}
+                      onClick={() => copyToClipboard(transferContent, 'Nội dung chuyển khoản')}
                       className="ml-2"
                     >
                       {copySuccess === 'Nội dung chuyển khoản' ? (
@@ -232,14 +251,14 @@ const TopUp = () => {
                     <ul className="space-y-1 ml-4">
                       <li>• Chọn ngân hàng ACB</li>
                       <li>• Nhập số tài khoản: <span className="font-mono">{bankInfo.accountNumber}</span></li>
-                      <li>• <strong>Quan trọng:</strong> Ghi đúng nội dung: <span className="font-mono font-bold">{bankInfo.transferContent}</span></li>
+                      <li>• <strong>Quan trọng:</strong> Ghi đúng nội dung: <span className="font-mono font-bold">{transferContent}</span></li>
                       <li>• Nhập số tiền và thực hiện chuyển khoản</li>
                     </ul>
                   </div>
                 </div>
                 <div className="mt-4 p-3 bg-yellow-100 rounded border border-yellow-300">
                   <div className="text-yellow-800 font-medium text-center">
-                    ⚠️ Chuyển khoản đúng nội dung: <span className="font-mono font-bold">{bankInfo.transferContent}</span>
+                    ⚠️ Chuyển khoản đúng nội dung: <span className="font-mono font-bold">{transferContent}</span>
                     <br />
                     💰 Tiền sẽ tự động cộng vào tài khoản trong vòng 1 phút
                   </div>

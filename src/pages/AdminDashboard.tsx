@@ -25,6 +25,7 @@ import GuideManagement from '@/components/ui/guide-management';
 import ContactSettings from '@/components/ui/contact-settings';
 import PolicyManagement from '@/components/ui/policy-management';
 import MediaLibrary from '@/components/ui/media-library';
+import BankSettings from '@/components/ui/bank-settings';
 interface AvailableFarm {
   id: string;
   name: string;
@@ -497,6 +498,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="notifications">Thông báo</TabsTrigger>
             <TabsTrigger value="eggs">Trứng tồn</TabsTrigger>
             <TabsTrigger value="guide">Hướng dẫn</TabsTrigger>
+            <TabsTrigger value="bank">Ngân hàng</TabsTrigger>
             <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
             <TabsTrigger value="media">Kho Media</TabsTrigger>
             <TabsTrigger value="activities">Hoạt động</TabsTrigger>
@@ -662,6 +664,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="policies" className="space-y-4">
             <PolicyManagement />
+          </TabsContent>
+
+          <TabsContent value="bank" className="space-y-4">
+            <BankSettings />
           </TabsContent>
 
           <TabsContent value="contacts" className="space-y-4">
