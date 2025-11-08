@@ -18,10 +18,16 @@ interface NotificationRow {
 }
 
 // Ẩn nội dung text URL đính kèm đã được chèn thêm vào cuối content (phục vụ email)
-function stripAppended(text: string) {
+function stripAppended(text: string, hasMetadataReason?: boolean) {
   if (!text) return text;
+  let result = text;
   // Xóa phần bắt đầu từ "Tệp đính kèm:" hoặc "Liên kết:" đến hết chuỗi
-  return text.replace(/\n?\s*Tệp đính kèm:\s*[\s\S]*$/i, "").replace(/\n?\s*Liên kết:\s*[\s\S]*$/i, "").trim();
+  result = result.replace(/\n?\s*Tệp đính kèm:\s*[\s\S]*$/i, "").replace(/\n?\s*Liên kết:\s*[\s\S]*$/i, "");
+  // Nếu có metadata.reason thì xóa phần "Lý do: ..." trong content để tránh trùng lặp
+  if (hasMetadataReason) {
+    result = result.replace(/\n?\s*Lý do:\s*[^\n]*$/i, "");
+  }
+  return result.trim();
 }
 
 // Format thông báo biến động số dư với màu sắc
@@ -44,7 +50,7 @@ function formatBalanceChangeNotification(content: string) {
 // Helper: tạo khóa chuẩn hóa để loại trùng theo nội dung + thời điểm (độ chính xác đến giây)
 function notificationKey(n: NotificationRow) {
   const timeKey = new Date(n.created_at).toISOString().slice(0, 19); // YYYY-MM-DDTHH:mm:ss
-  const content = stripAppended(n.content || "").replace(/\s+/g, " ").trim();
+  const content = stripAppended(n.content || "", !!n.metadata?.reason).replace(/\s+/g, " ").trim();
   const title = (n.title || "").trim();
   const type = (n.type || "").toString();
   return `${type}|${title}|${content}|${timeKey}`;
@@ -197,7 +203,7 @@ export default function NotificationPanel() {
         <div>
           <div className="text-sm font-semibold text-foreground">{n.title}</div>
           <div className="text-sm text-muted-foreground line-clamp-2 break-words" dangerouslySetInnerHTML={{
-            __html: linkifyText(formatBalanceChangeNotification(stripAppended(n.content)))
+            __html: linkifyText(formatBalanceChangeNotification(stripAppended(n.content, !!n.metadata?.reason)))
           }} />
         </div>
         {!n.is_read && <span className="mt-0.5 inline-flex h-2 w-2 rounded-full bg-primary" aria-hidden />}
@@ -239,7 +245,7 @@ export default function NotificationPanel() {
           </DialogHeader>
         <div className="whitespace-pre-line text-sm leading-relaxed text-foreground space-y-3">
   <div dangerouslySetInnerHTML={{
-    __html: selected ? linkifyText(formatBalanceChangeNotification(stripAppended(selected.content))) : ""
+    __html: selected ? linkifyText(formatBalanceChangeNotification(stripAppended(selected.content, !!selected.metadata?.reason))) : ""
   }} />
   {selected?.metadata?.reason && (
     <div className="p-3 bg-muted rounded-lg border border-border">
