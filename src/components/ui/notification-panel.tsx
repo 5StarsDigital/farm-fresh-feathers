@@ -68,7 +68,10 @@ export default function NotificationPanel() {
         ascending: false
       }).limit(50);
       if (error) throw error;
-      setItems(data || []);
+      
+      // Deduplicate by id to prevent showing duplicate notifications
+      const uniqueData = data ? Array.from(new Map(data.map((item: NotificationRow) => [item.id, item])).values()) as NotificationRow[] : [];
+      setItems(uniqueData);
     } catch (err) {
       console.error("Load notifications error:", err);
     } finally {
@@ -85,18 +88,30 @@ export default function NotificationPanel() {
     return () => clearInterval(id);
   }, [user?.id]);
 
-  // Realtime updates for instant reflection of edits/revokes
+  // Realtime updates for instant reflection of edits/revokes (with debounce)
   useEffect(() => {
     if (!user) return;
+    
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchNotifications();
+      }, 300); // Wait 300ms before fetching to avoid rapid successive calls
+    };
+    
     const channel = (supabase as any).channel('notifications').on('postgres_changes', {
       event: '*',
       schema: 'public',
       table: 'notifications',
       filter: `user_id=eq.${user.id}`
     }, () => {
-      fetchNotifications();
+      debouncedFetch();
     }).subscribe();
+    
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       (supabase as any).removeChannel(channel);
     };
   }, [user?.id]);
