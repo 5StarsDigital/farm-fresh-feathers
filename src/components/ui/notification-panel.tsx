@@ -41,6 +41,32 @@ function formatBalanceChangeNotification(content: string) {
     return `Số dư thay đổi từ <span class="${amountColor}">${oldAmount}đ</span> thành <span class="${amountColor}">${newAmount}đ</span>`;
   });
 }
+// Helper: tạo khóa chuẩn hóa để loại trùng theo nội dung + thời điểm (độ chính xác đến giây)
+function notificationKey(n: NotificationRow) {
+  const timeKey = new Date(n.created_at).toISOString().slice(0, 19); // YYYY-MM-DDTHH:mm:ss
+  const content = stripAppended(n.content || "").replace(/\s+/g, " ").trim();
+  const title = (n.title || "").trim();
+  const type = (n.type || "").toString();
+  return `${type}|${title}|${content}|${timeKey}`;
+}
+
+function dedupeNotifications(list: NotificationRow[]) {
+  const map = new Map<string, NotificationRow>();
+  for (const n of list) {
+    const key = notificationKey(n);
+    if (!map.has(key)) {
+      map.set(key, n);
+    } else {
+      const existing = map.get(key)!;
+      // Giữ bản mới hơn; đồng thời hợp nhất trạng thái đã đọc để không bị đánh dấu chưa đọc lại
+      const pick = new Date(n.created_at).getTime() > new Date(existing.created_at).getTime() ? n : existing;
+      const merged = { ...pick, is_read: existing.is_read && n.is_read };
+      map.set(key, merged);
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
 export default function NotificationPanel() {
   const {
     user
@@ -69,9 +95,10 @@ export default function NotificationPanel() {
       }).limit(50);
       if (error) throw error;
       
-      // Deduplicate by id to prevent showing duplicate notifications
-      const uniqueData = data ? Array.from(new Map(data.map((item: NotificationRow) => [item.id, item])).values()) as NotificationRow[] : [];
-      setItems(uniqueData);
+      // Deduplicate theo id và theo nội dung + thời điểm (phòng khi backend chèn 2 bản ghi khác id)
+      const uniqueById = data ? Array.from(new Map(data.map((item: NotificationRow) => [item.id, item])).values()) as NotificationRow[] : [];
+      const deduped = dedupeNotifications(uniqueById);
+      setItems(deduped);
     } catch (err) {
       console.error("Load notifications error:", err);
     } finally {
