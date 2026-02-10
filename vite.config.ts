@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: "/farm-fresh-feathers/", // 🔥 DÒNG QUAN TRỌNG NHẤT
   server: {
     host: "::",
     port: 8080,
